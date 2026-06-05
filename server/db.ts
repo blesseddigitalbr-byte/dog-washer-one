@@ -1,18 +1,22 @@
 import { eq } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/mysql2";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { InsertUser, users } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _client: postgres.Sql | null = null;
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _client = postgres(process.env.DATABASE_URL);
+      _db = drizzle(_client);
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
+      _client = null;
     }
   }
   return _db;
@@ -68,7 +72,9 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = new Date();
     }
 
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
+    // PostgreSQL upsert using ON CONFLICT
+    await db.insert(users).values(values).onConflictDoUpdate({
+      target: users.openId,
       set: updateSet,
     });
   } catch (error) {
@@ -90,3 +96,12 @@ export async function getUserByOpenId(openId: string) {
 }
 
 // TODO: add feature queries here as your schema grows.
+
+// Helper to close database connection
+export async function closeDb() {
+  if (_client) {
+    await _client.end();
+    _client = null;
+    _db = null;
+  }
+}

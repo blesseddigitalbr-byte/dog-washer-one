@@ -21,15 +21,29 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users } from "lucide-react";
+import { LayoutDashboard, LogOut, PanelLeft, Users, Building2, FileText, ShoppingCart, CreditCard } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
+import { toast } from "sonner";
 
-const menuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
+interface MenuItem {
+  icon: any;
+  label: string;
+  path: string;
+  comingSoon?: boolean;
+}
+
+const menuItems: MenuItem[] = [
+  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
+  { icon: Building2, label: "Organizações", path: "/organizations", comingSoon: true },
+  { icon: FileText, label: "Pessoas Jurídicas", path: "/legal-entities", comingSoon: true },
+  { icon: Users, label: "Unidades", path: "/units" },
+  { icon: ShoppingCart, label: "Clientes", path: "/clients", comingSoon: true },
+  { icon: ShoppingCart, label: "Pets", path: "/pets", comingSoon: true },
+  { icon: CreditCard, label: "Financeiro", path: "/financial", comingSoon: true },
+  { icon: CreditCard, label: "Asaas", path: "/asaas", comingSoon: true },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -151,6 +165,14 @@ function DashboardLayoutContent({
     };
   }, [isResizing, setSidebarWidth]);
 
+  const handleMenuClick = (item: MenuItem) => {
+    if (item.comingSoon) {
+      toast.info("Em breve");
+    } else {
+      setLocation(item.path);
+    }
+  };
+
   return (
     <>
       <div className="relative" ref={sidebarRef}>
@@ -171,7 +193,7 @@ function DashboardLayoutContent({
               {!isCollapsed ? (
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="font-semibold tracking-tight truncate">
-                    Navigation
+                    GroomerFlow
                   </span>
                 </div>
               ) : null}
@@ -186,7 +208,7 @@ function DashboardLayoutContent({
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      onClick={() => setLocation(item.path)}
+                      onClick={() => handleMenuClick(item)}
                       tooltip={item.label}
                       className={`h-10 transition-all font-normal`}
                     >
