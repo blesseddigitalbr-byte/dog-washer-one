@@ -40,8 +40,9 @@ const menuItems: MenuItem[] = [
   { icon: Building2, label: "Organizações", path: "/organizations", comingSoon: true },
   { icon: FileText, label: "Pessoas Jurídicas", path: "/legal-entities", comingSoon: true },
   { icon: Users, label: "Unidades", path: "/units" },
-  { icon: ShoppingCart, label: "Clientes", path: "/clients", comingSoon: true },
+  { icon: ShoppingCart, label: "Clientes", path: "/clients" },
   { icon: ShoppingCart, label: "Pets", path: "/pets", comingSoon: true },
+  { icon: CreditCard, label: "Agenda", path: "/schedule" },
   { icon: CreditCard, label: "Financeiro", path: "/financial", comingSoon: true },
   { icon: CreditCard, label: "Asaas", path: "/asaas", comingSoon: true },
 ];

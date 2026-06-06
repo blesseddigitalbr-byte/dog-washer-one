@@ -29,7 +29,16 @@ export default function LoginPage() {
       name: email.split("@")[0],
     };
 
+    // Sessão com expiração de 24 horas
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
+    const session = {
+      createdAt: new Date().toISOString(),
+      expiresAt: expiresAt.toISOString(),
+    };
+
     localStorage.setItem("groomerflow_user", JSON.stringify(user));
+    localStorage.setItem("groomerflow_session", JSON.stringify(session));
     toast.success("Login realizado!");
     setLocation("/");
     setIsLoading(false);

@@ -8,13 +8,16 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import UnitsPage from "./pages/UnitsPage";
+import SchedulePage from "./pages/SchedulePage";
+import ClientsPage from "./pages/ClientsPage";
 import { useLocalAuth } from "./hooks/useLocalAuth";
+import { DashboardLayoutSkeleton } from "./components/DashboardLayoutSkeleton";
 
 function Router() {
   const { isAuthenticated, loading } = useLocalAuth();
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
+    return <DashboardLayoutSkeleton />;
   }
 
   if (!isAuthenticated) {
@@ -22,12 +25,16 @@ function Router() {
   }
 
   return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/units"} component={UnitsPage} />
-      <Route path={"/404"} component={NotFound} />
-      <Route component={NotFound} />
-    </Switch>
+    <DashboardLayout>
+      <Switch>
+        <Route path="/" component={Home} />
+        <Route path="/units" component={UnitsPage} />
+        <Route path="/schedule" component={SchedulePage} />
+        <Route path="/clients" component={ClientsPage} />
+        <Route path="/404" component={NotFound} />
+        <Route component={NotFound} />
+      </Switch>
+    </DashboardLayout>
   );
 }
 
@@ -37,9 +44,7 @@ function App() {
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
           <Toaster />
-          <DashboardLayout>
-            <Router />
-          </DashboardLayout>
+          <Router />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
