@@ -52,7 +52,7 @@ export default function Dashboard() {
                     <p className="text-xs text-muted-foreground mb-2 font-medium">
                       {stat.title}
                     </p>
-                    <p className="text-3xl font-bold text-foreground">
+                    <p className="text-2xl font-bold text-foreground">
                       {stat.value}
                     </p>
                   </div>
@@ -73,11 +73,11 @@ export default function Dashboard() {
           <h2 className="text-xl font-bold text-foreground mb-6">
             Atividade Recente
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-0">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="flex items-center justify-between py-4"
+                className="flex items-center justify-between py-4 border-b border-accent/5 last:border-b-0"
               >
                 <div>
                   <p className="font-medium text-foreground">

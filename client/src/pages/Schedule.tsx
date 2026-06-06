@@ -131,9 +131,9 @@ export default function SchedulePage() {
         </div>
 
         {/* Appointments List */}
-        <div className="space-y-3">
+        <div className="space-y-0">
           {appointments.map((appointment) => (
-            <div key={appointment.id} className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 group flex items-center justify-between">
+            <div key={appointment.id} className="bg-white p-4 hover:bg-accent/5 transition-all duration-200 group flex items-center justify-between border-b border-accent/5 last:border-b-0">
               {/* Left side - Pet info */}
               <div className="flex items-center gap-4 flex-1">
                 <div className="w-16 h-16 rounded-xl bg-accent/10 flex items-center justify-center text-2xl flex-shrink-0">
@@ -149,7 +149,7 @@ export default function SchedulePage() {
 
               {/* Right side - Time and VIP badge */}
               <div className="flex items-center gap-6 flex-shrink-0">
-                <span className="text-2xl font-bold text-foreground">{appointment.time}</span>
+                <span className="text-lg font-bold text-foreground">{appointment.time}</span>
                 {appointment.isVip && (
                   <span className="bg-foreground text-background px-4 py-2 rounded-full text-xs font-bold">
                     VIP
