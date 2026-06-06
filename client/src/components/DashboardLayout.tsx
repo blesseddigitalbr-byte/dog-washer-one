@@ -17,6 +17,8 @@ import {
   ChevronDown,
   Menu,
   X,
+  ArrowLeft,
+  ArrowRight,
 } from "lucide-react";
 
 interface MenuSection {
@@ -202,6 +204,12 @@ export default function DashboardLayout({
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-4">
+            {/* Logo */}
+            <img 
+              src="/manus-storage/logo-groomerflow_b15c94b1.png" 
+              alt="GroomerFlow" 
+              className="h-10 w-10 object-contain"
+            />
             <div className="text-right">
               <p className="text-sm font-medium text-foreground">{user?.name}</p>
               <p className="text-xs text-muted-foreground">{user?.email}</p>
@@ -212,6 +220,22 @@ export default function DashboardLayout({
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Navigation Buttons */}
+        <div className="bg-card border-b border-border px-6 py-3 flex items-center gap-2">
+          <button
+            onClick={() => window.history.back()}
+            className="px-4 py-2 rounded-md bg-accent text-accent-foreground hover:bg-accent/90 transition-colors text-sm font-medium"
+          >
+            ← Voltar
+          </button>
+          <button
+            onClick={() => window.history.forward()}
+            className="px-4 py-2 rounded-md bg-accent text-accent-foreground hover:bg-accent/90 transition-colors text-sm font-medium"
+          >
+            Avançar →
+          </button>
         </div>
 
         {/* Page Content */}
