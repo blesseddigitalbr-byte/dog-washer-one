@@ -1,12 +1,7 @@
-import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { BarChart3, Users, Calendar, TrendingUp } from "lucide-react";
-import { getLoginUrl } from "@/const";
 
 export default function Dashboard() {
-  // Preserve authentication logic from previous version
-  const { user, loading, error, isAuthenticated, logout } = useAuth();
-
   const stats = [
     {
       title: "Agendamentos",
