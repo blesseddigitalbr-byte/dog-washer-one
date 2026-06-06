@@ -143,7 +143,7 @@ export default function DashboardLayout({
               </button>
 
               {/* Menu Items */}
-              {(sidebarOpen || expandedSections.includes(section.title)) && (
+              {expandedSections.includes(section.title) && (
                 <div className="space-y-1 mt-2">
                   {section.items.map((item) => (
                     <button
@@ -153,7 +153,7 @@ export default function DashboardLayout({
                         item.comingSoon
                           ? "text-sidebar-foreground/50 cursor-not-allowed"
                           : location === item.path
-                          ? "bg-sidebar-accent/20 text-sidebar-accent"
+                          ? "bg-sidebar-accent text-sidebar-primary-foreground font-semibold border-l-4 border-sidebar-accent"
                           : "text-sidebar-foreground hover:bg-sidebar-accent/20 hover:text-sidebar-accent"
                       }`}
                     >
