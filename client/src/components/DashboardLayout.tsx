@@ -114,7 +114,11 @@ export default function DashboardLayout({
         <div className="p-4 border-b border-sidebar-border">
           <div className="flex items-center justify-between">
             {sidebarOpen && (
-              <h1 className="text-xl font-bold text-sidebar-accent">GroomerFlow</h1>
+              <img 
+                src="/manus-storage/logo-groomerflow_b15c94b1.png" 
+                alt="GroomerFlow" 
+                className="h-12 w-12 object-contain"
+              />
             )}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -204,12 +208,6 @@ export default function DashboardLayout({
           </button>
           <div className="flex-1" />
           <div className="flex items-center gap-4">
-            {/* Logo */}
-            <img 
-              src="/manus-storage/logo-groomerflow_b15c94b1.png" 
-              alt="GroomerFlow" 
-              className="h-10 w-10 object-contain"
-            />
             <div className="text-right">
               <p className="text-sm font-medium text-foreground">{user?.name}</p>
               <p className="text-xs text-muted-foreground">{user?.email}</p>
