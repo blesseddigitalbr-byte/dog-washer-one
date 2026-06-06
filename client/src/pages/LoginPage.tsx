@@ -53,8 +53,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sidebar to-sidebar/90 p-4">
+      <Card className="w-full max-w-md p-8 bg-card border-2 border-primary/20">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-primary">GroomerFlow</h1>
           <p className="text-muted-foreground mt-2">Acesse sua conta</p>
@@ -99,7 +99,7 @@ export default function LoginPage() {
             Não tem conta?{" "}
             <button
               onClick={() => setLocation("/register")}
-              className="text-secondary hover:text-secondary/80 font-medium"
+              className="text-blue-600 hover:text-blue-700 font-medium"
             >
               Criar conta
             </button>
