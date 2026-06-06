@@ -2,44 +2,29 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import DashboardLayout from "@/components/DashboardLayout";
 import NotFound from "@/pages/NotFound";
-import LoginPage from "@/pages/LoginPage";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
-import UnitsPage from "./pages/UnitsPage";
-import SchedulePage from "./pages/SchedulePage";
-import ClientsPage from "./pages/ClientsPage";
-import RegisterPage from "./pages/RegisterPage";
-import { useLocalAuth } from "./hooks/useLocalAuth";
-import { DashboardLayoutSkeleton } from "./components/DashboardLayoutSkeleton";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 function Router() {
-  const { isAuthenticated, loading } = useLocalAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
-    return <DashboardLayoutSkeleton />;
+    return <div>Carregando...</div>;
   }
 
   return (
     <Switch>
-      <Route path="/login" component={LoginPage} />
-      <Route path="/register" component={RegisterPage} />
       <Route>
-        {!isAuthenticated ? (
-          <LoginPage />
-        ) : (
-          <DashboardLayout>
-            <Switch>
-              <Route path="/" component={Home} />
-              <Route path="/units" component={UnitsPage} />
-              <Route path="/schedule" component={SchedulePage} />
-              <Route path="/clients" component={ClientsPage} />
-              <Route path="/404" component={NotFound} />
-              <Route component={NotFound} />
-            </Switch>
-          </DashboardLayout>
-        )}
+        <DashboardLayout>
+          <Switch>
+            <Route path="/" component={Home} />
+            <Route path="/404" component={NotFound} />
+            <Route component={NotFound} />
+          </Switch>
+        </DashboardLayout>
       </Route>
     </Switch>
   );

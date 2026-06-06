@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useLocalAuth } from "@/hooks/useLocalAuth";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 import {
   LayoutDashboard,
@@ -37,7 +37,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [location, setLocation] = useLocation();
-  const { user, logout } = useLocalAuth();
+  const { user } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedSections, setExpandedSections] = useState<string[]>([
     "OPERACIONAL",
@@ -48,8 +48,8 @@ export default function DashboardLayout({
       title: "OPERACIONAL",
       items: [
         { icon: <LayoutDashboard className="w-5 h-5" />, label: "Painel", path: "/" },
-        { icon: <Calendar className="w-5 h-5" />, label: "Agendamento", path: "/schedule" },
-        { icon: <Users className="w-5 h-5" />, label: "Clientes", path: "/clients" },
+        { icon: <Calendar className="w-5 h-5" />, label: "Agendamento", path: "/schedule", comingSoon: true },
+        { icon: <Users className="w-5 h-5" />, label: "Clientes", path: "/clients", comingSoon: true },
         { icon: <Users2 className="w-5 h-5" />, label: "Alunos", path: "/students", comingSoon: true },
       ],
     },
@@ -66,7 +66,7 @@ export default function DashboardLayout({
       items: [
         { icon: <TrendingUp className="w-5 h-5" />, label: "Financeiro", path: "/financial", comingSoon: true },
         { icon: <Users2 className="w-5 h-5" />, label: "Equipe", path: "/team", comingSoon: true },
-        { icon: <LayoutDashboard className="w-5 h-5" />, label: "Unidades", path: "/units" },
+        { icon: <LayoutDashboard className="w-5 h-5" />, label: "Unidades", path: "/units", comingSoon: true },
         { icon: <BarChart3 className="w-5 h-5" />, label: "Relatórios", path: "/reports", comingSoon: true },
       ],
     },
@@ -96,8 +96,8 @@ export default function DashboardLayout({
   };
 
   const handleLogout = () => {
-    logout();
-    setLocation("/login");
+    // TODO: Implementar logout
+    toast.info("Logout em desenvolvimento");
   };
 
   return (
@@ -148,14 +148,15 @@ export default function DashboardLayout({
                   {section.items.map((item) => (
                     <button
                       key={item.label}
-                      onClick={() => handleMenuClick(item.path, item.comingSoon)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all ${
-                        item.comingSoon
-                          ? "text-sidebar-foreground/50 cursor-not-allowed"
-                          : location === item.path
-                          ? "bg-sidebar-accent text-sidebar-primary-foreground font-semibold border-l-4 border-sidebar-accent"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent/20 hover:text-sidebar-accent"
-                      }`}
+            onClick={() => handleMenuClick(item.path, item.comingSoon)}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all ${
+                item.comingSoon
+                  ? "text-sidebar-foreground/50 cursor-not-allowed"
+                  : location === item.path
+                  ? "bg-sidebar-accent text-sidebar-primary-foreground font-semibold border-l-4 border-sidebar-accent"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/20 hover:text-sidebar-accent"
+              }`}
+              disabled={item.comingSoon}
                     >
                       {item.icon}
                       {sidebarOpen && (
