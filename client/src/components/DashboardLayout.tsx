@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useLocalAuth } from "@/hooks/useLocalAuth";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 import {
   LayoutDashboard,
@@ -37,7 +37,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [location, setLocation] = useLocation();
-  const { user, logout } = useLocalAuth();
+  const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedSections, setExpandedSections] = useState<string[]>([
     "OPERACIONAL",

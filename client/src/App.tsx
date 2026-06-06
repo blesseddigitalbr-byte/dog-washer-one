@@ -11,11 +11,11 @@ import UnitsPage from "./pages/UnitsPage";
 import SchedulePage from "./pages/SchedulePage";
 import ClientsPage from "./pages/ClientsPage";
 import RegisterPage from "./pages/RegisterPage";
-import { useLocalAuth } from "./hooks/useLocalAuth";
+import { useAuth } from "./_core/hooks/useAuth";
 import { DashboardLayoutSkeleton } from "./components/DashboardLayoutSkeleton";
 
 function Router() {
-  const { isAuthenticated, loading } = useLocalAuth();
+  const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
     return <DashboardLayoutSkeleton />;

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
 export default function RegisterPage() {
   const [, setLocation] = useLocation();
@@ -12,7 +13,18 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+
+  const registerMutation = trpc.auth.register.useMutation({
+    onSuccess: () => {
+      toast.success("Conta criada com sucesso! Redirecionando para dashboard...");
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao criar conta");
+    },
+  });
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,35 +52,7 @@ export default function RegisterPage() {
       return;
     }
 
-    // Verificar se usuário já existe
-    const existingUsers = JSON.parse(localStorage.getItem("groomerflow_users") || "[]");
-    if (existingUsers.some((u: any) => u.email === email)) {
-      toast.error("Este email já está cadastrado");
-      return;
-    }
-
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Criar novo usuário
-    const newUser = {
-      id: Math.random().toString(36).substr(2, 9),
-      name,
-      email,
-      password, // Em produção, isso seria hasheado
-      createdAt: new Date().toISOString(),
-    };
-
-    // Armazenar usuário na lista
-    existingUsers.push(newUser);
-    localStorage.setItem("groomerflow_users", JSON.stringify(existingUsers));
-
-    toast.success("Conta criada com sucesso! Faça login para continuar.");
-    
-    // Redirecionar para login
-    setTimeout(() => {
-      window.location.href = "/login";
-    }, 1000);
+    registerMutation.mutate({ name, email, password });
   };
 
   return (
@@ -95,7 +79,7 @@ export default function RegisterPage() {
               placeholder="Seu nome"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              disabled={isLoading}
+              disabled={registerMutation.isPending}
               className="mt-1"
             />
           </div>
@@ -107,7 +91,7 @@ export default function RegisterPage() {
               placeholder="seu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
+              disabled={registerMutation.isPending}
               className="mt-1"
             />
           </div>
@@ -119,7 +103,7 @@ export default function RegisterPage() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
+              disabled={registerMutation.isPending}
               className="mt-1"
             />
             <p className="text-xs text-slate-500 mt-1">Mínimo 6 caracteres</p>
@@ -132,17 +116,17 @@ export default function RegisterPage() {
               placeholder="••••••••"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={isLoading}
+              disabled={registerMutation.isPending}
               className="mt-1"
             />
           </div>
 
           <Button
             type="submit"
-            disabled={isLoading}
+            disabled={registerMutation.isPending}
             className="w-full bg-[#E8D5C4] hover:bg-[#D4C4B0] text-[#07111E] font-semibold"
           >
-            {isLoading ? "Criando conta..." : "Criar Conta"}
+            {registerMutation.isPending ? "Criando conta..." : "Criar Conta"}
           </Button>
         </form>
 

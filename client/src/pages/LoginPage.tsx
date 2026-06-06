@@ -1,15 +1,27 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 export default function LoginPage() {
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  
+  const loginMutation = trpc.auth.login.useMutation({
+    onSuccess: () => {
+      toast.success("Login realizado!");
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 300);
+    },
+    onError: (error) => {
+      toast.error(error.message || "Erro ao fazer login");
+    },
+  });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,37 +31,7 @@ export default function LoginPage() {
       return;
     }
 
-    setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Verificar se usuário existe
-    const users = JSON.parse(localStorage.getItem("groomerflow_users") || "[]");
-    const user = users.find((u: any) => u.email === email && u.password === password);
-
-    if (!user) {
-      toast.error("Email ou senha inválidos");
-      setIsLoading(false);
-      return;
-    }
-
-    // Sessão com expiração de 24 horas
-    const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24);
-    const session = {
-      createdAt: new Date().toISOString(),
-      expiresAt: expiresAt.toISOString(),
-    };
-
-    localStorage.setItem("groomerflow_user", JSON.stringify(user));
-    localStorage.setItem("groomerflow_session", JSON.stringify(session));
-    
-    // Forçar re-render e navegação
-    toast.success("Login realizado!");
-    
-    // Usar window.location para garantir navegação
-    setTimeout(() => {
-      window.location.href = "/";
-    }, 300);
+    loginMutation.mutate({ email, password });
   };
 
   return (
@@ -68,7 +50,7 @@ export default function LoginPage() {
               placeholder="seu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              disabled={isLoading}
+              disabled={loginMutation.isPending}
               className="mt-1"
             />
           </div>
@@ -80,17 +62,17 @@ export default function LoginPage() {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              disabled={isLoading}
+              disabled={loginMutation.isPending}
               className="mt-1"
             />
           </div>
 
           <Button
             type="submit"
-            disabled={isLoading}
+            disabled={loginMutation.isPending}
             className="w-full bg-[#E8D5C4] hover:bg-[#D4C4B0] text-[#07111E] font-semibold"
           >
-            {isLoading ? "Entrando..." : "Entrar"}
+            {loginMutation.isPending ? "Entrando..." : "Entrar"}
           </Button>
         </form>
 
