@@ -38,7 +38,7 @@ async function startServer() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   // Health check endpoints
-  app.use("/", healthRouter);
+  app.use("/api/health", healthRouter);
   // tRPC API
   app.use(
     "/api/trpc",
