@@ -36,7 +36,7 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user, logout } = useLocalAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedSections, setExpandedSections] = useState<string[]>([
@@ -151,7 +151,9 @@ export default function DashboardLayout({
                       onClick={() => handleMenuClick(item.path, item.comingSoon)}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all ${
                         item.comingSoon
-                          ? "text-sidebar-foreground/50 hover:text-sidebar-foreground/70"
+                          ? "text-sidebar-foreground/50 cursor-not-allowed"
+                          : location === item.path
+                          ? "bg-sidebar-accent/20 text-sidebar-accent"
                           : "text-sidebar-foreground hover:bg-sidebar-accent/20 hover:text-sidebar-accent"
                       }`}
                     >
