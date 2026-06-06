@@ -140,7 +140,7 @@ export default function RegisterPage() {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full"
+            className="w-full bg-[#E8D5C4] hover:bg-[#D4C4B0] text-[#07111E] font-semibold"
           >
             {isLoading ? "Criando conta..." : "Criar Conta"}
           </Button>

@@ -88,7 +88,7 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-secondary hover:bg-secondary/90 text-secondary-foreground font-semibold"
+            className="w-full bg-[#E8D5C4] hover:bg-[#D4C4B0] text-[#07111E] font-semibold"
           >
             {isLoading ? "Entrando..." : "Entrar"}
           </Button>
