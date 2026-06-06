@@ -1,269 +1,221 @@
-import { useLocalAuth } from "@/hooks/useLocalAuth";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-  useSidebar,
-} from "@/components/ui/sidebar";
-import { getLoginUrl } from "@/const";
-import { useIsMobile } from "@/hooks/useMobile";
-import { LayoutDashboard, LogOut, PanelLeft, Users, Building2, FileText, ShoppingCart, CreditCard } from "lucide-react";
-import { CSSProperties, useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
-import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
-import { Button } from "./ui/button";
+import { useLocalAuth } from "@/hooks/useLocalAuth";
 import { toast } from "sonner";
+import {
+  LayoutDashboard,
+  Calendar,
+  Users,
+  Scissors,
+  Package,
+  TrendingUp,
+  Users2,
+  BarChart3,
+  Zap,
+  Settings,
+  LogOut,
+  ChevronDown,
+  Menu,
+  X,
+} from "lucide-react";
+
+interface MenuSection {
+  title: string;
+  items: MenuItem[];
+}
 
 interface MenuItem {
-  icon: any;
+  icon: React.ReactNode;
   label: string;
   path: string;
   comingSoon?: boolean;
 }
-
-const menuItems: MenuItem[] = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/" },
-  { icon: Building2, label: "Organizações", path: "/organizations", comingSoon: true },
-  { icon: FileText, label: "Pessoas Jurídicas", path: "/legal-entities", comingSoon: true },
-  { icon: Users, label: "Unidades", path: "/units" },
-  { icon: ShoppingCart, label: "Clientes", path: "/clients" },
-  { icon: ShoppingCart, label: "Pets", path: "/pets", comingSoon: true },
-  { icon: CreditCard, label: "Agenda", path: "/schedule" },
-  { icon: CreditCard, label: "Financeiro", path: "/financial", comingSoon: true },
-  { icon: CreditCard, label: "Asaas", path: "/asaas", comingSoon: true },
-];
-
-const SIDEBAR_WIDTH_KEY = "sidebar-width";
-const DEFAULT_WIDTH = 280;
-const MIN_WIDTH = 200;
-const MAX_WIDTH = 480;
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [sidebarWidth, setSidebarWidth] = useState(() => {
-    const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
-    return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
-  });
-  const { loading, user, logout, isAuthenticated } = useLocalAuth();
   const [, setLocation] = useLocation();
-
-  useEffect(() => {
-    localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
-  }, [sidebarWidth]);
-
-  if (loading) {
-    return <DashboardLayoutSkeleton />
-  }
-
-  if (!isAuthenticated || !user) {
-    return null;
-  }
-
-  return (
-    <SidebarProvider
-      style={
-        {
-          "--sidebar-width": `${sidebarWidth}px`,
-        } as CSSProperties
-      }
-    >
-      <DashboardLayoutContent setSidebarWidth={setSidebarWidth}>
-        {children}
-      </DashboardLayoutContent>
-    </SidebarProvider>
-  );
-}
-
-type DashboardLayoutContentProps = {
-  children: React.ReactNode;
-  setSidebarWidth: (width: number) => void;
-};
-
-function DashboardLayoutContent({
-  children,
-  setSidebarWidth,
-}: DashboardLayoutContentProps) {
   const { user, logout } = useLocalAuth();
-  const [location, setLocation] = useLocation();
-  const { state, toggleSidebar } = useSidebar();
-  const isCollapsed = state === "collapsed";
-  const [isResizing, setIsResizing] = useState(false);
-  const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeMenuItem = menuItems.find(item => item.path === location);
-  const isMobile = useIsMobile();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [expandedSections, setExpandedSections] = useState<string[]>([
+    "OPERACIONAL",
+  ]);
 
-  useEffect(() => {
-    if (isCollapsed) {
-      setIsResizing(false);
-    }
-  }, [isCollapsed]);
+  const menuSections: MenuSection[] = [
+    {
+      title: "OPERACIONAL",
+      items: [
+        { icon: <LayoutDashboard className="w-5 h-5" />, label: "Painel", path: "/" },
+        { icon: <Calendar className="w-5 h-5" />, label: "Agendamento", path: "/schedule" },
+        { icon: <Users className="w-5 h-5" />, label: "Clientes", path: "/clients" },
+        { icon: <Users2 className="w-5 h-5" />, label: "Alunos", path: "/students", comingSoon: true },
+      ],
+    },
+    {
+      title: "CATÁLOGO",
+      items: [
+        { icon: <Scissors className="w-5 h-5" />, label: "Serviços", path: "/services", comingSoon: true },
+        { icon: <Package className="w-5 h-5" />, label: "Produtos", path: "/products", comingSoon: true },
+        { icon: <Package className="w-5 h-5" />, label: "Pacote", path: "/pacote", comingSoon: true },
+      ],
+    },
+    {
+      title: "GESTÃO",
+      items: [
+        { icon: <TrendingUp className="w-5 h-5" />, label: "Financeiro", path: "/financial", comingSoon: true },
+        { icon: <Users2 className="w-5 h-5" />, label: "Equipe", path: "/team", comingSoon: true },
+        { icon: <LayoutDashboard className="w-5 h-5" />, label: "Unidades", path: "/units" },
+        { icon: <BarChart3 className="w-5 h-5" />, label: "Relatórios", path: "/reports", comingSoon: true },
+      ],
+    },
+    {
+      title: "SISTEMA",
+      items: [
+        { icon: <Zap className="w-5 h-5" />, label: "Integrações", path: "/integrations", comingSoon: true },
+        { icon: <Settings className="w-5 h-5" />, label: "Configurações", path: "/settings", comingSoon: true },
+      ],
+    },
+  ];
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing) return;
+  const toggleSection = (section: string) => {
+    setExpandedSections((prev) =>
+      prev.includes(section)
+        ? prev.filter((s) => s !== section)
+        : [...prev, section]
+    );
+  };
 
-      const sidebarLeft = sidebarRef.current?.getBoundingClientRect().left ?? 0;
-      const newWidth = e.clientX - sidebarLeft;
-      if (newWidth >= MIN_WIDTH && newWidth <= MAX_WIDTH) {
-        setSidebarWidth(newWidth);
-      }
-    };
-
-    const handleMouseUp = () => {
-      setIsResizing(false);
-    };
-
-    if (isResizing) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "col-resize";
-      document.body.style.userSelect = "none";
-    }
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-  }, [isResizing, setSidebarWidth]);
-
-  const handleMenuClick = (item: MenuItem) => {
-    if (item.comingSoon) {
+  const handleMenuClick = (path: string, comingSoon?: boolean) => {
+    if (comingSoon) {
       toast.info("Em breve");
-    } else {
-      setLocation(item.path);
+      return;
     }
+    setLocation(path);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setLocation("/login");
   };
 
   return (
-    <>
-      <div className="relative" ref={sidebarRef}>
-        <Sidebar
-          collapsible="icon"
-          className="border-r-0"
-          disableTransition={isResizing}
-        >
-          <SidebarHeader className="h-16 justify-center">
-            <div className="flex items-center gap-3 px-2 transition-all w-full">
+    <div className="flex h-screen bg-background">
+      {/* Sidebar */}
+      <div
+        className={`fixed md:relative z-40 h-screen bg-sidebar text-sidebar-foreground transition-all duration-300 ${
+          sidebarOpen ? "w-64" : "w-0 md:w-20"
+        } overflow-hidden`}
+      >
+        {/* Header */}
+        <div className="p-4 border-b border-sidebar-border">
+          <div className="flex items-center justify-between">
+            {sidebarOpen && (
+              <h1 className="text-xl font-bold text-sidebar-accent">GroomerFlow</h1>
+            )}
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="md:hidden text-sidebar-foreground hover:text-sidebar-accent"
+            >
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Menu Sections */}
+        <div className="flex-1 overflow-y-auto py-4">
+          {menuSections.map((section) => (
+            <div key={section.title} className="px-2 mb-4">
+              {/* Section Title */}
               <button
-                onClick={toggleSidebar}
-                className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
-                aria-label="Toggle navigation"
+                onClick={() => toggleSection(section.title)}
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-sidebar-foreground hover:text-sidebar-accent transition-colors"
               >
-                <PanelLeft className="h-4 w-4 text-muted-foreground" />
+                {sidebarOpen && section.title}
+                {sidebarOpen && (
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${
+                      expandedSections.includes(section.title) ? "rotate-180" : ""
+                    }`}
+                  />
+                )}
               </button>
-              {!isCollapsed ? (
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold tracking-tight truncate">
-                    GroomerFlow
-                  </span>
-                </div>
-              ) : null}
-            </div>
-          </SidebarHeader>
 
-          <SidebarContent className="gap-0">
-            <SidebarMenu className="px-2 py-1">
-              {menuItems.map(item => {
-                const isActive = location === item.path;
-                return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => handleMenuClick(item)}
-                      tooltip={item.label}
-                      className={`h-10 transition-all font-normal`}
+              {/* Menu Items */}
+              {(sidebarOpen || expandedSections.includes(section.title)) && (
+                <div className="space-y-1 mt-2">
+                  {section.items.map((item) => (
+                    <button
+                      key={item.label}
+                      onClick={() => handleMenuClick(item.path, item.comingSoon)}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all ${
+                        item.comingSoon
+                          ? "text-sidebar-foreground/50 hover:text-sidebar-foreground/70"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent/20 hover:text-sidebar-accent"
+                      }`}
                     >
-                      <item.icon
-                        className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
-                      />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarContent>
+                      {item.icon}
+                      {sidebarOpen && (
+                        <span className="flex-1 text-left">{item.label}</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
 
-          <SidebarFooter className="p-3">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <Avatar className="h-9 w-9 border shrink-0">
-                    <AvatarFallback className="text-xs font-medium">
-                      {user?.name?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                    <p className="text-sm font-medium truncate leading-none">
-                      {user?.name || "-"}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate mt-1.5">
-                      {user?.email || "-"}
-                    </p>
-                  </div>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem
-                  onClick={() => {
-                    logout();
-                    setLocation("/");
-                  }}
-                  className="cursor-pointer text-destructive focus:text-destructive"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sair</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarFooter>
-        </Sidebar>
-        <div
-          className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors ${isCollapsed ? "hidden" : ""}`}
-          onMouseDown={() => {
-            if (isCollapsed) return;
-            setIsResizing(true);
-          }}
-          style={{ zIndex: 50 }}
-        />
+        {/* Logout Button */}
+        <div className="p-4 border-t border-sidebar-border">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-sidebar-foreground hover:bg-sidebar-accent/20 hover:text-sidebar-accent transition-all"
+          >
+            <LogOut className="w-5 h-5" />
+            {sidebarOpen && "Sair"}
+          </button>
+        </div>
       </div>
 
-      <SidebarInset>
-        {isMobile && (
-          <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />
-              <div className="flex items-center gap-3">
-                <div className="flex flex-col gap-1">
-                  <span className="tracking-tight text-foreground">
-                    {activeMenuItem?.label ?? "Menu"}
-                  </span>
-                </div>
-              </div>
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 md:hidden z-30"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Top Bar */}
+        <div className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="md:hidden text-foreground hover:text-primary"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          <div className="flex-1" />
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-sm font-medium text-foreground">{user?.name}</p>
+              <p className="text-xs text-muted-foreground">{user?.email}</p>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+              <span className="text-sm font-bold text-primary">
+                {user?.name?.charAt(0).toUpperCase()}
+              </span>
             </div>
           </div>
-        )}
-        <main className="flex-1 p-4">{children}</main>
-      </SidebarInset>
-    </>
+        </div>
+
+        {/* Page Content */}
+        <div className="flex-1 overflow-auto">
+          {children}
+        </div>
+      </div>
+    </div>
   );
 }

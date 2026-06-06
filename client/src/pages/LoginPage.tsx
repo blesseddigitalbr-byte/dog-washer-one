@@ -53,10 +53,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md p-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-sidebar to-sidebar/90 p-4">
+      <Card className="w-full max-w-md p-8 bg-card border-2 border-primary/20">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">GroomerFlow</h1>
+          <h1 className="text-3xl font-bold text-primary">GroomerFlow</h1>
           <p className="text-muted-foreground mt-2">Acesse sua conta</p>
         </div>
 
@@ -88,7 +88,7 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full"
+            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
           >
             {isLoading ? "Entrando..." : "Entrar"}
           </Button>
