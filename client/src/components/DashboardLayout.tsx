@@ -115,13 +115,13 @@ export default function DashboardLayout({
           {sidebarOpen && (
             <div className="flex flex-col items-center gap-3 w-full">
               <img 
-                src="/manus-storage/logo_Groomer_Flow-removebg-preview_2252a9da.png" 
+                src="/manus-storage/ChatGPTImage6dejun.de2026,02_50_36_e9df4a2e.png" 
                 alt="GroomerFlow" 
                 className="h-32 w-32 object-contain"
               />
               <div className="flex flex-col items-center gap-1">
-                <p className="text-sm font-bold text-sidebar-foreground tracking-wider">GROOMER</p>
-                <p className="text-xs font-semibold text-sidebar-accent">FLOW</p>
+                <p className="text-sm font-bold tracking-wider" style={{ color: '#C5A059' }}>GROOMER</p>
+                <p className="text-xs font-semibold" style={{ color: '#C5A059' }}>FLOW</p>
               </div>
             </div>
           )}
