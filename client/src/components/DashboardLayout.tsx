@@ -111,22 +111,28 @@ export default function DashboardLayout({
         } overflow-hidden`}
       >
         {/* Header */}
-        <div className="p-4 border-b border-sidebar-border">
-          <div className="flex items-center justify-between">
-            {sidebarOpen && (
+        <div className="p-6 border-b border-sidebar-border flex flex-col items-center justify-center text-center">
+          {sidebarOpen && (
+            <div className="flex flex-col items-center gap-3 w-full">
               <img 
                 src="/manus-storage/logo_Groomer_Flow-removebg-preview_2252a9da.png" 
                 alt="GroomerFlow" 
-                className="h-20 w-20 object-contain"
+                className="h-32 w-32 object-contain"
               />
-            )}
+              <div className="flex flex-col items-center gap-1">
+                <p className="text-sm font-bold text-sidebar-foreground tracking-wider">GROOMER</p>
+                <p className="text-xs font-semibold text-sidebar-accent">FLOW</p>
+              </div>
+            </div>
+          )}
+          {!sidebarOpen && (
             <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden text-sidebar-foreground hover:text-sidebar-accent"
+              onClick={() => setSidebarOpen(true)}
+              className="text-sidebar-foreground hover:text-sidebar-accent"
             >
-              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              <Menu className="w-6 h-6" />
             </button>
-          </div>
+          )}
         </div>
 
         {/* Menu Sections */}
