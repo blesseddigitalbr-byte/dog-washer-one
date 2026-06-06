@@ -115,7 +115,7 @@ export default function DashboardLayout({
           <div className="flex items-center justify-between">
             {sidebarOpen && (
               <img 
-                src="/manus-storage/logo-groomerflow_b15c94b1.png" 
+                src="/manus-storage/logo-groomerflow-clean_bb5475d5.png" 
                 alt="GroomerFlow" 
                 className="h-12 w-12 object-contain"
               />
@@ -212,7 +212,7 @@ export default function DashboardLayout({
               <p className="text-sm font-medium text-foreground">{user?.name}</p>
               <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center shadow-md">
               <span className="text-sm font-bold text-primary">
                 {user?.name?.charAt(0).toUpperCase()}
               </span>
