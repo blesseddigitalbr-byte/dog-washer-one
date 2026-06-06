@@ -323,7 +323,7 @@ function buildCronUser(
 ): AuthenticatedUser {
   const now = new Date();
   return {
-    id: "00000000-0000-0000-0000-000000000000",
+    id: -1,
     openId: userInfo.openId,
     name: userInfo.name || "Manus Scheduled Task",
     email: null,

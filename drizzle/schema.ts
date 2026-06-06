@@ -8,10 +8,10 @@ import { relations } from "drizzle-orm";
  */
 export const users = pgTable("users", {
   /**
-   * Surrogate primary key. UUID managed by the database.
+   * Surrogate primary key. Auto-incremented numeric value managed by the database.
    * Use this for relations between tables.
    */
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: serial("id").primaryKey(),
   /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
