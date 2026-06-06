@@ -53,7 +53,7 @@ export default function Dashboard() {
             return (
               <div
                 key={stat.title}
-                className="bg-card rounded-lg p-6 border border-border shadow-sm hover:shadow-md hover:border-secondary transition-all"
+                className="bg-card rounded-lg p-6 border-2 border-secondary shadow-sm hover:shadow-md transition-all"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div>
@@ -77,7 +77,7 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-card rounded-lg p-6 border border-border shadow-sm">
+        <div className="bg-card rounded-lg p-6 border-2 border-secondary shadow-sm">
           <h2 className="text-xl font-bold text-foreground mb-4">
             Atividade Recente
           </h2>

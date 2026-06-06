@@ -125,7 +125,7 @@ export default function ClientsPage() {
           {filteredClients.map((client) => (
             <div
               key={client.id}
-              className="bg-white rounded-lg p-6 border border-border shadow-sm hover:shadow-md transition-all hover:border-secondary"
+              className="bg-white rounded-lg p-6 border-2 border-secondary shadow-sm hover:shadow-md transition-all"
             >
               {/* Header with Avatar and Menu */}
               <div className="flex items-start justify-between mb-4">
@@ -173,7 +173,7 @@ export default function ClientsPage() {
           ))}
 
           {/* Add New Client Card */}
-          <div className="bg-white rounded-lg p-6 border-2 border-dashed border-border hover:border-secondary transition-all flex flex-col items-center justify-center min-h-64">
+          <div className="bg-white rounded-lg p-6 border-2 border-secondary flex flex-col items-center justify-center min-h-64 transition-all hover:shadow-md">
             <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center mb-4">
               <Plus className="w-6 h-6 text-secondary" />
             </div>

@@ -69,7 +69,7 @@ export default function SchedulePage() {
         </div>
 
         {/* Week Navigation */}
-        <Card className="p-6 mb-8 border-0 bg-white">
+        <Card className="p-6 mb-8 bg-white">
           <div className="flex items-center justify-between mb-6">
             <Button
               variant="outline"
@@ -128,7 +128,7 @@ export default function SchedulePage() {
           {appointments.map((appointment) => (
             <Card
               key={appointment.id}
-              className="p-6 border-0 bg-white hover:shadow-lg transition-shadow"
+              className="p-6 bg-white hover:shadow-lg transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-6 flex-1">
