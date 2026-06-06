@@ -111,7 +111,7 @@ export default function SchedulePage() {
         </div>
 
         {/* Calendar */}
-        <Card className="border-accent/30 p-8 mb-8 bg-white/50">
+        <Card className="border-accent/20 p-8 mb-8 bg-white/40">
           <div className="flex items-center justify-between">
             <button className="p-2 hover:bg-accent/10 rounded-lg transition-colors text-foreground hover:text-accent">
               <ChevronLeft className="w-6 h-6" />
@@ -141,31 +141,31 @@ export default function SchedulePage() {
         </Card>
 
         {/* Appointments List */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {appointments.map((appointment) => (
-            <Card key={appointment.id} className="border-accent/30 p-6 hover:shadow-xl transition-all hover:border-accent/50 bg-white/50 group">
+            <Card key={appointment.id} className="border-accent/20 p-6 hover:shadow-xl transition-all hover:border-accent/40 bg-white/40 group">
               <div className="flex items-center gap-6">
                 {/* Time */}
                 <div className="flex-shrink-0">
-                  <div className="w-24 h-24 rounded-2xl bg-accent/20 flex items-center justify-center border-3 border-accent/30 group-hover:bg-accent/30 transition-colors">
-                    <span className="text-2xl font-bold text-foreground">{appointment.time}</span>
+                  <div className="w-20 h-20 rounded-2xl bg-accent/15 flex items-center justify-center border-2 border-accent/20 group-hover:bg-accent/20 transition-colors">
+                    <span className="text-xl font-bold text-foreground">{appointment.time}</span>
                   </div>
                 </div>
 
                 {/* Pet Info */}
                 <div className="flex-1">
-                  <div className="flex items-center gap-4 mb-3">
-                    <span className="text-4xl">{appointment.avatar}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-3xl">{appointment.avatar}</span>
                     <div>
-                      <h3 className="font-bold text-foreground text-xl">{appointment.petName}</h3>
-                      <p className="text-sm text-muted-foreground">{appointment.petType}</p>
-                      <p className="text-xs text-muted-foreground font-medium mt-1">{appointment.service}</p>
+                      <h3 className="font-bold text-foreground text-lg">{appointment.petName}</h3>
+                      <p className="text-xs text-muted-foreground">{appointment.petType}</p>
+                      <p className="text-xs text-muted-foreground font-medium">{appointment.service}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Status & Actions */}
-                <div className="flex items-center gap-4 flex-shrink-0">
+                <div className="flex items-center gap-3 flex-shrink-0">
                   <span
                     className={`px-5 py-2 rounded-full text-sm font-bold capitalize ${
                       appointment.status === "confirmado"
