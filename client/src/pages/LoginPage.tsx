@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,12 +22,15 @@ export default function LoginPage() {
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Armazenar sessão local
-    const user = {
-      id: Math.random().toString(36).substr(2, 9),
-      email,
-      name: email.split("@")[0],
-    };
+    // Verificar se usuário existe
+    const users = JSON.parse(localStorage.getItem("groomerflow_users") || "[]");
+    const user = users.find((u: any) => u.email === email && u.password === password);
+
+    if (!user) {
+      toast.error("Email ou senha inválidos");
+      setIsLoading(false);
+      return;
+    }
 
     // Sessão com expiração de 24 horas
     const expiresAt = new Date();
@@ -39,9 +42,14 @@ export default function LoginPage() {
 
     localStorage.setItem("groomerflow_user", JSON.stringify(user));
     localStorage.setItem("groomerflow_session", JSON.stringify(session));
+    
+    // Forçar re-render e navegação
     toast.success("Login realizado!");
-    setLocation("/");
-    setIsLoading(false);
+    
+    // Usar window.location para garantir navegação
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 300);
   };
 
   return (
@@ -85,6 +93,18 @@ export default function LoginPage() {
             {isLoading ? "Entrando..." : "Entrar"}
           </Button>
         </form>
+
+        <div className="mt-6 text-center">
+          <p className="text-sm text-slate-600">
+            Não tem conta?{" "}
+            <button
+              onClick={() => setLocation("/register")}
+              className="text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Criar conta
+            </button>
+          </p>
+        </div>
       </Card>
     </div>
   );
