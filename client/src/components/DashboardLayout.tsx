@@ -115,9 +115,9 @@ export default function DashboardLayout({
           <div className="flex items-center justify-between">
             {sidebarOpen && (
               <img 
-                src="/manus-storage/logo-groomerflow-clean_bb5475d5.png" 
+                src="/manus-storage/logo_Groomer_Flow-removebg-preview_2252a9da.png" 
                 alt="GroomerFlow" 
-                className="h-12 w-12 object-contain"
+                className="h-20 w-20 object-contain"
               />
             )}
             <button
@@ -221,19 +221,26 @@ export default function DashboardLayout({
         </div>
 
         {/* Navigation Buttons */}
-        <div className="bg-card border-b border-border px-6 py-3 flex items-center gap-2">
-          <button
-            onClick={() => window.history.back()}
-            className="px-4 py-2 rounded-md bg-accent text-accent-foreground hover:bg-accent/90 transition-colors text-sm font-medium"
-          >
-            ← Voltar
-          </button>
-          <button
-            onClick={() => window.history.forward()}
-            className="px-4 py-2 rounded-md bg-accent text-accent-foreground hover:bg-accent/90 transition-colors text-sm font-medium"
-          >
-            Avançar →
-          </button>
+        <div className="bg-card border-b border-border px-6 py-3 flex items-center justify-end gap-3">
+          <div className="flex items-center gap-2 bg-muted/30 rounded-lg p-1">
+            <button
+              onClick={() => window.history.back()}
+              className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-accent transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group"
+              title="Voltar para página anterior"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+              <span className="hidden sm:inline">Voltar</span>
+            </button>
+            <div className="w-px h-6 bg-border" />
+            <button
+              onClick={() => window.history.forward()}
+              className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-accent transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group"
+              title="Avançar para próxima página"
+            >
+              <span className="hidden sm:inline">Avançar</span>
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </button>
+          </div>
         </div>
 
         {/* Page Content */}
