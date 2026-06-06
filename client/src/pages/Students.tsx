@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Users, BookOpen, Award, Calendar } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function StudentsPage() {
   // Dados de exemplo
@@ -75,7 +74,7 @@ export default function StudentsPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-l-accent">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-accent/10 rounded-lg">
@@ -87,7 +86,7 @@ export default function StudentsPage() {
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-l-accent">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-accent/10 rounded-lg">
                 <BookOpen className="w-6 h-6 text-accent" />
@@ -98,7 +97,7 @@ export default function StudentsPage() {
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-l-accent">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-accent/10 rounded-lg">
                 <Award className="w-6 h-6 text-accent" />
@@ -109,7 +108,7 @@ export default function StudentsPage() {
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-l-accent">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-accent/10 rounded-lg">
                 <Calendar className="w-6 h-6 text-accent" />
@@ -122,65 +121,61 @@ export default function StudentsPage() {
           </div>
         </div>
 
-        {/* Students Table */}
-        <div className="bg-white rounded-xl overflow-hidden shadow-sm border-l-4 border-l-accent">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-accent/5">
-                  <TableHead className="text-foreground font-semibold">Nome</TableHead>
-                  <TableHead className="text-foreground font-semibold">Email</TableHead>
-                  <TableHead className="text-foreground font-semibold">Curso</TableHead>
-                  <TableHead className="text-foreground font-semibold">Data de Inscrição</TableHead>
-                  <TableHead className="text-foreground font-semibold">Status</TableHead>
-                  <TableHead className="text-foreground font-semibold">Progresso</TableHead>
-                  <TableHead className="text-foreground font-semibold">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {students.map((student) => (
-                  <TableRow key={student.id} className="hover:bg-accent/5 transition-colors border-b-2 border-b-accent/10 py-2">
-                    <TableCell className="font-medium text-foreground">{student.name}</TableCell>
-                    <TableCell className="text-muted-foreground">{student.email}</TableCell>
-                    <TableCell className="text-muted-foreground">{student.course}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {new Date(student.enrollmentDate).toLocaleDateString("pt-BR")}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold capitalize ${getStatusColor(
-                          student.status
-                        )}`}
-                      >
-                        {student.status}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="w-24 h-2 bg-accent/10 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-accent"
-                            style={{ width: `${student.progress}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-medium text-foreground">{student.progress}%</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="text-xs rounded-lg">
-                          Ver
-                        </Button>
-                        <Button size="sm" variant="outline" className="text-xs rounded-lg">
-                          Editar
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+        {/* Students Cards */}
+        <div className="space-y-4">
+          {students.map((student) => (
+            <div
+              key={student.id}
+              className="bg-white rounded-xl p-6 shadow-sm border-l-4 border-l-accent hover:shadow-md transition-shadow"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <h3 className="text-lg font-bold text-foreground">{student.name}</h3>
+                  <p className="text-sm text-muted-foreground">{student.email}</p>
+                </div>
+                <span
+                  className={`inline-block px-3 py-1 rounded-full text-xs font-semibold capitalize ${getStatusColor(
+                    student.status
+                  )}`}
+                >
+                  {student.status}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">CURSO</p>
+                  <p className="text-sm font-medium text-foreground">{student.course}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">DATA DE INSCRIÇÃO</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {new Date(student.enrollmentDate).toLocaleDateString("pt-BR")}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">PROGRESSO</p>
+                  <div className="flex items-center gap-2">
+                    <div className="w-16 h-2 bg-accent/10 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-accent"
+                        style={{ width: `${student.progress}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-foreground">{student.progress}%</span>
+                  </div>
+                </div>
+                <div className="flex items-end gap-2">
+                  <Button size="sm" variant="outline" className="text-xs rounded-lg">
+                    Ver
+                  </Button>
+                  <Button size="sm" variant="outline" className="text-xs rounded-lg">
+                    Editar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
