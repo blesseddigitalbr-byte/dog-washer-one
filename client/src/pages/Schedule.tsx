@@ -1,148 +1,191 @@
-import { Calendar, Clock, User, MapPin } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, MoreVertical, Edit2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 export default function SchedulePage() {
+  const [selectedDate, setSelectedDate] = useState(new Date(2024, 9, 24)); // Oct 24, 2024
+
   // Dados de exemplo
-  const upcomingAppointments = [
+  const appointments = [
     {
       id: 1,
-      clientName: "João Silva",
-      petName: "Max",
-      service: "Banho e Tosa",
-      date: "2026-06-06",
-      time: "10:00",
+      time: "09:00",
+      petName: "Luna",
+      petType: "Bento & Tosa Higiênica",
+      service: "Grooming Elite",
       status: "confirmado",
+      avatar: "🐕",
     },
     {
       id: 2,
-      clientName: "Maria Santos",
-      petName: "Bella",
-      service: "Tosa Higiênica",
-      date: "2026-06-06",
-      time: "14:00",
-      status: "pendente",
+      time: "10:30",
+      petName: "Thor",
+      petType: "Tratamento da Pelagem",
+      service: "Nível 2",
+      status: "confirmado",
+      avatar: "🐕",
     },
     {
       id: 3,
-      clientName: "Carlos Oliveira",
-      petName: "Rex",
-      service: "Banho",
-      date: "2026-06-07",
-      time: "09:00",
+      time: "14:00",
+      petName: "Bella",
+      petType: "Tosa Criativa",
+      service: "Prof. Carla",
+      status: "pendente",
+      avatar: "🐕",
+    },
+    {
+      id: 4,
+      time: "15:30",
+      petName: "Max",
+      petType: "Banho Completo",
+      service: "Grooming Elite",
       status: "confirmado",
+      avatar: "🐕",
     },
   ];
+
+  // Gerar semana
+  const getWeekDays = (date: Date) => {
+    const curr = new Date(date);
+    const first = curr.getDate() - curr.getDay();
+    const days = [];
+    const dayNames = ["SEG", "TER", "QUA", "QUI", "SEX", "SÁB", "DOM"];
+
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(curr.setDate(first + i));
+      days.push({
+        date: day,
+        day: day.getDate(),
+        name: dayNames[i],
+      });
+    }
+    return days;
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "confirmado":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 text-green-700";
       case "pendente":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 text-yellow-700";
       case "cancelado":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 text-red-700";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-700";
     }
   };
+
+  const formatMonthYear = (date: Date) => {
+    return date.toLocaleDateString("pt-BR", {
+      month: "long",
+      year: "numeric",
+    }).toUpperCase();
+  };
+
+  const weekDays = getWeekDays(selectedDate);
+  const monthYear = formatMonthYear(selectedDate);
 
   return (
     <div className="flex-1 overflow-auto p-6 bg-background">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Agendamentos</h1>
-          <p className="text-muted-foreground">Gerencie todos os agendamentos de seus clientes</p>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="mb-6 flex gap-3">
-          <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
-            + Novo Agendamento
-          </Button>
-          <Button variant="outline">Filtrar</Button>
-        </div>
-
-        {/* Calendar Section */}
-        <Card className="mb-6 p-6 border-accent/30">
-          <div className="flex items-center gap-2 mb-4">
-            <Calendar className="w-5 h-5 text-accent" />
-            <h2 className="text-xl font-semibold text-foreground">Calendário</h2>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold text-accent uppercase tracking-widest mb-2">
+              {monthYear}
+            </p>
+            <h1 className="text-4xl font-bold text-foreground mb-1">Agenda Semanal</h1>
+            <p className="text-sm text-muted-foreground capitalize">
+              {selectedDate.toLocaleDateString("pt-BR", {
+                weekday: "long",
+                day: "numeric",
+              })}
+            </p>
           </div>
-          <div className="bg-muted/20 rounded-lg p-8 text-center text-muted-foreground">
-            <p>Calendário visual será implementado aqui</p>
+          <Button className="bg-foreground hover:bg-foreground/90 text-background flex items-center gap-2 rounded-full px-6">
+            <Plus className="w-4 h-4" />
+            Novo Agendamento
+          </Button>
+        </div>
+
+        {/* Calendar */}
+        <Card className="border-accent/30 p-8 mb-8 bg-white/50">
+          <div className="flex items-center justify-between">
+            <button className="p-2 hover:bg-accent/10 rounded-lg transition-colors text-foreground hover:text-accent">
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+
+            <div className="grid grid-cols-7 gap-3 flex-1 mx-8">
+              {weekDays.map((day, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedDate(day.date)}
+                  className={`py-4 px-3 rounded-2xl text-center transition-all font-medium ${
+                    day.date.toDateString() === selectedDate.toDateString()
+                      ? "bg-accent text-foreground border-3 border-accent/50 shadow-lg scale-105"
+                      : "bg-muted/10 text-foreground hover:bg-muted/20 border-2 border-transparent"
+                  }`}
+                >
+                  <div className="text-xs font-bold mb-2 uppercase tracking-wide">{day.name}</div>
+                  <div className="text-2xl font-bold">{day.day}</div>
+                </button>
+              ))}
+            </div>
+
+            <button className="p-2 hover:bg-accent/10 rounded-lg transition-colors text-foreground hover:text-accent">
+              <ChevronRight className="w-6 h-6" />
+            </button>
           </div>
         </Card>
 
-        {/* Upcoming Appointments */}
-        <Card className="border-accent/30">
-          <div className="p-6 border-b border-border">
-            <h2 className="text-xl font-semibold text-foreground">Próximos Agendamentos</h2>
-          </div>
-          <div className="divide-y divide-border">
-            {upcomingAppointments.map((appointment) => (
-              <div key={appointment.id} className="p-6 hover:bg-muted/20 transition-colors">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                  {/* Client Info */}
-                  <div className="flex items-start gap-3">
-                    <User className="w-5 h-5 text-accent mt-1 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Cliente</p>
-                      <p className="font-semibold text-foreground">{appointment.clientName}</p>
-                      <p className="text-sm text-muted-foreground">Pet: {appointment.petName}</p>
-                    </div>
+        {/* Appointments List */}
+        <div className="space-y-4">
+          {appointments.map((appointment) => (
+            <Card key={appointment.id} className="border-accent/30 p-6 hover:shadow-xl transition-all hover:border-accent/50 bg-white/50 group">
+              <div className="flex items-center gap-6">
+                {/* Time */}
+                <div className="flex-shrink-0">
+                  <div className="w-24 h-24 rounded-2xl bg-accent/20 flex items-center justify-center border-3 border-accent/30 group-hover:bg-accent/30 transition-colors">
+                    <span className="text-2xl font-bold text-foreground">{appointment.time}</span>
                   </div>
+                </div>
 
-                  {/* Service Info */}
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-accent mt-1 flex-shrink-0" />
+                {/* Pet Info */}
+                <div className="flex-1">
+                  <div className="flex items-center gap-4 mb-3">
+                    <span className="text-4xl">{appointment.avatar}</span>
                     <div>
-                      <p className="text-sm text-muted-foreground">Serviço</p>
-                      <p className="font-semibold text-foreground">{appointment.service}</p>
-                    </div>
-                  </div>
-
-                  {/* Date & Time */}
-                  <div className="flex items-start gap-3">
-                    <Clock className="w-5 h-5 text-accent mt-1 flex-shrink-0" />
-                    <div>
-                      <p className="text-sm text-muted-foreground">Data e Hora</p>
-                      <p className="font-semibold text-foreground">
-                        {new Date(appointment.date).toLocaleDateString("pt-BR")}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{appointment.time}</p>
-                    </div>
-                  </div>
-
-                  {/* Status */}
-                  <div className="flex items-start gap-3">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Status</p>
-                      <span
-                        className={`inline-block px-3 py-1 rounded-full text-xs font-semibold capitalize ${getStatusColor(
-                          appointment.status
-                        )}`}
-                      >
-                        {appointment.status}
-                      </span>
+                      <h3 className="font-bold text-foreground text-xl">{appointment.petName}</h3>
+                      <p className="text-sm text-muted-foreground">{appointment.petType}</p>
+                      <p className="text-xs text-muted-foreground font-medium mt-1">{appointment.service}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-2 justify-end">
-                  <Button size="sm" variant="outline">
-                    Editar
-                  </Button>
-                  <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
-                    Cancelar
-                  </Button>
+                {/* Status & Actions */}
+                <div className="flex items-center gap-4 flex-shrink-0">
+                  <span
+                    className={`px-5 py-2 rounded-full text-sm font-bold capitalize ${
+                      appointment.status === "confirmado"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
+                  >
+                    {appointment.status === "confirmado" ? "✓ Confirmado" : "⏳ Pendente"}
+                  </span>
+                  <button className="p-2 hover:bg-accent/10 rounded-lg transition-colors text-foreground hover:text-accent opacity-0 group-hover:opacity-100">
+                    <Edit2 className="w-5 h-5" />
+                  </button>
+                  <button className="p-2 hover:bg-accent/10 rounded-lg transition-colors text-foreground hover:text-accent opacity-0 group-hover:opacity-100">
+                    <MoreVertical className="w-5 h-5" />
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
-        </Card>
+            </Card>
+          ))}
+        </div>
       </div>
     </div>
   );
