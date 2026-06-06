@@ -76,7 +76,7 @@ export default function StudentsPage() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 shadow-sm">
+          <div className="bg-white rounded-xl p-4 shadow-sm border-l-4 border-l-accent">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-accent/10 rounded-lg">
                 <Users className="w-6 h-6 text-accent" />
@@ -123,7 +123,7 @@ export default function StudentsPage() {
         </div>
 
         {/* Students Table */}
-        <div className="bg-white rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-white rounded-xl overflow-hidden shadow-sm border-l-4 border-l-accent">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>

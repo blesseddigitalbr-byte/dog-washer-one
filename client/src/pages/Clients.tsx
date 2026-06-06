@@ -103,7 +103,7 @@ export default function ClientsPage() {
           {filteredClients.map((client) => (
             <div
               key={client.id}
-              className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 relative group"
+              className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 relative group border-l-4 border-l-accent"
             >
               {/* Menu Button */}
               <button className="absolute top-4 right-4 p-2 hover:bg-accent/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100">

@@ -45,7 +45,7 @@ export default function Dashboard() {
             return (
               <div
                 key={stat.title}
-                className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200"
+                className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-l-accent"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div>
@@ -77,7 +77,7 @@ export default function Dashboard() {
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="flex items-center justify-between py-4 border-b border-accent/5 last:border-b-0"
+                className="flex items-center justify-between py-4 border-b border-accent/5 last:border-b-0 border-l-4 border-l-accent pl-4"
               >
                 <div>
                   <p className="font-medium text-foreground">
