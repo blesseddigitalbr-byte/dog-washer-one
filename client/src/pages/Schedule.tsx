@@ -131,9 +131,9 @@ export default function SchedulePage() {
         </div>
 
         {/* Appointments List */}
-        <div className="space-y-0">
+        <div className="space-y-4">
           {appointments.map((appointment) => (
-            <div key={appointment.id} className="bg-white p-4 hover:bg-accent/5 transition-all duration-200 group flex items-center justify-between border-b border-accent/5 last:border-b-0 border-l-4 border-l-accent rounded-r-lg">
+            <div key={appointment.id} className="bg-white p-4 hover:bg-accent/5 transition-all duration-200 group flex items-center justify-between border-l-4 border-l-accent rounded-lg shadow-sm">
               {/* Left side - Pet info */}
               <div className="flex items-center gap-4 flex-1">
                 <div className="w-16 h-16 rounded-xl bg-accent/10 flex items-center justify-center text-2xl flex-shrink-0">
