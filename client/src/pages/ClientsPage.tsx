@@ -23,7 +23,7 @@ export default function ClientsPage() {
       email: "ricardo@email.com",
       pets: ["Thor"],
       lastVisit: "05 Mai, 2024",
-      status: "Regular",
+      status: "Modelo",
       avatar: "RM",
     },
     {
@@ -55,14 +55,23 @@ export default function ClientsPage() {
     },
   ];
 
-  const filteredClients = clients.filter((client) =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredClients = clients.filter((client) => {
+    const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (selectedFilter === "todos") return matchesSearch;
+    if (selectedFilter === "vips") return matchesSearch && client.status === "VIP";
+    if (selectedFilter === "modelo") return matchesSearch && client.status === "Modelo";
+    if (selectedFilter === "regulares") return matchesSearch && client.status === "Regular";
+    if (selectedFilter === "inativos") return matchesSearch && client.status === "Inativo";
+    
+    return matchesSearch;
+  });
 
   const filters = [
     { id: "todos", label: "Todos", count: clients.length },
     { id: "vips", label: "VIPs", count: clients.filter(c => c.status === "VIP").length },
-    { id: "recentes", label: "Recentes", count: 5 },
+    { id: "modelo", label: "Modelo", count: clients.filter(c => c.status === "Modelo").length },
+    { id: "regulares", label: "Regulares", count: clients.filter(c => c.status === "Regular").length },
     { id: "inativos", label: "Inativos (304)", count: 304 },
   ];
 
@@ -79,14 +88,14 @@ export default function ClientsPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-3 mb-8">
+        <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
           {filters.map((filter) => (
             <button
               key={filter.id}
               onClick={() => setSelectedFilter(filter.id)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
                 selectedFilter === filter.id
-                  ? "bg-secondary text-foreground"
+                  ? "bg-white border-l-4 border-l-secondary text-foreground shadow-sm"
                   : "bg-white border border-border text-foreground hover:border-secondary"
               }`}
             >
