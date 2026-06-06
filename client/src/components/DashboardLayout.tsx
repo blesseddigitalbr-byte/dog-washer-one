@@ -205,7 +205,7 @@ export default function DashboardLayout({
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
-        <div className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
+        <div className="bg-background border-b border-border px-6 py-4 flex items-center justify-between">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="md:hidden text-foreground hover:text-primary"
@@ -227,7 +227,7 @@ export default function DashboardLayout({
         </div>
 
         {/* Navigation Buttons */}
-        <div className="bg-card border-b border-border px-6 py-3 flex items-center justify-end gap-3">
+        <div className="bg-background border-b border-border px-6 py-3 flex items-center justify-end gap-3">
           <div className="flex items-center gap-2 bg-muted/30 rounded-lg p-1">
             <button
               onClick={() => window.history.back()}
