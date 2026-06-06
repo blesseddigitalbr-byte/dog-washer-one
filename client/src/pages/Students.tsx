@@ -139,7 +139,7 @@ export default function StudentsPage() {
               </TableHeader>
               <TableBody>
                 {students.map((student) => (
-                  <TableRow key={student.id} className="hover:bg-accent/5 transition-colors border-b-2 border-b-accent/10">
+                  <TableRow key={student.id} className="hover:bg-accent/5 transition-colors border-b-2 border-b-accent/10 py-2">
                     <TableCell className="font-medium text-foreground">{student.name}</TableCell>
                     <TableCell className="text-muted-foreground">{student.email}</TableCell>
                     <TableCell className="text-muted-foreground">{student.course}</TableCell>
