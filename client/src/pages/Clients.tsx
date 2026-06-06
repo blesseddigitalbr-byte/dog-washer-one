@@ -1,59 +1,14 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Plus, MoreVertical } from "lucide-react";
+import { Plus, MoreVertical, AlertCircle } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
 export default function ClientsPage() {
   const [filter, setFilter] = useState("todos");
 
-  // Dados de exemplo
-  const clients = [
-    {
-      id: 1,
-      name: "Helena Silveira",
-      email: "helena@example.com",
-      avatar: "👩",
-      pets: ["Bento", "Max"],
-      lastVisit: "12 Mai, 2024",
-      type: "regular",
-    },
-    {
-      id: 2,
-      name: "Ricardo Mendes",
-      email: "ricardo@example.com",
-      avatar: "👨",
-      pets: ["Thor"],
-      lastVisit: "09 Mai, 2024",
-      type: "vip",
-    },
-    {
-      id: 3,
-      name: "Ana Beatriz",
-      email: "ana@example.com",
-      avatar: "👩",
-      pets: ["Luna"],
-      lastVisit: "28 Abr, 2024",
-      type: "regular",
-    },
-    {
-      id: 4,
-      name: "Lucas Ferreira",
-      email: "lucas@example.com",
-      avatar: "👨",
-      pets: ["Toby"],
-      lastVisit: "20 Abr, 2024",
-      type: "regular",
-    },
-    {
-      id: 5,
-      name: "Carla Dias",
-      email: "carla@example.com",
-      avatar: "👩",
-      pets: ["Bella"],
-      lastVisit: "15 Abr, 2024",
-      type: "vip",
-    },
-  ];
+  // Fetch clients from tRPC
+  const { data: clients = [], isLoading, error } = trpc.clients.list.useQuery();
 
   const filters = [
     { id: "todos", label: "Todos", icon: "📋" },
@@ -64,9 +19,29 @@ export default function ClientsPage() {
   ];
 
   const filteredClients = clients.filter((client) => {
-    if (filter === "vips") return client.type === "vip";
+    if (filter === "vips") return client.pets?.some((pet) => pet.is_vip);
+    if (filter === "modelo") return client.pets?.some((pet) => pet.is_model_dog);
     return true;
   });
+
+  // Get first letter of name for avatar
+  const getInitial = (name: string) => {
+    return name?.charAt(0).toUpperCase() || "?";
+  };
+
+  // Format date to Brazilian format
+  const formatDate = (date: string | null) => {
+    if (!date) return "Sem visita";
+    try {
+      return new Date(date).toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    } catch {
+      return "Data inválida";
+    }
+  };
 
   return (
     <div className="flex-1 overflow-auto p-6 bg-background">
@@ -98,72 +73,120 @@ export default function ClientsPage() {
           ))}
         </div>
 
-        {/* Clients Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredClients.map((client) => (
-            <div
-              key={client.id}
-              className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 relative group border-l-4 border-l-accent"
-            >
-              {/* Menu Button */}
-              <button className="absolute top-4 right-4 p-2 hover:bg-accent/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
-                <MoreVertical className="w-4 h-4 text-foreground" />
-              </button>
-
-              {/* VIP Badge */}
-              {client.type === "vip" && (
-                <div className="absolute top-4 left-4 bg-accent/10 px-3 py-1 rounded-full">
-                  <span className="text-xs font-bold text-accent">⭐ VIP</span>
-                </div>
-              )}
-
-              {/* Client Info */}
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center text-2xl flex-shrink-0">
-                  {client.avatar}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-foreground text-lg truncate">{client.name}</h3>
-                  <p className="text-xs text-muted-foreground truncate">{client.email}</p>
-                </div>
+        {/* Loading State */}
+        {isLoading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="bg-white rounded-xl p-6 shadow-sm animate-pulse border-l-4 border-l-accent/20"
+              >
+                <div className="h-16 bg-accent/10 rounded-full mb-4 w-16" />
+                <div className="h-4 bg-accent/10 rounded mb-2" />
+                <div className="h-3 bg-accent/10 rounded w-2/3" />
               </div>
+            ))}
+          </div>
+        )}
 
-              {/* Pets */}
-              <div className="mb-6">
-                <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wide">Pets Cadastrados</p>
-                <div className="flex gap-2 flex-wrap">
-                  {client.pets.map((pet, idx) => (
-                    <div
-                      key={idx}
-                      className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-xs font-bold text-accent hover:bg-accent/20 transition-colors"
-                      title={pet}
-                    >
-                      {pet.charAt(0).toUpperCase()}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Last Visit */}
-              <div>
-                <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wide">Última Visita</p>
-                <p className="text-sm font-semibold text-foreground mb-3">{client.lastVisit}</p>
-                <button className="text-xs text-accent hover:text-accent/80 font-bold transition-colors">
-                  Ver Histórico →
-                </button>
-              </div>
-            </div>
-          ))}
-
-          {/* Add New Client Card */}
-          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center cursor-pointer group border-2 border-dashed border-accent/20 hover:border-accent/40">
-            <div className="text-center">
-              <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">+</div>
-              <p className="text-sm font-bold text-foreground">Adicionar Novo Cliente</p>
-              <p className="text-xs text-muted-foreground mt-2">Cadastre um novo perfil e seus pets</p>
+        {/* Error State */}
+        {error && !isLoading && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-red-600" />
+            <div>
+              <p className="font-semibold text-red-900">Erro ao carregar clientes</p>
+              <p className="text-sm text-red-700">
+                {error instanceof Error ? error.message : "Tente novamente mais tarde"}
+              </p>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && !error && filteredClients.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-lg text-muted-foreground mb-4">Nenhum cliente encontrado</p>
+            <Button className="bg-accent hover:bg-accent/90 text-foreground">
+              <Plus className="w-4 h-4 mr-2" />
+              Adicionar Primeiro Cliente
+            </Button>
+          </div>
+        )}
+
+        {/* Clients Grid */}
+        {!isLoading && !error && filteredClients.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredClients.map((client) => (
+              <div
+                key={client.id}
+                className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 relative group border-l-4 border-l-accent"
+              >
+                {/* Menu Button */}
+                <button className="absolute top-4 right-4 p-2 hover:bg-accent/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
+                  <MoreVertical className="w-4 h-4 text-foreground" />
+                </button>
+
+                {/* VIP Badge */}
+                {client.pets?.some((pet) => pet.is_vip) && (
+                  <div className="absolute top-4 left-4 bg-accent/10 px-3 py-1 rounded-full">
+                    <span className="text-xs font-bold text-accent">⭐ VIP</span>
+                  </div>
+                )}
+
+                {/* Client Info */}
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center text-2xl flex-shrink-0 font-bold text-accent">
+                    {getInitial(client.nome)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-foreground text-lg truncate">{client.nome}</h3>
+                    <p className="text-xs text-muted-foreground truncate">{client.email}</p>
+                  </div>
+                </div>
+
+                {/* Pets */}
+                <div className="mb-6">
+                  <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wide">
+                    Pets Cadastrados ({client.pets?.length || 0})
+                  </p>
+                  <div className="flex gap-2 flex-wrap">
+                    {client.pets && client.pets.length > 0 ? (
+                      client.pets.map((pet) => (
+                        <div
+                          key={pet.id}
+                          className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-xs font-bold text-accent hover:bg-accent/20 transition-colors"
+                          title={`${pet.name} (${pet.breed})`}
+                        >
+                          {pet.name.charAt(0).toUpperCase()}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">Sem pets cadastrados</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Contact */}
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wide">Contato</p>
+                  <p className="text-sm font-semibold text-foreground mb-3">{client.phone || "Não informado"}</p>
+                  <button className="text-xs text-accent hover:text-accent/80 font-bold transition-colors">
+                    Ver Detalhes →
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {/* Add New Client Card */}
+            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center cursor-pointer group border-2 border-dashed border-accent/20 hover:border-accent/40">
+              <div className="text-center">
+                <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">+</div>
+                <p className="text-sm font-bold text-foreground">Adicionar Novo Cliente</p>
+                <p className="text-xs text-muted-foreground mt-2">Cadastre um novo perfil e seus pets</p>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

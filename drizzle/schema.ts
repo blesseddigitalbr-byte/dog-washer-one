@@ -166,3 +166,116 @@ export const unitsRelations = relations(units, ({ one }) => ({
     references: [legalEntities.id],
   }),
 }));
+
+// ========== OPERATIONAL ENTITIES ==========
+
+/**
+ * Clients - Clientes do Grooming
+ */
+export const clients = pgTable("clients", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  unitId: uuid("unit_id").notNull().references(() => units.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 50 }),
+  cpf: varchar("cpf", { length: 14 }).unique(),
+  address: text("address"),
+  city: varchar("city", { length: 100 }),
+  state: varchar("state", { length: 2 }),
+  zipCode: varchar("zip_code", { length: 10 }),
+  isVip: boolean("is_vip").default(false),
+  totalSpent: decimal("total_spent", { precision: 10, scale: 2 }).default("0"),
+  lastVisit: timestamp("last_visit", { withTimezone: true }),
+  status: varchar("status", { length: 50 }).default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+});
+
+export type Client = typeof clients.$inferSelect;
+export type InsertClient = typeof clients.$inferInsert;
+
+/**
+ * Pets - Animais dos Clientes
+ */
+export const pets = pgTable("pets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 255 }).notNull(),
+  breed: varchar("breed", { length: 100 }),
+  species: varchar("species", { length: 50 }),
+  color: varchar("color", { length: 100 }),
+  birthDate: timestamp("birth_date", { withTimezone: true }),
+  weight: decimal("weight", { precision: 5, scale: 2 }),
+  microchip: varchar("microchip", { length: 50 }),
+  notes: text("notes"),
+  photo: varchar("photo", { length: 255 }),
+  status: varchar("status", { length: 50 }).default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+});
+
+export type Pet = typeof pets.$inferSelect;
+export type InsertPet = typeof pets.$inferInsert;
+
+/**
+ * Services - Serviços de Grooming
+ */
+export const services = pgTable("services", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  unitId: uuid("unit_id").notNull().references(() => units.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  durationMinutes: serial("duration_minutes"),
+  category: varchar("category", { length: 100 }),
+  status: varchar("status", { length: 50 }).default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+});
+
+export type Service = typeof services.$inferSelect;
+export type InsertService = typeof services.$inferInsert;
+
+/**
+ * Appointments - Agendamentos
+ */
+export const appointments = pgTable("appointments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  unitId: uuid("unit_id").notNull().references(() => units.id, { onDelete: "cascade" }),
+  clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  petId: uuid("pet_id").notNull().references(() => pets.id, { onDelete: "cascade" }),
+  serviceId: uuid("service_id").notNull().references(() => services.id, { onDelete: "cascade" }),
+  appointmentDate: timestamp("appointment_date", { withTimezone: true }).notNull(),
+  status: varchar("status", { length: 50 }).default("pending"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+});
+
+export type Appointment = typeof appointments.$inferSelect;
+export type InsertAppointment = typeof appointments.$inferInsert;
+
+/**
+ * Students - Alunos/Aprendizes
+ */
+export const students = pgTable("students", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 50 }),
+  cpf: varchar("cpf", { length: 14 }).unique(),
+  course: varchar("course", { length: 255 }),
+  enrollmentDate: timestamp("enrollment_date", { withTimezone: true }).notNull(),
+  status: varchar("status", { length: 50 }).default("active"),
+  progress: serial("progress").default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+});
+
+export type Student = typeof students.$inferSelect;
+export type InsertStudent = typeof students.$inferInsert;

@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { sdk } from "./_core/sdk";
 import * as db from "./db";
+import { supabase } from "./_core/supabase";
 
 const COOKIE_NAME = "manus_session";
 
@@ -73,12 +74,73 @@ export const appRouter = router({
     }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  // Clients & Pets routers
+  clients: router({
+    // List all clients with their associated pets
+    list: publicProcedure.query(async () => {
+      try {
+        const { data: clientes, error } = await supabase
+          .from("clientes")
+          .select("id, nome, email, phone")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        // Fetch pets for each client
+        const clientesComPets = await Promise.all(
+          (clientes || []).map(async (cliente) => {
+            const { data: pets, error: petsError } = await supabase
+              .from("pets")
+              .select("id, name, breed, sexo, cor_pelagem, weight, is_vip, is_model_dog")
+              .eq("client_id", cliente.id);
+
+            if (petsError) console.error("Error fetching pets:", petsError);
+
+            return {
+              ...cliente,
+              pets: pets || [],
+            };
+          })
+        );
+
+        return clientesComPets;
+      } catch (error) {
+        console.error("Error fetching clients:", error);
+        return [];
+      }
+    }),
+
+    // Get a single client by ID with their pets
+    getById: publicProcedure
+      .input(z.object({ id: z.string().uuid() }))
+      .query(async ({ input }) => {
+        try {
+          const { data: cliente, error } = await supabase
+            .from("clientes")
+            .select("id, nome, email, phone")
+            .eq("id", input.id)
+            .single();
+
+          if (error) throw error;
+          if (!cliente) return null;
+
+          const { data: pets, error: petsError } = await supabase
+            .from("pets")
+            .select("id, name, breed, sexo, cor_pelagem, weight, is_vip, is_model_dog")
+            .eq("client_id", cliente.id);
+
+          if (petsError) console.error("Error fetching pets:", petsError);
+
+          return {
+            ...cliente,
+            pets: pets || [],
+          };
+        } catch (error) {
+          console.error("Error fetching client:", error);
+          return null;
+        }
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
