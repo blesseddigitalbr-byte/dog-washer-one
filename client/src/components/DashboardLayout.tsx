@@ -50,9 +50,9 @@ export default function DashboardLayout({
       title: "OPERACIONAL",
       items: [
         { icon: <LayoutDashboard className="w-5 h-5" />, label: "Painel", path: "/" },
-        { icon: <Calendar className="w-5 h-5" />, label: "Agendamento", path: "/schedule", comingSoon: true },
-        { icon: <Users className="w-5 h-5" />, label: "Clientes", path: "/clients", comingSoon: true },
-        { icon: <Users2 className="w-5 h-5" />, label: "Alunos", path: "/students", comingSoon: true },
+        { icon: <Calendar className="w-5 h-5" />, label: "Agendamento", path: "/schedule" },
+        { icon: <Users className="w-5 h-5" />, label: "Clientes", path: "/clients" },
+        { icon: <Users2 className="w-5 h-5" />, label: "Alunos", path: "/students" },
       ],
     },
     {
@@ -119,9 +119,9 @@ export default function DashboardLayout({
                 alt="GroomerFlow" 
                 className="h-32 w-32 object-contain"
               />
-              <div className="flex flex-col items-center gap-1">
+              <div className="flex items-center gap-2 justify-center">
                 <p className="text-sm font-bold tracking-wider" style={{ color: '#C5A059' }}>GROOMER</p>
-                <p className="text-xs font-semibold" style={{ color: '#C5A059' }}>FLOW</p>
+                <p className="text-sm font-bold tracking-wider" style={{ color: '#C5A059' }}>FLOW</p>
               </div>
             </div>
           )}
