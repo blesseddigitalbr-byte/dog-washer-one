@@ -58,6 +58,7 @@ export default function ClientsPage() {
   const filters = [
     { id: "todos", label: "Todos", icon: "📋" },
     { id: "vips", label: "VIPs", icon: "⭐" },
+    { id: "modelo", label: "Modelo", icon: "🎯" },
     { id: "recentes", label: "Recentes", icon: "🕐" },
     { id: "inativos", label: "Inativos (30d)", icon: "⏸️" },
   ];
