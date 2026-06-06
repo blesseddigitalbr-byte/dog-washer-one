@@ -1,6 +1,5 @@
-import { Users, BookOpen, Award, Calendar } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Users, BookOpen, Award, Calendar } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function StudentsPage() {
@@ -62,22 +61,22 @@ export default function StudentsPage() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Alunos</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-2">Alunos</h1>
           <p className="text-muted-foreground">Gerencie todos os seus alunos e cursos</p>
         </div>
 
         {/* Action Buttons */}
         <div className="mb-6 flex gap-3">
-          <Button className="bg-accent hover:bg-accent/90 text-accent-foreground">
+          <Button className="bg-accent hover:bg-accent/90 text-accent-foreground rounded-full">
             + Novo Aluno
           </Button>
-          <Button variant="outline">Filtrar</Button>
-          <Button variant="outline">Relatório</Button>
+          <Button variant="outline" className="rounded-full">Filtrar</Button>
+          <Button variant="outline" className="rounded-full">Relatório</Button>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card className="p-4 border-accent/30">
+          <div className="bg-white rounded-xl p-4 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-accent/10 rounded-lg">
                 <Users className="w-6 h-6 text-accent" />
@@ -87,8 +86,8 @@ export default function StudentsPage() {
                 <p className="text-2xl font-bold text-foreground">{students.length}</p>
               </div>
             </div>
-          </Card>
-          <Card className="p-4 border-accent/30">
+          </div>
+          <div className="bg-white rounded-xl p-4 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-accent/10 rounded-lg">
                 <BookOpen className="w-6 h-6 text-accent" />
@@ -98,8 +97,8 @@ export default function StudentsPage() {
                 <p className="text-2xl font-bold text-foreground">3</p>
               </div>
             </div>
-          </Card>
-          <Card className="p-4 border-accent/30">
+          </div>
+          <div className="bg-white rounded-xl p-4 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-accent/10 rounded-lg">
                 <Award className="w-6 h-6 text-accent" />
@@ -109,8 +108,8 @@ export default function StudentsPage() {
                 <p className="text-2xl font-bold text-foreground">1</p>
               </div>
             </div>
-          </Card>
-          <Card className="p-4 border-accent/30">
+          </div>
+          <div className="bg-white rounded-xl p-4 shadow-sm">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-accent/10 rounded-lg">
                 <Calendar className="w-6 h-6 text-accent" />
@@ -120,15 +119,15 @@ export default function StudentsPage() {
                 <p className="text-2xl font-bold text-foreground">3</p>
               </div>
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* Students Table */}
-        <Card className="border-accent/30 overflow-hidden">
+        <div className="bg-white rounded-xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/20 border-b border-border">
+                <TableRow className="bg-accent/5">
                   <TableHead className="text-foreground font-semibold">Nome</TableHead>
                   <TableHead className="text-foreground font-semibold">Email</TableHead>
                   <TableHead className="text-foreground font-semibold">Curso</TableHead>
@@ -140,7 +139,7 @@ export default function StudentsPage() {
               </TableHeader>
               <TableBody>
                 {students.map((student) => (
-                  <TableRow key={student.id} className="border-b border-border hover:bg-muted/20 transition-colors">
+                  <TableRow key={student.id} className="hover:bg-accent/5 transition-colors">
                     <TableCell className="font-medium text-foreground">{student.name}</TableCell>
                     <TableCell className="text-muted-foreground">{student.email}</TableCell>
                     <TableCell className="text-muted-foreground">{student.course}</TableCell>
@@ -158,7 +157,7 @@ export default function StudentsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="w-24 h-2 bg-accent/10 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-accent"
                             style={{ width: `${student.progress}%` }}
@@ -169,10 +168,10 @@ export default function StudentsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex gap-2">
-                        <Button size="sm" variant="outline" className="text-xs">
+                        <Button size="sm" variant="outline" className="text-xs rounded-lg">
                           Ver
                         </Button>
-                        <Button size="sm" variant="outline" className="text-xs">
+                        <Button size="sm" variant="outline" className="text-xs rounded-lg">
                           Editar
                         </Button>
                       </div>
@@ -182,7 +181,7 @@ export default function StudentsPage() {
               </TableBody>
             </Table>
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

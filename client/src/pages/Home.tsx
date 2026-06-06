@@ -8,42 +8,34 @@ export default function Dashboard() {
       value: "24",
       change: "+12% este mês",
       icon: Calendar,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
     },
     {
       title: "Clientes",
       value: "156",
       change: "+8 novos",
       icon: Users,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
     },
     {
       title: "Receita",
       value: "R$ 8.450",
       change: "+15% vs mês anterior",
       icon: TrendingUp,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
     },
     {
       title: "Taxa de Ocupação",
       value: "87%",
       change: "Acima da meta",
       icon: BarChart3,
-      color: "text-primary",
-      bgColor: "bg-primary/10",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="flex-1 overflow-auto p-6 bg-background">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-foreground mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">Bem-vindo ao GroomerFlow</p>
+          <p className="text-muted-foreground text-sm">Bem-vindo ao GroomerFlow</p>
         </div>
 
         {/* Stats Grid */}
@@ -53,22 +45,22 @@ export default function Dashboard() {
             return (
               <div
                 key={stat.title}
-                className="bg-card rounded-lg p-6 border-2 border-secondary shadow-sm hover:shadow-md transition-all"
+                className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <p className="text-sm text-muted-foreground mb-1">
+                    <p className="text-xs text-muted-foreground mb-2 font-medium">
                       {stat.title}
                     </p>
                     <p className="text-3xl font-bold text-foreground">
                       {stat.value}
                     </p>
                   </div>
-                  <div className={`${stat.bgColor} p-3 rounded-lg`}>
-                    <Icon className={`w-6 h-6 ${stat.color}`} />
+                  <div className="bg-accent/10 p-3 rounded-lg">
+                    <Icon className="w-6 h-6 text-accent" />
                   </div>
                 </div>
-                <p className="text-xs text-primary font-semibold">
+                <p className="text-xs text-accent font-medium">
                   {stat.change}
                 </p>
               </div>
@@ -77,15 +69,15 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-card rounded-lg p-6 border-2 border-secondary shadow-sm">
-          <h2 className="text-xl font-bold text-foreground mb-4">
+        <div className="bg-white rounded-xl p-6 shadow-sm">
+          <h2 className="text-xl font-bold text-foreground mb-6">
             Atividade Recente
           </h2>
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="flex items-center justify-between pb-4 border-b border-border last:border-0"
+                className="flex items-center justify-between py-4"
               >
                 <div>
                   <p className="font-medium text-foreground">
@@ -95,7 +87,7 @@ export default function Dashboard() {
                     Cliente: João Silva
                   </p>
                 </div>
-                <span className="text-xs font-semibold text-primary bg-primary/10 px-3 py-1 rounded">
+                <span className="text-xs font-semibold text-accent bg-accent/10 px-3 py-1 rounded-full">
                   Hoje
                 </span>
               </div>

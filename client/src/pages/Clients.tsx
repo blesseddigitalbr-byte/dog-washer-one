@@ -1,7 +1,7 @@
-import { Search, Plus, MoreVertical } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { Plus, MoreVertical } from "lucide-react";
 
 export default function ClientsPage() {
   const [filter, setFilter] = useState("todos");
@@ -86,10 +86,10 @@ export default function ClientsPage() {
             <button
               key={f.id}
               onClick={() => setFilter(f.id)}
-              className={`px-4 py-2 rounded-full font-medium text-sm transition-all flex items-center gap-2 border-2 ${
+              className={`px-4 py-2 rounded-full font-medium text-sm transition-all flex items-center gap-2 ${
                 filter === f.id
-                  ? "bg-accent text-foreground border-accent/50"
-                  : "bg-background text-foreground border-muted/30 hover:border-accent/30"
+                  ? "bg-accent text-foreground"
+                  : "bg-white text-foreground hover:bg-accent/5"
               }`}
             >
               <span>{f.icon}</span>
@@ -101,9 +101,9 @@ export default function ClientsPage() {
         {/* Clients Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredClients.map((client) => (
-            <Card
+            <div
               key={client.id}
-              className="border-accent/20 p-6 hover:shadow-xl transition-all hover:border-accent/40 relative bg-white/40 group"
+              className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 relative group"
             >
               {/* Menu Button */}
               <button className="absolute top-4 right-4 p-2 hover:bg-accent/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
@@ -112,14 +112,14 @@ export default function ClientsPage() {
 
               {/* VIP Badge */}
               {client.type === "vip" && (
-                <div className="absolute top-4 left-4 bg-accent/15 px-3 py-1 rounded-full border border-accent/20">
+                <div className="absolute top-4 left-4 bg-accent/10 px-3 py-1 rounded-full">
                   <span className="text-xs font-bold text-accent">⭐ VIP</span>
                 </div>
               )}
 
               {/* Client Info */}
-              <div className="flex items-center gap-4 mb-5">
-                <div className="w-16 h-16 rounded-full bg-accent/15 flex items-center justify-center text-2xl border-2 border-accent/20 flex-shrink-0">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center text-2xl flex-shrink-0">
                   {client.avatar}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -129,13 +129,13 @@ export default function ClientsPage() {
               </div>
 
               {/* Pets */}
-              <div className="mb-5">
+              <div className="mb-6">
                 <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wide">Pets Cadastrados</p>
                 <div className="flex gap-2 flex-wrap">
                   {client.pets.map((pet, idx) => (
                     <div
                       key={idx}
-                      className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center text-xs font-bold text-accent border border-accent/20 hover:bg-accent/20 transition-colors"
+                      className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-xs font-bold text-accent hover:bg-accent/20 transition-colors"
                       title={pet}
                     >
                       {pet.charAt(0).toUpperCase()}
@@ -152,17 +152,17 @@ export default function ClientsPage() {
                   Ver Histórico →
                 </button>
               </div>
-            </Card>
+            </div>
           ))}
 
           {/* Add New Client Card */}
-          <Card className="border-2 border-dashed border-muted/30 p-6 flex items-center justify-center hover:border-accent/40 hover:bg-accent/5 transition-all cursor-pointer group bg-white/40">
+          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center cursor-pointer group border-2 border-dashed border-accent/20 hover:border-accent/40">
             <div className="text-center">
               <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">+</div>
               <p className="text-sm font-bold text-foreground">Adicionar Novo Cliente</p>
               <p className="text-xs text-muted-foreground mt-2">Cadastre um novo perfil e seus pets</p>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
     </div>
