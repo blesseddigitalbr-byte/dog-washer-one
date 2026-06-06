@@ -52,17 +52,17 @@ export default function SchedulePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-8">
+    <div className="min-h-screen bg-background p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-4xl font-bold text-slate-900 mb-2">
+            <h1 className="text-4xl font-bold text-foreground mb-2">
               Agenda Semanal
             </h1>
-            <p className="text-slate-600">Sexta-feira, 24 de Outubro 2024</p>
+            <p className="text-muted-foreground">Sexta-feira, 24 de Outubro 2024</p>
           </div>
-          <Button className="bg-amber-600 hover:bg-amber-700 text-white flex items-center gap-2">
+          <Button className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2">
             <Plus className="w-4 h-4" />
             Novo Agendamento
           </Button>

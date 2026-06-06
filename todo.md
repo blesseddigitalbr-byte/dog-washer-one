@@ -68,3 +68,12 @@
 - [ ] Frontend exibindo painel estático com menu
 - [ ] Tabela de Unidades carregando dados
 - [ ] Formulário criando/editando unidades com sucesso
+
+## Frontend - Design Premium
+- [x] Paleta de cores oficial (Primary #07111E, Secondary #C5A059, Tertiary #8E6E3E)
+- [x] Fundo creme (#F5E6D3) em todas as páginas
+- [x] ClientsPage com cards premium e grid responsivo
+- [x] SchedulePage com design premium
+- [x] Dashboard com cards de métricas
+- [x] Menu lateral com hover states e active states
+- [x] Botões com cores corretas e hover effects
