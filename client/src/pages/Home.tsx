@@ -34,25 +34,25 @@ export default function Dashboard() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Dashboard</h1>
-          <p className="text-muted-foreground text-sm">Bem-vindo ao GroomerFlow</p>
+          <h1 className="text-4xl font-bold text-foreground mb-2">Painel de Controle</h1>
+          <p className="text-muted-foreground text-sm">Acompanhe o desempenho do seu negócio em tempo real</p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {stats.map((stat) => {
             const Icon = stat.icon;
             return (
               <div
                 key={stat.title}
-                className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-l-accent"
+                className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-l-accent"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div>
-                    <p className="text-xs text-muted-foreground mb-2 font-medium">
+                    <p className="text-xs text-muted-foreground mb-2 font-bold uppercase tracking-wider">
                       {stat.title}
                     </p>
-                    <p className="text-2xl font-bold text-foreground">
+                    <p className="text-3xl font-bold text-foreground">
                       {stat.value}
                     </p>
                   </div>
@@ -60,7 +60,7 @@ export default function Dashboard() {
                     <Icon className="w-6 h-6 text-accent" />
                   </div>
                 </div>
-                <p className="text-xs text-accent font-medium">
+                <p className="text-xs text-accent font-semibold">
                   {stat.change}
                 </p>
               </div>
@@ -69,7 +69,7 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-xl p-6 shadow-sm">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-l-accent">
           <h2 className="text-xl font-bold text-foreground mb-6">
             Atividade Recente
           </h2>

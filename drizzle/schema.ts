@@ -244,6 +244,27 @@ export type Service = typeof services.$inferSelect;
 export type InsertService = typeof services.$inferInsert;
 
 /**
+ * Professionals - Profissionais de Grooming
+ */
+export const professionals = pgTable("professionals", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  unitId: uuid("unit_id").notNull().references(() => units.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 50 }),
+  cpf: varchar("cpf", { length: 14 }).unique(),
+  specialization: varchar("specialization", { length: 255 }),
+  status: varchar("status", { length: 50 }).default("active"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+});
+
+export type Professional = typeof professionals.$inferSelect;
+export type InsertProfessional = typeof professionals.$inferInsert;
+
+/**
  * Appointments - Agendamentos
  */
 export const appointments = pgTable("appointments", {
@@ -253,9 +274,24 @@ export const appointments = pgTable("appointments", {
   clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
   petId: uuid("pet_id").notNull().references(() => pets.id, { onDelete: "cascade" }),
   serviceId: uuid("service_id").notNull().references(() => services.id, { onDelete: "cascade" }),
+  professionalId: uuid("professional_id").notNull().references(() => professionals.id, { onDelete: "cascade" }),
   appointmentDate: timestamp("appointment_date", { withTimezone: true }).notNull(),
+  startTime: varchar("start_time", { length: 5 }),
+  durationMinutes: serial("duration_minutes"),
+  actualStartTime: varchar("actual_start_time", { length: 5 }),
+  actualEndTime: varchar("actual_end_time", { length: 5 }),
   status: varchar("status", { length: 50 }).default("pending"),
   notes: text("notes"),
+  cancellationReason: text("cancellation_reason"),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  confirmedAt: timestamp("confirmed_at", { withTimezone: true }),
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+  packageSessionDecremented: boolean("package_session_decremented").default(false),
+  productsDecremented: boolean("products_decremented").default(false),
+  productivityRecorded: boolean("productivity_recorded").default(false),
+  studentHoursRecorded: boolean("student_hours_recorded").default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }),
 });
@@ -264,11 +300,41 @@ export type Appointment = typeof appointments.$inferSelect;
 export type InsertAppointment = typeof appointments.$inferInsert;
 
 /**
+ * AppointmentStudents - Relação M:N entre Agendamentos e Alunos
+ */
+export const appointmentStudents = pgTable("appointment_students", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  appointmentId: uuid("appointment_id").notNull().references(() => appointments.id, { onDelete: "cascade" }),
+  studentId: uuid("student_id").notNull().references(() => students.id, { onDelete: "cascade" }),
+  role: varchar("role", { length: 50 }), // "executor", "supervisor", "participant"
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type AppointmentStudent = typeof appointmentStudents.$inferSelect;
+export type InsertAppointmentStudent = typeof appointmentStudents.$inferInsert;
+
+/**
+ * AppointmentStatusHistory - Histórico de Mudanças de Status
+ */
+export const appointmentStatusHistory = pgTable("appointment_status_history", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  appointmentId: uuid("appointment_id").notNull().references(() => appointments.id, { onDelete: "cascade" }),
+  status: varchar("status", { length: 50 }).notNull(),
+  changedBy: uuid("changed_by").references(() => users.id, { onDelete: "set null" }),
+  changedAt: timestamp("changed_at", { withTimezone: true }).defaultNow().notNull(),
+  reason: text("reason"),
+});
+
+export type AppointmentStatusHistoryRecord = typeof appointmentStatusHistory.$inferSelect;
+export type InsertAppointmentStatusHistory = typeof appointmentStatusHistory.$inferInsert;
+
+/**
  * Students - Alunos/Aprendizes
  */
 export const students = pgTable("students", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  unitId: uuid("unit_id").references(() => units.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }),
   phone: varchar("phone", { length: 50 }),

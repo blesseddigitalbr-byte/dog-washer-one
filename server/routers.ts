@@ -388,6 +388,289 @@ export const appRouter = router({
         }
       }),
   }),
+
+  professionals: router({
+    // List all professionals
+    list: publicProcedure.query(async () => {
+      try {
+        const { data: professionals, error } = await supabase
+          .from("professionals")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        return professionals || [];
+      } catch (error) {
+        console.error("Error fetching professionals:", error);
+        return [];
+      }
+    }),
+
+    // Get a single professional by ID
+    getById: publicProcedure
+      .input(z.object({ id: z.string().uuid() }))
+      .query(async ({ input }) => {
+        try {
+          const { data: professional, error } = await supabase
+            .from("professionals")
+            .select("*")
+            .eq("id", input.id)
+            .single();
+
+          if (error) throw error;
+          return professional;
+        } catch (error) {
+          console.error("Error fetching professional:", error);
+          return null;
+        }
+      }),
+
+    // Create a new professional
+    create: publicProcedure
+      .input(z.object({
+        organizationId: z.string().uuid(),
+        unitId: z.string().uuid(),
+        name: z.string().min(1, "Nome é obrigatório"),
+        email: z.string().email().optional(),
+        phone: z.string().optional(),
+        cpf: z.string().optional(),
+        specialization: z.string().optional(),
+        status: z.string().default("active"),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { data, error } = await supabase
+            .from("professionals")
+            .insert([{
+              organization_id: input.organizationId,
+              unit_id: input.unitId,
+              name: input.name,
+              email: input.email || null,
+              phone: input.phone || null,
+              cpf: input.cpf || null,
+              specialization: input.specialization || null,
+              status: input.status,
+              is_active: true,
+            }])
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          console.error("Error creating professional:", error);
+          throw new Error("Erro ao criar profissional");
+        }
+      }),
+
+    // Update a professional
+    update: publicProcedure
+      .input(z.object({
+        id: z.string().uuid(),
+        name: z.string().optional(),
+        email: z.string().email().optional(),
+        phone: z.string().optional(),
+        cpf: z.string().optional(),
+        specialization: z.string().optional(),
+        status: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { id, ...updateData } = input;
+          const updatePayload: Record<string, any> = {};
+          
+          if (updateData.name) updatePayload.name = updateData.name;
+          if (updateData.email) updatePayload.email = updateData.email;
+          if (updateData.phone) updatePayload.phone = updateData.phone;
+          if (updateData.cpf) updatePayload.cpf = updateData.cpf;
+          if (updateData.specialization) updatePayload.specialization = updateData.specialization;
+          if (updateData.status) updatePayload.status = updateData.status;
+
+          const { data, error } = await supabase
+            .from("professionals")
+            .update(updatePayload)
+            .eq("id", id)
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          console.error("Error updating professional:", error);
+          throw new Error("Erro ao atualizar profissional");
+        }
+      }),
+
+    // Delete a professional
+    delete: publicProcedure
+      .input(z.object({ id: z.string().uuid() }))
+      .mutation(async ({ input }) => {
+        try {
+          const { error } = await supabase
+            .from("professionals")
+            .delete()
+            .eq("id", input.id);
+
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          console.error("Error deleting professional:", error);
+          throw new Error("Erro ao deletar profissional");
+        }
+      }),
+  }),
+
+  appointments: router({
+    // List all appointments with related data
+    list: publicProcedure.query(async () => {
+      try {
+        const { data: appointments, error } = await supabase
+          .from("appointments")
+          .select(`
+            *,
+            client:client_id(name, email, phone),
+            pet:pet_id(name, breed, species),
+            service:service_id(name, price, duration_minutes),
+            professional:professional_id(name, specialization)
+          `)
+          .order("appointment_date", { ascending: false });
+
+        if (error) throw error;
+        return appointments || [];
+      } catch (error) {
+        console.error("Error fetching appointments:", error);
+        return [];
+      }
+    }),
+
+    // Get a single appointment by ID
+    getById: publicProcedure
+      .input(z.object({ id: z.string().uuid() }))
+      .query(async ({ input }) => {
+        try {
+          const { data: appointment, error } = await supabase
+            .from("appointments")
+            .select(`
+              *,
+              client:client_id(name, email, phone),
+              pet:pet_id(name, breed, species),
+              service:service_id(name, price, duration_minutes),
+              professional:professional_id(name, specialization)
+            `)
+            .eq("id", input.id)
+            .single();
+
+          if (error) throw error;
+          return appointment;
+        } catch (error) {
+          console.error("Error fetching appointment:", error);
+          return null;
+        }
+      }),
+
+    // Create a new appointment
+    create: publicProcedure
+      .input(z.object({
+        organizationId: z.string().uuid(),
+        unitId: z.string().uuid(),
+        clientId: z.string().uuid(),
+        petId: z.string().uuid(),
+        serviceId: z.string().uuid(),
+        professionalId: z.string().uuid(),
+        appointmentDate: z.string().datetime(),
+        startTime: z.string().optional(),
+        durationMinutes: z.number().optional(),
+        status: z.string().default("pending"),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { data, error } = await supabase
+            .from("appointments")
+            .insert([{
+              organization_id: input.organizationId,
+              unit_id: input.unitId,
+              client_id: input.clientId,
+              pet_id: input.petId,
+              service_id: input.serviceId,
+              professional_id: input.professionalId,
+              appointment_date: input.appointmentDate,
+              start_time: input.startTime || null,
+              duration_minutes: input.durationMinutes || null,
+              status: input.status,
+              notes: input.notes || null,
+            }])
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          console.error("Error creating appointment:", error);
+          throw new Error("Erro ao criar agendamento");
+        }
+      }),
+
+    // Update an appointment
+    update: publicProcedure
+      .input(z.object({
+        id: z.string().uuid(),
+        clientId: z.string().uuid().optional(),
+        petId: z.string().uuid().optional(),
+        serviceId: z.string().uuid().optional(),
+        professionalId: z.string().uuid().optional(),
+        appointmentDate: z.string().datetime().optional(),
+        startTime: z.string().optional(),
+        durationMinutes: z.number().optional(),
+        status: z.string().optional(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const updateData: Record<string, any> = {};
+          if (input.clientId) updateData.client_id = input.clientId;
+          if (input.petId) updateData.pet_id = input.petId;
+          if (input.serviceId) updateData.service_id = input.serviceId;
+          if (input.professionalId) updateData.professional_id = input.professionalId;
+          if (input.appointmentDate) updateData.appointment_date = input.appointmentDate;
+          if (input.startTime) updateData.start_time = input.startTime;
+          if (input.durationMinutes) updateData.duration_minutes = input.durationMinutes;
+          if (input.status) updateData.status = input.status;
+          if (input.notes !== undefined) updateData.notes = input.notes || null;
+
+          const { data, error } = await supabase
+            .from("appointments")
+            .update(updateData)
+            .eq("id", input.id)
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          console.error("Error updating appointment:", error);
+          throw new Error("Erro ao atualizar agendamento");
+        }
+      }),
+
+    // Delete an appointment
+    delete: publicProcedure
+      .input(z.object({ id: z.string().uuid() }))
+      .mutation(async ({ input }) => {
+        try {
+          const { error } = await supabase
+            .from("appointments")
+            .delete()
+            .eq("id", input.id);
+
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          console.error("Error deleting appointment:", error);
+          throw new Error("Erro ao deletar agendamento");
+        }
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;
