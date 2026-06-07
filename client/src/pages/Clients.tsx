@@ -45,11 +45,11 @@ export default function ClientsPage() {
     : null;
 
   const filters = [
-    { id: "todos", label: "Todos", icon: "📋" },
-    { id: "vips", label: "VIPs", icon: "⭐" },
-    { id: "modelo", label: "Modelo", icon: "🎯" },
-    { id: "recentes", label: "Recentes", icon: "🕐" },
-    { id: "inativos", label: "Inativos (30d)", icon: "⏸️" },
+    { id: "todos", label: "Todos", icon: "\u2022" },
+    { id: "vips", label: "VIPs", icon: "\u2605" },
+    { id: "modelo", label: "Modelo", icon: "\u2713" },
+    { id: "recentes", label: "Recentes", icon: "\u23F3" },
+    { id: "inativos", label: "Inativos (30d)", icon: "\u26A0" },
   ];
 
   const filteredClients = clients.filter((client: any) => {
@@ -273,7 +273,7 @@ export default function ClientsPage() {
                 {/* Pets */}
                 <div className="mb-4 pb-4 border-b border-border">
                   <p className="text-xs font-bold text-muted-foreground mb-3 uppercase tracking-wide">
-                    🐾 Pets Cadastrados
+                    Pets Cadastrados
                   </p>
                   <div className="flex flex-wrap gap-3">
                     {client.pets && client.pets.length > 0 ? (
@@ -308,19 +308,21 @@ export default function ClientsPage() {
 
                 {/* Última Visita */}
                 <div className="mb-4 pb-4 border-b border-border">
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Última Visita</p>
-                  <p className="text-sm font-semibold text-foreground mt-1">{formatDate(client.last_visit)}</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Última Visita</p>
+                      <p className="text-sm font-semibold text-foreground mt-1">{formatDate(client.last_visit)}</p>
+                    </div>
+                    <button
+                      onClick={() => handleOpenModal(client.id)}
+                      className="text-xs text-accent hover:text-accent/80 font-bold transition-colors inline-flex items-center gap-1 whitespace-nowrap"
+                    >
+                      Ver Histórico →
+                    </button>
+                  </div>
                 </div>
 
-                {/* Contact + Link */}
-                <div className="mt-auto">
-                  <button
-                    onClick={() => handleOpenModal(client.id)}
-                    className="text-xs text-accent hover:text-accent/80 font-bold transition-colors inline-flex items-center gap-1"
-                  >
-                    Ver detalhes →
-                  </button>
-                </div>
+
               </div>
             ))}
 

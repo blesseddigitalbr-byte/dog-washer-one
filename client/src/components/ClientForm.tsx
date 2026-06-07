@@ -23,18 +23,18 @@ export function ClientForm({
   onSuccess,
 }: ClientFormProps) {
   const [formData, setFormData] = useState({
-    name: clientData?.name || "",
+    name: clientData?.name || clientData?.nome || "",
     email: clientData?.email || "",
     phone: clientData?.phone || "",
     cpf: clientData?.cpf || "",
-    zipCode: clientData?.zipCode || "",
-    address: clientData?.address || "",
-    number: clientData?.number || "",
-    complement: clientData?.complement || "",
-    city: clientData?.city || "",
-    state: clientData?.state || "",
-    isVip: clientData?.isVip || false,
-    isModelDog: clientData?.isModelDog || false,
+    zipCode: clientData?.cep || "",
+    address: clientData?.logradouro || "",
+    number: clientData?.numero || "",
+    complement: clientData?.complemento || "",
+    city: clientData?.cidade || "",
+    state: clientData?.uf || "",
+    isVip: clientData?.is_vip || false,
+    isModelDog: clientData?.is_model_dog || false,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -52,18 +52,18 @@ export function ClientForm({
   useEffect(() => {
     if (clientData && isOpen) {
       setFormData({
-        name: clientData.name || "",
+        name: clientData.name || clientData.nome || "",
         email: clientData.email || "",
         phone: clientData.phone || "",
         cpf: clientData.cpf || "",
-        zipCode: clientData.zipCode || "",
-        address: clientData.address || "",
-        number: clientData.number || "",
-        complement: clientData.complement || "",
-        city: clientData.city || "",
-        state: clientData.state || "",
-        isVip: clientData.isVip || false,
-        isModelDog: clientData.isModelDog || false,
+        zipCode: clientData.cep || "",
+        address: clientData.logradouro || "",
+        number: clientData.numero || "",
+        complement: clientData.complemento || "",
+        city: clientData.cidade || "",
+        state: clientData.uf || "",
+        isVip: clientData.is_vip || false,
+        isModelDog: clientData.is_model_dog || false,
       });
     }
   }, [clientData, isOpen]);
@@ -412,28 +412,30 @@ export function ClientForm({
           </div>
 
           {/* Checkboxes VIP e Modelo lado a lado */}
-          <div className="flex items-center gap-6 pt-4">
-            <div className="flex items-center gap-2">
+          <div className="grid grid-cols-2 gap-6 pt-4 bg-accent/5 p-4 rounded-lg">
+            <div className="flex items-center gap-3">
               <Checkbox
                 id="isVip"
                 checked={formData.isVip}
                 onCheckedChange={(checked) => setFormData({ ...formData, isVip: checked as boolean })}
                 disabled={isLoading}
+                className="w-5 h-5"
               />
-              <Label htmlFor="isVip" className="text-sm font-semibold text-foreground cursor-pointer">
-                ⭐ Cliente VIP
+              <Label htmlFor="isVip" className="text-sm font-semibold text-foreground cursor-pointer flex-1">
+                Cliente VIP
               </Label>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Checkbox
                 id="isModelDog"
                 checked={formData.isModelDog}
                 onCheckedChange={(checked) => setFormData({ ...formData, isModelDog: checked as boolean })}
                 disabled={isLoading}
+                className="w-5 h-5"
               />
-              <Label htmlFor="isModelDog" className="text-sm font-semibold text-foreground cursor-pointer">
-                🎯 Cliente Escola/Modelo
+              <Label htmlFor="isModelDog" className="text-sm font-semibold text-foreground cursor-pointer flex-1">
+                Cliente Escola/Modelo
               </Label>
             </div>
           </div>
