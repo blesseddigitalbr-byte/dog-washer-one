@@ -35,6 +35,21 @@
 - [x] Testes vitest para modal (11 testes, 100% passing)
 - [x] Validar integração com tRPC
 
+## DELTA 3: CRUD Completo
+- [x] Criar procedure tRPC `clients.create`
+- [x] Criar procedure tRPC `clients.update`
+- [x] Criar procedure tRPC `clients.delete`
+- [x] Criar procedure tRPC `pets.create`
+- [x] Criar procedure tRPC `pets.update`
+- [x] Criar procedure tRPC `pets.delete`
+- [x] Criar formulário de criação de cliente (ClientForm)
+- [x] Criar formulário de edição de cliente
+- [x] Criar formulário de criação/edição de pet (PetForm)
+- [x] Implementar diálogos de confirmação para deleção
+- [x] Integrar CRUD na página de clientes
+- [x] Testes vitest para CRUD operations (11 testes, 100% passing)
+- [x] Validar fluxo completo no navegador
+
 ## Próximas Fases
 
 ### DELTA 2.2: Agendamentos
@@ -65,8 +80,10 @@
 - [ ] Webhooks para eventos
 
 ## Status Atual
-✅ **DELTA 2.1 COMPLETO**
-- Database seeded com 5 clientes e 6 pets
-- Procedures tRPC criadas e testadas
-- Frontend conectado a dados reais
-- Todos os testes passando
+✅ **DELTA 3 COMPLETO - CRUD COMPLETO**
+- ✅ 6 procedures tRPC para CRUD (create, update, delete para clientes e pets)
+- ✅ Formulários de criação/edição com validação
+- ✅ Diálogos de confirmação para deleção
+- ✅ UI integrada com menu de ações (Editar/Deletar)
+- ✅ 11 testes vitest passando 100%
+- ✅ Fluxo completo testado no navegador

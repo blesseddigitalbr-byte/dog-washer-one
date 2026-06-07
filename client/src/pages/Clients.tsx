@@ -1,13 +1,24 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Plus, MoreVertical, AlertCircle } from "lucide-react";
+import { Plus, MoreVertical, AlertCircle, Edit2, Trash2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { ClientDetailModal } from "@/components/ClientDetailModal";
+import { ClientForm } from "@/components/ClientForm";
+import { DeleteConfirmationDialog } from "@/components/DeleteConfirmationDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function ClientsPage() {
   const [filter, setFilter] = useState("todos");
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [clientFormOpen, setClientFormOpen] = useState(false);
+  const [editingClient, setEditingClient] = useState<any>(null);
+  const [deletingClient, setDeletingClient] = useState<any>(null);
 
   // Fetch clients from tRPC
   const { data: clients = [], isLoading, error } = trpc.clients.list.useQuery();
@@ -21,6 +32,10 @@ export default function ClientsPage() {
     { id: selectedClientId! },
     { enabled: !!selectedClientId }
   );
+
+  // Mutations
+  const deleteClientMutation = trpc.clients.delete.useMutation();
+  const utils = trpc.useUtils();
 
   // Convert tRPC error to Error object
   const clientDetailError = detailError
@@ -68,13 +83,37 @@ export default function ClientsPage() {
     setSelectedClientId(null);
   };
 
+  const handleEditClient = (client: any) => {
+    setEditingClient(client);
+    setClientFormOpen(true);
+    handleCloseModal();
+  };
+
+  const handleDeleteClient = async () => {
+    if (!deletingClient) return;
+
+    try {
+      await deleteClientMutation.mutateAsync({ id: deletingClient.id });
+      await utils.clients.list.invalidate();
+      setDeletingClient(null);
+    } catch (error) {
+      console.error("Error deleting client:", error);
+    }
+  };
+
   return (
     <div className="flex-1 overflow-auto p-6 bg-background">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <h1 className="text-3xl font-bold text-foreground">Clientes</h1>
-          <Button className="bg-foreground hover:bg-foreground/90 text-background flex items-center gap-2 rounded-full px-6">
+          <Button
+            onClick={() => {
+              setEditingClient(null);
+              setClientFormOpen(true);
+            }}
+            className="bg-foreground hover:bg-foreground/90 text-background flex items-center gap-2 rounded-full px-6"
+          >
             <Plus className="w-4 h-4" />
             Novo Cliente
           </Button>
@@ -131,7 +170,13 @@ export default function ClientsPage() {
         {!isLoading && !error && filteredClients.length === 0 && (
           <div className="text-center py-12">
             <p className="text-lg text-muted-foreground mb-4">Nenhum cliente encontrado</p>
-            <Button className="bg-accent hover:bg-accent/90 text-foreground">
+            <Button
+              onClick={() => {
+                setEditingClient(null);
+                setClientFormOpen(true);
+              }}
+              className="bg-accent hover:bg-accent/90 text-foreground"
+            >
               <Plus className="w-4 h-4 mr-2" />
               Adicionar Primeiro Cliente
             </Button>
@@ -144,18 +189,31 @@ export default function ClientsPage() {
             {filteredClients.map((client) => (
               <div
                 key={client.id}
-                onClick={() => handleOpenModal(client.id)}
-                className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 relative group border-l-4 border-l-accent cursor-pointer"
+                className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 relative group border-l-4 border-l-accent"
               >
                 {/* Menu Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                  }}
-                  className="absolute top-4 right-4 p-2 hover:bg-accent/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
-                >
-                  <MoreVertical className="w-4 h-4 text-foreground" />
-                </button>
+                <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="p-2">
+                        <MoreVertical className="w-4 h-4 text-foreground" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleEditClient(client)}>
+                        <Edit2 className="w-4 h-4 mr-2" />
+                        Editar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setDeletingClient(client)}
+                        className="text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Deletar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
 
                 {/* VIP Badge */}
                 {client.pets?.some((pet) => pet.is_vip) && (
@@ -199,9 +257,14 @@ export default function ClientsPage() {
 
                 {/* Contact */}
                 <div>
-                  <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wide">Contato</p>
+                  <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wide">
+                    Contato
+                  </p>
                   <p className="text-sm font-semibold text-foreground mb-3">{client.phone || "Não informado"}</p>
-                  <button className="text-xs text-accent hover:text-accent/80 font-bold transition-colors">
+                  <button
+                    onClick={() => handleOpenModal(client.id)}
+                    className="text-xs text-accent hover:text-accent/80 font-bold transition-colors"
+                  >
                     Ver Detalhes →
                   </button>
                 </div>
@@ -209,7 +272,13 @@ export default function ClientsPage() {
             ))}
 
             {/* Add New Client Card */}
-            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center cursor-pointer group border-2 border-dashed border-accent/20 hover:border-accent/40">
+            <div
+              onClick={() => {
+                setEditingClient(null);
+                setClientFormOpen(true);
+              }}
+              className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 flex items-center justify-center cursor-pointer group border-2 border-dashed border-accent/20 hover:border-accent/40"
+            >
               <div className="text-center">
                 <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">+</div>
                 <p className="text-sm font-bold text-foreground">Adicionar Novo Cliente</p>
@@ -227,6 +296,32 @@ export default function ClientsPage() {
         client={selectedClient || null}
         isLoading={isLoadingDetail}
         error={clientDetailError}
+        onEditClient={handleEditClient}
+      />
+
+      {/* Client Form Modal */}
+      <ClientForm
+        isOpen={clientFormOpen}
+        onClose={() => {
+          setClientFormOpen(false);
+          setEditingClient(null);
+        }}
+        clientId={editingClient?.id}
+        clientData={editingClient}
+        onSuccess={() => {
+          utils.clients.list.invalidate();
+        }}
+      />
+
+      {/* Delete Client Confirmation */}
+      <DeleteConfirmationDialog
+        isOpen={!!deletingClient}
+        onClose={() => setDeletingClient(null)}
+        onConfirm={handleDeleteClient}
+        title="Deletar Cliente"
+        description="Todos os pets associados também serão deletados. Esta ação não pode ser desfeita."
+        itemName={deletingClient?.nome || ""}
+        isLoading={deleteClientMutation.isPending}
       />
     </div>
   );

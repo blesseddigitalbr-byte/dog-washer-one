@@ -140,6 +140,172 @@ export const appRouter = router({
           return null;
         }
       }),
+
+    // Create a new client
+    create: publicProcedure
+      .input(z.object({
+        nome: z.string().min(1, "Nome é obrigatório"),
+        email: z.string().email("Email inválido"),
+        phone: z.string().min(1, "Telefone é obrigatório"),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { data, error } = await supabase
+            .from("clientes")
+            .insert([{
+              nome: input.nome,
+              email: input.email,
+              phone: input.phone,
+            }])
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          console.error("Error creating client:", error);
+          throw new Error("Erro ao criar cliente");
+        }
+      }),
+
+    // Update a client
+    update: publicProcedure
+      .input(z.object({
+        id: z.string().uuid(),
+        nome: z.string().min(1, "Nome é obrigatório"),
+        email: z.string().email("Email inválido"),
+        phone: z.string().min(1, "Telefone é obrigatório"),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { data, error } = await supabase
+            .from("clientes")
+            .update({
+              nome: input.nome,
+              email: input.email,
+              phone: input.phone,
+            })
+            .eq("id", input.id)
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          console.error("Error updating client:", error);
+          throw new Error("Erro ao atualizar cliente");
+        }
+      }),
+
+    // Delete a client
+    delete: publicProcedure
+      .input(z.object({ id: z.string().uuid() }))
+      .mutation(async ({ input }) => {
+        try {
+          // Delete all pets first
+          await supabase.from("pets").delete().eq("client_id", input.id);
+
+          // Then delete the client
+          const { error } = await supabase
+            .from("clientes")
+            .delete()
+            .eq("id", input.id);
+
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          console.error("Error deleting client:", error);
+          throw new Error("Erro ao deletar cliente");
+        }
+      }),
+  }),
+
+  // Pets router
+  pets: router({
+    // Create a new pet
+    create: publicProcedure
+      .input(z.object({
+        client_id: z.string().uuid(),
+        name: z.string().min(1, "Nome do pet é obrigatório"),
+        breed: z.string().min(1, "Raça é obrigatória"),
+        sexo: z.enum(["M", "F"]),
+        cor_pelagem: z.string().min(1, "Cor da pelagem é obrigatória"),
+        weight: z.string().min(1, "Peso é obrigatório"),
+        is_vip: z.boolean().default(false),
+        is_model_dog: z.boolean().default(false),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { data, error } = await supabase
+            .from("pets")
+            .insert([{
+              client_id: input.client_id,
+              name: input.name,
+              breed: input.breed,
+              sexo: input.sexo,
+              cor_pelagem: input.cor_pelagem,
+              weight: input.weight,
+              is_vip: input.is_vip,
+              is_model_dog: input.is_model_dog,
+            }])
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          console.error("Error creating pet:", error);
+          throw new Error("Erro ao criar pet");
+        }
+      }),
+
+    // Update a pet
+    update: publicProcedure
+      .input(z.object({
+        id: z.string().uuid(),
+        name: z.string().min(1, "Nome do pet é obrigatório"),
+        breed: z.string().min(1, "Raça é obrigatória"),
+        sexo: z.enum(["M", "F"]),
+        cor_pelagem: z.string().min(1, "Cor da pelagem é obrigatória"),
+        weight: z.string().min(1, "Peso é obrigatório"),
+        is_vip: z.boolean(),
+        is_model_dog: z.boolean(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { id, ...updateData } = input;
+          const { data, error } = await supabase
+            .from("pets")
+            .update(updateData)
+            .eq("id", id)
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          console.error("Error updating pet:", error);
+          throw new Error("Erro ao atualizar pet");
+        }
+      }),
+
+    // Delete a pet
+    delete: publicProcedure
+      .input(z.object({ id: z.string().uuid() }))
+      .mutation(async ({ input }) => {
+        try {
+          const { error } = await supabase
+            .from("pets")
+            .delete()
+            .eq("id", input.id);
+
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          console.error("Error deleting pet:", error);
+          throw new Error("Erro ao deletar pet");
+        }
+      }),
   }),
 });
 
