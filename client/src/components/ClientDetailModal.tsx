@@ -203,80 +203,102 @@ export function ClientDetailModal({
                       const safePetNameChar = petName ? petName.charAt(0).toUpperCase() : "?";
                       return (
                       <Card key={pet.id} className="border-l-4 border-l-accent p-4">
-                        {/* Pet Header with Photo and Basic Info */}
-                        <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center gap-4">
+                        {/* Pet Header with Large Photo */}
+                        <div className="flex gap-6 mb-6">
+                          {/* Large Photo */}
+                          <div className="flex-shrink-0">
                             {pet.photo ? (
                               <img
                                 src={pet.photo}
                                 alt={petName}
-                                className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                                className="w-32 h-32 rounded-lg object-cover"
                               />
                             ) : (
-                              <div className="w-20 h-20 rounded-lg bg-accent/10 flex items-center justify-center text-2xl font-bold text-accent flex-shrink-0">
+                              <div className="w-32 h-32 rounded-lg bg-accent/10 flex items-center justify-center text-4xl font-bold text-accent">
                                 {safePetNameChar}
                               </div>
                             )}
-                            <div>
-                              <div className="flex items-center gap-2 mb-1">
-                                <h4 className="text-lg font-bold text-foreground">{petName}</h4>
-                                {(pet as any).gender && (
-                                  <span className="text-lg">
-                                    {(pet as any).gender === 'M' ? '♂️' : '♀️'}
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-sm text-muted-foreground">{pet.breed}</p>
-                            </div>
                           </div>
-                          <div className="flex gap-2 flex-wrap justify-end">
-                            {pet.is_vip && (
-                              <span className="px-3 py-1 bg-accent/10 rounded-full text-xs font-bold text-accent">
-                                ⭐ VIP
-                              </span>
-                            )}
-                            {pet.is_model_dog && (
-                              <span className="px-3 py-1 bg-purple-100 rounded-full text-xs font-bold text-purple-700">
-                                🎯 Modelo
-                              </span>
-                            )}
-                          </div>
-                        </div>
 
-                        {/* Pet Details Grid */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 p-3 bg-accent/5 rounded-lg">
-                          <div>
-                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
-                              🐕 Raça
-                            </p>
-                            <p className="text-sm font-medium text-foreground">{pet.breed}</p>
+                          {/* Pet Info */}
+                          <div className="flex-1">
+                            {/* Name and Gender */}
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="text-xl font-bold text-foreground">{petName}</h4>
+                              {(pet as any).gender && (
+                                <span className="text-xl">
+                                  {(pet as any).gender === 'M' ? '♂️' : '♀️'}
+                                </span>
+                              )}
+                            </div>
+                            {/* Breed */}
+                            <p className="text-sm text-muted-foreground mb-4">{pet.breed}</p>
+
+                            {/* First Grid: Raça, Porte, Data de Nascimento, Idade */}
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                              <div>
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                                  🐕 Raça
+                                </p>
+                                <p className="text-sm font-medium text-foreground">{pet.breed}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                                  📏 Porte
+                                </p>
+                                <p className="text-sm font-medium text-foreground">{(pet as any).size || 'Não informado'}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                                  📅 Data de Nascimento
+                                </p>
+                                <p className="text-sm font-medium text-foreground">
+                                  {pet.birthDate ? new Date(pet.birthDate).toLocaleDateString('pt-BR') : 'Não informado'}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                                  🎂 Idade
+                                </p>
+                                <p className="text-sm font-medium text-foreground">
+                                  {(() => {
+                                    const birthDate = pet.birthDate ? new Date(pet.birthDate) : null;
+                                    const age = birthDate ? Math.floor((Date.now() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null;
+                                    const months = birthDate ? Math.floor(((Date.now() - birthDate.getTime()) % (365.25 * 24 * 60 * 60 * 1000)) / (30 * 24 * 60 * 60 * 1000)) : null;
+                                    return age !== null ? `${age} ${age === 1 ? 'ano' : 'anos'}${months ? ` e ${months} ${months === 1 ? 'mês' : 'meses'}` : ''}` : 'Não informado';
+                                  })()}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Second Grid: Sexo, Pelagem, Última Visita */}
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                              {(pet as any).gender && (
+                                <div>
+                                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                                    ♂️ Sexo
+                                  </p>
+                                  <p className="text-sm font-medium text-foreground">
+                                    {(pet as any).gender === 'M' ? 'Macho' : 'Fêmea'}
+                                  </p>
+                                </div>
+                              )}
+                              {(pet as any).coat && (
+                                <div>
+                                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                                    🧶 Pelagem
+                                  </p>
+                                  <p className="text-sm font-medium text-foreground">{(pet as any).coat}</p>
+                                </div>
+                              )}
+                              <div>
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                                  📅 Última Visita
+                                </p>
+                                <p className="text-sm font-medium text-foreground">02/05/2024</p>
+                              </div>
+                            </div>
                           </div>
-                          {(pet as any).size && (
-                            <div>
-                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
-                                📏 Porte
-                              </p>
-                              <p className="text-sm font-medium text-foreground">{(pet as any).size}</p>
-                            </div>
-                          )}
-                          {pet.birthDate && (
-                            <div>
-                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
-                                📅 Nascimento
-                              </p>
-                              <p className="text-sm font-medium text-foreground">
-                                {new Date(pet.birthDate).toLocaleDateString('pt-BR')}
-                              </p>
-                            </div>
-                          )}
-                          {pet.color && (
-                            <div>
-                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
-                                🎨 Cor
-                              </p>
-                              <p className="text-sm font-medium text-foreground">{pet.color}</p>
-                            </div>
-                          )}
                         </div>
 
                         {/* Action Buttons */}
