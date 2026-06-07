@@ -316,6 +316,10 @@ export const appRouter = router({
         notes: z.string().optional(),
         photo: z.string().optional(),
         status: z.string().default("active"),
+        vaccines: z.string().optional(),
+        dewormed: z.boolean().optional(),
+        hasDiseasesOrAllergies: z.boolean().optional(),
+        diseasesOrAllergiesDescription: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         try {
@@ -333,6 +337,10 @@ export const appRouter = router({
               notes: updateData.notes || null,
               photo: updateData.photo || null,
               status: updateData.status,
+              vaccines: updateData.vaccines || null,
+              dewormed: updateData.dewormed || false,
+              has_diseases_or_allergies: updateData.hasDiseasesOrAllergies || false,
+              diseases_or_allergies_description: updateData.diseasesOrAllergiesDescription || null,
             })
             .eq("id", id)
             .select()

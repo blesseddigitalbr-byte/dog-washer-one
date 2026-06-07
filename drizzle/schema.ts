@@ -211,6 +211,10 @@ export const pets = pgTable("pets", {
   microchip: varchar("microchip", { length: 50 }),
   notes: text("notes"),
   photo: varchar("photo", { length: 255 }),
+  vaccines: text("vaccines"), // JSON array de vacinas
+  dewormed: boolean("dewormed").default(false), // Vermífugo
+  hasDiseasesOrAllergies: boolean("has_diseases_or_allergies").default(false),
+  diseasesOrAllergiesDescription: text("diseases_or_allergies_description"),
   status: varchar("status", { length: 50 }).default("active"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }),

@@ -105,3 +105,27 @@
 - [ ] Integração com WhatsApp (notificações)
 - [ ] Integração com Google Calendar (agendamentos)
 - [ ] Webhooks para eventos
+
+
+## DELTA 6: Melhorias de UX e Funcionalidades de Pets
+
+### Visibilidade de Pets
+- [ ] Adicionar botão "Novo Pet" visível no card do cliente (nos 3 pontinhos ou em "Pets Cadastrados")
+- [ ] Melhorar visibilidade da opção de cadastro de pets
+
+### Padronização de Ícones
+- [ ] Padronizar ícones com o estilo do painel (ícones com fundo dourado/accent)
+- [ ] Aplicar padrão de ícones em todo o portal (Clientes, Agendamentos, Alunos, etc)
+
+### Formulário de Pets - Upload de Foto
+- [ ] Adicionar campo de upload/alterar foto do pet no formulário de cadastro
+- [ ] Adicionar campo de upload/alterar foto do pet no formulário de edição
+- [ ] Integrar com storage S3 para salvar fotos
+
+### Formulário de Pets - Informações de Saúde
+- [ ] Adicionar campo de vacinas (múltipla seleção: Raiva, Múltipla, Giardia, etc)
+- [ ] Adicionar campo Vermífugo (Sim/Não)
+- [ ] Adicionar campo Doenças/Alergias (Sim/Não com descrição condicional)
+- [ ] Atualizar schema do Drizzle para incluir novos campos
+- [ ] Atualizar procedures tRPC para retornar novos campos
+- [ ] Escrever testes vitest para novos campos

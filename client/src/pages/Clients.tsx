@@ -157,7 +157,13 @@ export default function ClientsPage() {
                     : "bg-white text-foreground border-border hover:border-accent/30 hover:shadow-sm"
                 }`}
               >
-                <span>{f.icon}</span>
+                <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${
+                  filter === f.id
+                    ? "bg-foreground/20 text-foreground"
+                    : "bg-accent/10 text-accent"
+                }`}>
+                  {f.icon}
+                </span>
                 {f.label}
               </button>
             ))}
