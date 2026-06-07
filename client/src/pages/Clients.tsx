@@ -21,6 +21,7 @@ export default function ClientsPage() {
   const [editingClient, setEditingClient] = useState<any>(null);
   const [deletingClient, setDeletingClient] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [clientForNewPet, setClientForNewPet] = useState<any>(null);
 
   // Fetch clients from tRPC
   const { data: clients = [], isLoading, error } = trpc.clients.list.useQuery();
@@ -119,6 +120,11 @@ export default function ClientsPage() {
     } catch (error) {
       console.error("Error deleting client:", error);
     }
+  };
+
+  const handleAddNewPet = (client: any) => {
+    setClientForNewPet(client);
+    handleOpenModal(client.id);
   };
 
   return (
@@ -233,6 +239,10 @@ export default function ClientsPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleAddNewPet(client)}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Novo Pet
+                      </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleEditClient(client)}>
                         <Edit2 className="w-4 h-4 mr-2" />
                         Editar
