@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { AlertCircle, Loader2, Upload } from "lucide-react";
+import { AlertCircle, Loader2, Upload, History } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import {
   Select,
@@ -23,6 +23,46 @@ interface PetFormProps {
   onSuccess?: () => void;
 }
 
+const BREEDS = [
+  "Poodle",
+  "Shih Tzu",
+  "Golden Retriever",
+  "Labrador",
+  "Bulldog Francês",
+  "Dálmata",
+  "Pastor Alemão",
+  "Beagle",
+  "Cocker Spaniel",
+  "Dachshund",
+  "Pinscher",
+  "Schnauzer",
+  "Maltês",
+  "Yorkshire Terrier",
+  "Lhasa Apso",
+  "Pug",
+  "Boxer",
+  "Rottweiler",
+  "Husky",
+  "Outro",
+];
+
+const SIZES = [
+  { id: "p", label: "Pequeno (P)" },
+  { id: "m", label: "Médio (M)" },
+  { id: "g", label: "Grande (G)" },
+  { id: "gg", label: "Gigante (GG)" },
+];
+
+const COAT_TYPES = [
+  "Curta",
+  "Média",
+  "Longa",
+  "Crespa",
+  "Ondulada",
+  "Dupla",
+  "Áspera",
+];
+
 export function PetForm({
   isOpen,
   onClose,
@@ -34,6 +74,8 @@ export function PetForm({
   const [formData, setFormData] = useState({
     name: petData?.name || "",
     breed: petData?.breed || "",
+    size: petData?.size || "",
+    coatType: petData?.coatType || "",
     species: petData?.species || "",
     color: petData?.color || "",
     birthDate: petData?.birthDate || "",
@@ -78,7 +120,7 @@ export function PetForm({
       newErrors.name = "Nome do pet é obrigatório";
     }
 
-    if (!formData.breed.trim()) {
+    if (!formData.breed) {
       newErrors.breed = "Raça é obrigatória";
     }
 
@@ -108,73 +150,38 @@ export function PetForm({
     }
   };
 
-  const toggleVaccine = (vaccineId: string) => {
-    setFormData(prev => ({
+  const handleVaccineChange = (vaccineId: string) => {
+    setFormData((prev) => ({
       ...prev,
       vaccines: prev.vaccines.includes(vaccineId)
         ? prev.vaccines.filter((v: string) => v !== vaccineId)
-        : [...prev.vaccines, vaccineId]
+        : [...prev.vaccines, vaccineId],
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
-      const payload = {
+      const submitData = {
         ...formData,
-        photo: photoPreview,
         vaccines: JSON.stringify(formData.vaccines),
+        clientId,
       };
 
       if (isEditing && petId) {
-        await updateMutation.mutateAsync({
-          id: petId,
-          ...payload,
-        });
+        await updateMutation.mutateAsync({ id: petId, ...submitData });
       } else {
-        await createMutation.mutateAsync({
-          clientId: clientId,
-          ...payload,
-        });
+        await createMutation.mutateAsync(submitData);
       }
 
-      // Invalidate clients to refetch
-      await utils.clients.list.invalidate();
       await utils.clients.getById.invalidate({ id: clientId });
-
-      // Reset form
-      setFormData({
-        name: "",
-        breed: "",
-        species: "",
-        color: "",
-        birthDate: "",
-        weight: "",
-        microchip: "",
-        notes: "",
-        photo: "",
-        status: "active",
-        vaccines: [],
-        dewormed: false,
-        hasDiseasesOrAllergies: false,
-        diseasesOrAllergiesDescription: "",
-      });
-      setPhotoFile(null);
-      setPhotoPreview("");
-      setErrors({});
-      onClose();
-
-      if (onSuccess) {
-        onSuccess();
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Erro ao salvar pet";
-      setErrors({ submit: errorMessage });
+      onSuccess?.();
+      handleClose();
+    } catch (error: any) {
+      setErrors({ submit: error.message || "Erro ao salvar pet" });
     }
   };
 
@@ -182,6 +189,8 @@ export function PetForm({
     setFormData({
       name: "",
       breed: "",
+      size: "",
+      coatType: "",
       species: "",
       color: "",
       birthDate: "",
@@ -276,26 +285,123 @@ export function PetForm({
               )}
             </div>
 
-            {/* Breed Field */}
-            <div>
-              <Label htmlFor="breed" className="text-sm font-semibold text-foreground">
-                Raça *
-              </Label>
-              <Input
-                id="breed"
-                type="text"
-                placeholder="Ex: Poodle"
-                value={formData.breed}
-                onChange={(e) => {
-                  setFormData({ ...formData, breed: e.target.value });
-                  if (errors.breed) setErrors({ ...errors, breed: "" });
-                }}
-                className={errors.breed ? "border-red-500" : ""}
-                disabled={isLoading}
-              />
-              {errors.breed && (
-                <p className="text-xs text-red-600 mt-1">{errors.breed}</p>
-              )}
+            {/* Breed and Size - Side by Side */}
+            <div className="grid grid-cols-2 gap-4">
+              {/* Breed Field */}
+              <div>
+                <Label htmlFor="breed" className="text-sm font-semibold text-foreground">
+                  Raça *
+                </Label>
+                <Select
+                  value={formData.breed}
+                  onValueChange={(value) => {
+                    setFormData({ ...formData, breed: value });
+                    if (errors.breed) setErrors({ ...errors, breed: "" });
+                  }}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger className={errors.breed ? "border-red-500" : ""}>
+                    <SelectValue placeholder="Selecione a raça" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BREEDS.map((breed) => (
+                      <SelectItem key={breed} value={breed}>
+                        {breed}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.breed && (
+                  <p className="text-xs text-red-600 mt-1">{errors.breed}</p>
+                )}
+              </div>
+
+              {/* Size Field */}
+              <div>
+                <Label htmlFor="size" className="text-sm font-semibold text-foreground">
+                  Porte
+                </Label>
+                <Select
+                  value={formData.size}
+                  onValueChange={(value) => setFormData({ ...formData, size: value })}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o porte" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SIZES.map((size) => (
+                      <SelectItem key={size.id} value={size.id}>
+                        {size.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Color, Coat Type and Weight - Side by Side */}
+            <div className="grid grid-cols-3 gap-4">
+              {/* Color Field */}
+              <div>
+                <Label htmlFor="color" className="text-sm font-semibold text-foreground">
+                  Cor
+                </Label>
+                <Input
+                  id="color"
+                  type="text"
+                  placeholder="Ex: Branco"
+                  value={formData.color}
+                  onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  disabled={isLoading}
+                />
+              </div>
+
+              {/* Coat Type Field */}
+              <div>
+                <Label htmlFor="coatType" className="text-sm font-semibold text-foreground">
+                  Pelagem
+                </Label>
+                <Select
+                  value={formData.coatType}
+                  onValueChange={(value) => setFormData({ ...formData, coatType: value })}
+                  disabled={isLoading}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COAT_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Weight Field */}
+              <div>
+                <Label htmlFor="weight" className="text-sm font-semibold text-foreground">
+                  Peso (kg) *
+                </Label>
+                <Input
+                  id="weight"
+                  type="number"
+                  step="0.1"
+                  placeholder="Ex: 8.5"
+                  value={formData.weight}
+                  onChange={(e) => {
+                    setFormData({ ...formData, weight: e.target.value });
+                    if (errors.weight) setErrors({ ...errors, weight: "" });
+                  }}
+                  className={errors.weight ? "border-red-500" : ""}
+                  disabled={isLoading}
+                />
+                {errors.weight && (
+                  <p className="text-xs text-red-600 mt-1">{errors.weight}</p>
+                )}
+              </div>
             </div>
 
             {/* Species Field */}
@@ -312,51 +418,13 @@ export function PetForm({
                 disabled={isLoading}
               />
             </div>
-
-            {/* Color Field */}
-            <div>
-              <Label htmlFor="color" className="text-sm font-semibold text-foreground">
-                Cor
-              </Label>
-              <Input
-                id="color"
-                type="text"
-                placeholder="Ex: Branco"
-                value={formData.color}
-                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
-                disabled={isLoading}
-              />
-            </div>
-
-            {/* Weight Field */}
-            <div>
-              <Label htmlFor="weight" className="text-sm font-semibold text-foreground">
-                Peso (kg) *
-              </Label>
-              <Input
-                id="weight"
-                type="number"
-                step="0.1"
-                placeholder="Ex: 8.5"
-                value={formData.weight}
-                onChange={(e) => {
-                  setFormData({ ...formData, weight: e.target.value });
-                  if (errors.weight) setErrors({ ...errors, weight: "" });
-                }}
-                className={errors.weight ? "border-red-500" : ""}
-                disabled={isLoading}
-              />
-              {errors.weight && (
-                <p className="text-xs text-red-600 mt-1">{errors.weight}</p>
-              )}
-            </div>
           </div>
 
           {/* Informações Médicas */}
           <div className="space-y-3 border-b pb-4">
             <h3 className="font-semibold text-sm text-foreground">Informações Médicas</h3>
 
-            {/* Birth Date Field */}
+            {/* Birth Date */}
             <div>
               <Label htmlFor="birthDate" className="text-sm font-semibold text-foreground">
                 Data de Nascimento
@@ -370,7 +438,7 @@ export function PetForm({
               />
             </div>
 
-            {/* Microchip Field */}
+            {/* Microchip */}
             <div>
               <Label htmlFor="microchip" className="text-sm font-semibold text-foreground">
                 Microchip
@@ -385,54 +453,54 @@ export function PetForm({
               />
             </div>
 
-            {/* Vacinas */}
+            {/* Vaccines */}
             <div>
-              <Label className="text-sm font-semibold text-foreground block mb-2">
+              <Label className="text-sm font-semibold text-foreground mb-2 block">
                 Vacinas Atualizadas
               </Label>
               <div className="grid grid-cols-2 gap-3">
                 {availableVaccines.map((vaccine) => (
                   <div key={vaccine.id} className="flex items-center gap-2">
                     <Checkbox
-                      id={`vaccine-${vaccine.id}`}
+                      id={vaccine.id}
                       checked={formData.vaccines.includes(vaccine.id)}
-                      onCheckedChange={() => toggleVaccine(vaccine.id)}
+                      onCheckedChange={() => handleVaccineChange(vaccine.id)}
                       disabled={isLoading}
                     />
-                    <Label
-                      htmlFor={`vaccine-${vaccine.id}`}
-                      className="text-sm font-normal cursor-pointer"
+                    <label
+                      htmlFor={vaccine.id}
+                      className="text-sm font-medium text-foreground cursor-pointer"
                     >
                       {vaccine.label}
-                    </Label>
+                    </label>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Vermífugo */}
-            <div className="flex items-center gap-3 p-3 bg-accent/5 rounded-lg">
+            {/* Dewormed */}
+            <div className="flex items-center gap-3 bg-accent/5 p-3 rounded-lg">
               <Checkbox
                 id="dewormed"
                 checked={formData.dewormed}
                 onCheckedChange={(checked) => setFormData({ ...formData, dewormed: checked as boolean })}
                 disabled={isLoading}
               />
-              <Label htmlFor="dewormed" className="text-sm font-semibold cursor-pointer">
+              <Label htmlFor="dewormed" className="text-sm font-semibold text-foreground cursor-pointer">
                 Vermífugo em dia
               </Label>
             </div>
 
-            {/* Doenças/Alergias */}
+            {/* Diseases or Allergies */}
             <div className="space-y-2">
-              <div className="flex items-center gap-3 p-3 bg-accent/5 rounded-lg">
+              <div className="flex items-center gap-3 bg-accent/5 p-3 rounded-lg">
                 <Checkbox
                   id="hasDiseasesOrAllergies"
                   checked={formData.hasDiseasesOrAllergies}
                   onCheckedChange={(checked) => setFormData({ ...formData, hasDiseasesOrAllergies: checked as boolean })}
                   disabled={isLoading}
                 />
-                <Label htmlFor="hasDiseasesOrAllergies" className="text-sm font-semibold cursor-pointer">
+                <Label htmlFor="hasDiseasesOrAllergies" className="text-sm font-semibold text-foreground cursor-pointer">
                   Possui doenças ou alergias
                 </Label>
               </div>
@@ -440,20 +508,15 @@ export function PetForm({
               {formData.hasDiseasesOrAllergies && (
                 <div>
                   <Label htmlFor="diseasesDescription" className="text-sm font-semibold text-foreground">
-                    Descrição *
+                    Descrição
                   </Label>
                   <textarea
                     id="diseasesDescription"
-                    placeholder="Descreva as doenças ou alergias"
+                    placeholder="Descreva as doenças ou alergias..."
                     value={formData.diseasesOrAllergiesDescription}
-                    onChange={(e) => {
-                      setFormData({ ...formData, diseasesOrAllergiesDescription: e.target.value });
-                      if (errors.diseasesOrAllergiesDescription) {
-                        setErrors({ ...errors, diseasesOrAllergiesDescription: "" });
-                      }
-                    }}
+                    onChange={(e) => setFormData({ ...formData, diseasesOrAllergiesDescription: e.target.value })}
+                    className="w-full p-2 border border-border rounded-lg text-sm"
                     disabled={isLoading}
-                    className="w-full px-3 py-2 border border-input rounded-md text-sm"
                     rows={3}
                   />
                   {errors.diseasesOrAllergiesDescription && (
@@ -462,62 +525,56 @@ export function PetForm({
                 </div>
               )}
             </div>
+          </div>
 
-            {/* Notes Field */}
-            <div>
-              <Label htmlFor="notes" className="text-sm font-semibold text-foreground">
-                Observações
-              </Label>
-              <textarea
-                id="notes"
-                placeholder="Notas adicionais sobre o pet"
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                disabled={isLoading}
-                className="w-full px-3 py-2 border border-input rounded-md text-sm"
-                rows={3}
-              />
-            </div>
+          {/* Observações */}
+          <div className="space-y-3 border-b pb-4">
+            <h3 className="font-semibold text-sm text-foreground">Observações</h3>
+            <textarea
+              placeholder="Adicione observações sobre o pet..."
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full p-2 border border-border rounded-lg text-sm"
+              disabled={isLoading}
+              rows={3}
+            />
           </div>
 
           {/* Status */}
           <div className="space-y-3 border-b pb-4">
             <h3 className="font-semibold text-sm text-foreground">Status</h3>
-
-            <div>
-              <Label htmlFor="status" className="text-sm font-semibold text-foreground">
-                Status
-              </Label>
-              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })} disabled={isLoading}>
-                <SelectTrigger id="status">
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Ativo</SelectItem>
-                  <SelectItem value="inactive">Inativo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Select
+              value={formData.status}
+              onValueChange={(value) => setFormData({ ...formData, status: value })}
+              disabled={isLoading}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Ativo</SelectItem>
+                <SelectItem value="inactive">Inativo</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
+          {/* Buttons */}
+          <div className="flex gap-3 justify-end pt-4">
             <Button
               type="button"
-              onClick={handleClose}
               variant="outline"
-              className="flex-1"
+              onClick={handleClose}
               disabled={isLoading}
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-accent hover:bg-accent/90 text-foreground"
+              className="bg-accent hover:bg-accent/90 text-foreground"
               disabled={isLoading}
             >
               {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {isEditing ? "Atualizar" : "Criar"} Pet
+              {isEditing ? "Atualizar Pet" : "Criar Pet"}
             </Button>
           </div>
         </form>

@@ -110,22 +110,50 @@
 ## DELTA 6: Melhorias de UX e Funcionalidades de Pets
 
 ### Visibilidade de Pets
-- [ ] Adicionar botão "Novo Pet" visível no card do cliente (nos 3 pontinhos ou em "Pets Cadastrados")
-- [ ] Melhorar visibilidade da opção de cadastro de pets
+- [x] Adicionar botão "Novo Pet" visível no card do cliente (nos 3 pontinhos ou em "Pets Cadastrados")
+- [x] Melhorar visibilidade da opção de cadastro de pets
 
 ### Padronização de Ícones
-- [ ] Padronizar ícones com o estilo do painel (ícones com fundo dourado/accent)
+- [x] Padronizar ícones com o estilo do painel (ícones com fundo dourado/accent)
 - [ ] Aplicar padrão de ícones em todo o portal (Clientes, Agendamentos, Alunos, etc)
 
 ### Formulário de Pets - Upload de Foto
-- [ ] Adicionar campo de upload/alterar foto do pet no formulário de cadastro
-- [ ] Adicionar campo de upload/alterar foto do pet no formulário de edição
+- [x] Adicionar campo de upload/alterar foto do pet no formulário de cadastro
+- [x] Adicionar campo de upload/alterar foto do pet no formulário de edição
 - [ ] Integrar com storage S3 para salvar fotos
 
 ### Formulário de Pets - Informações de Saúde
-- [ ] Adicionar campo de vacinas (múltipla seleção: Raiva, Múltipla, Giardia, etc)
-- [ ] Adicionar campo Vermífugo (Sim/Não)
-- [ ] Adicionar campo Doenças/Alergias (Sim/Não com descrição condicional)
+- [x] Adicionar campo de vacinas (múltipla seleção: Raiva, Múltipla, Giardia, etc)
+- [x] Adicionar campo Vermífugo (Sim/Não)
+- [x] Adicionar campo Doenças/Alergias (Sim/Não com descrição condicional)
 - [ ] Atualizar schema do Drizzle para incluir novos campos
 - [ ] Atualizar procedures tRPC para retornar novos campos
 - [ ] Escrever testes vitest para novos campos
+
+
+## DELTA 7: Melhorias no Formulário de Pets e Modal de Histórico
+
+### Formulário de Pets - Campos Organizados
+- [ ] Converter campo "Raça" para select/dropdown (evitar erros de digitação)
+- [ ] Adicionar campo "Porte" como select/dropdown (P, M, G, GG)
+- [ ] Adicionar campo "Pelagem" como select/dropdown (Curta, Média, Longa, Crespa, etc)
+- [ ] Organizar layout: Raça e Porte lado a lado
+- [ ] Organizar layout: Cor, Pelagem e Peso lado a lado
+- [ ] Atualizar schema do Drizzle para incluir campos "porte" e "pelagem"
+- [ ] Atualizar procedures tRPC para retornar novos campos
+
+### Modal de Histórico de Visitas
+- [ ] Criar componente PetHistoryModal
+- [ ] Adicionar botão "Ver Histórico" em cada card de pet
+- [ ] Implementar modal com dados de visitas: data, serviço, profissional, status, observações
+- [ ] Exibir fotos antes/depois quando disponíveis
+- [ ] Exibir intercorrências
+- [ ] Exibir vínculo com pacote e valor
+- [ ] Usar dados disponíveis sem alterar regras de negócio
+
+### Padronização de Ícones - Correção
+- [ ] Substituir ícones simples por ícones com fundo accent (estilo painel)
+- [ ] Usar símbolo ∞ (infinito) para botão "Todos"
+- [ ] Aplicar ícones padronizados em filtros de Clientes
+- [ ] Aplicar ícones padronizados em filtros de Agendamentos
+- [ ] Aplicar ícones padronizados em filtros de Alunos

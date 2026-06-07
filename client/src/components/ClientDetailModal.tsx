@@ -6,6 +6,7 @@ import { X, Mail, Phone, MapPin, Calendar, Weight, Heart, Edit2, Trash2, Plus, U
 import { Spinner } from "@/components/ui/spinner";
 import { AlertCircle } from "lucide-react";
 import { PetForm } from "./PetForm";
+import { PetHistoryModal } from "./PetHistoryModal";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 import { trpc } from "@/lib/trpc";
 
@@ -62,6 +63,8 @@ export function ClientDetailModal({
   const [petFormOpen, setPetFormOpen] = useState(false);
   const [editingPet, setEditingPet] = useState<Pet | null>(null);
   const [deletingPet, setDeletingPet] = useState<Pet | null>(null);
+  const [historyPetId, setHistoryPetId] = useState<string | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const deletePetMutation = trpc.pets.delete.useMutation();
   const utils = trpc.useUtils();
@@ -325,6 +328,18 @@ export function ClientDetailModal({
 
                         <div className="flex gap-2 justify-end">
                           <Button
+                            onClick={() => {
+                              setHistoryPetId(pet.id);
+                              setHistoryOpen(true);
+                            }}
+                            variant="outline"
+                            size="sm"
+                            className="gap-2"
+                          >
+                            <Calendar className="w-4 h-4" />
+                            Ver Histórico
+                          </Button>
+                          <Button
                             onClick={() => handleEditPet(pet)}
                             variant="outline"
                             size="sm"
@@ -385,6 +400,19 @@ export function ClientDetailModal({
           onConfirm={handleDeletePet}
           onClose={() => setDeletingPet(null)}
           isLoading={deletePetMutation.isPending}
+        />
+      )}
+
+      {/* Pet History Modal */}
+      {historyOpen && historyPetId && client && (
+        <PetHistoryModal
+          isOpen={historyOpen}
+          onClose={() => {
+            setHistoryOpen(false);
+            setHistoryPetId(null);
+          }}
+          petName={client.pets.find(p => p.id === historyPetId)?.name || "Pet"}
+          visits={[]}
         />
       )}
     </>
