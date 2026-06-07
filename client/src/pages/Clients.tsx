@@ -46,11 +46,11 @@ export default function ClientsPage() {
     : null;
 
   const filters = [
-    { id: "todos", label: "Todos", icon: "\u2022" },
-    { id: "vips", label: "VIPs", icon: "\u2605" },
-    { id: "modelo", label: "Modelo", icon: "\u2713" },
-    { id: "recentes", label: "Recentes", icon: "\u23F3" },
-    { id: "inativos", label: "Inativos (30d)", icon: "\u26A0" },
+    { id: "todos", label: "Todos", icon: "∞" },
+    { id: "vips", label: "VIPs", icon: "★" },
+    { id: "modelo", label: "Modelo", icon: "✓" },
+    { id: "recentes", label: "Recentes", icon: "⏳" },
+    { id: "inativos", label: "Inativos (30d)", icon: "⚠" },
   ];
 
   const filteredClients = clients.filter((client: any) => {
@@ -333,7 +333,7 @@ export default function ClientsPage() {
                       onClick={() => handleOpenModal(client.id)}
                       className="text-xs text-accent hover:text-accent/80 font-bold transition-colors inline-flex items-center gap-1 whitespace-nowrap"
                     >
-                      Ver Histórico →
+                      Ver Detalhes →
                     </button>
                   </div>
                 </div>

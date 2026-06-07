@@ -165,12 +165,6 @@ export function ClientDetailModal({
 
               {/* Client Details Grid */}
               <div className="grid grid-cols-2 gap-4">
-                {client.cpf && (
-                  <div className="bg-accent/5 p-3 rounded-lg">
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">CPF</p>
-                    <p className="text-sm font-medium text-foreground">{client.cpf}</p>
-                  </div>
-                )}
                 {client.status && (
                   <div className="bg-accent/5 p-3 rounded-lg">
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Status</p>
@@ -272,7 +266,13 @@ export function ClientDetailModal({
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                          <div>
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
+                              Raça
+                            </p>
+                            <p className="text-sm font-medium text-foreground">{pet.breed}</p>
+                          </div>
                           {pet.color && (
                             <div>
                               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
@@ -292,19 +292,11 @@ export function ClientDetailModal({
                           {pet.birthDate && (
                             <div>
                               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
-                                Data de Nascimento
+                                Nascimento
                               </p>
                               <p className="text-sm font-medium text-foreground">
                                 {new Date(pet.birthDate).toLocaleDateString('pt-BR')}
                               </p>
-                            </div>
-                          )}
-                          {pet.microchip && (
-                            <div className="col-span-2 md:col-span-3">
-                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
-                                Microchip
-                              </p>
-                              <p className="text-sm font-medium text-foreground font-mono">{pet.microchip}</p>
                             </div>
                           )}
                         </div>
@@ -326,7 +318,7 @@ export function ClientDetailModal({
                           </div>
                         )}
 
-                        <div className="flex gap-2 justify-end">
+                        <div className="flex gap-2 justify-end flex-wrap">
                           <Button
                             onClick={() => {
                               setHistoryPetId(pet.id);
@@ -336,8 +328,8 @@ export function ClientDetailModal({
                             size="sm"
                             className="gap-2"
                           >
-                            <Calendar className="w-4 h-4" />
-                            Ver Histórico
+                            <FileText className="w-4 h-4" />
+                            Detalhes
                           </Button>
                           <Button
                             onClick={() => handleEditPet(pet)}

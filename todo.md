@@ -134,26 +134,26 @@
 ## DELTA 7: Melhorias no Formulário de Pets e Modal de Histórico
 
 ### Formulário de Pets - Campos Organizados
-- [ ] Converter campo "Raça" para select/dropdown (evitar erros de digitação)
-- [ ] Adicionar campo "Porte" como select/dropdown (P, M, G, GG)
-- [ ] Adicionar campo "Pelagem" como select/dropdown (Curta, Média, Longa, Crespa, etc)
-- [ ] Organizar layout: Raça e Porte lado a lado
-- [ ] Organizar layout: Cor, Pelagem e Peso lado a lado
-- [ ] Atualizar schema do Drizzle para incluir campos "porte" e "pelagem"
-- [ ] Atualizar procedures tRPC para retornar novos campos
+- [x] Converter campo "Raça" para select/dropdown (evitar erros de digitação)
+- [x] Adicionar campo "Porte" como select/dropdown (P, M, G, GG)
+- [x] Adicionar campo "Pelagem" como select/dropdown (Curta, Média, Longa, Crespa, etc)
+- [x] Organizar layout: Raça e Porte lado a lado
+- [x] Organizar layout: Cor, Pelagem e Peso lado a lado
+- [x] Atualizar schema do Drizzle para incluir campos "porte" e "pelagem"
+- [x] Atualizar procedures tRPC para retornar novos campos
 
 ### Modal de Histórico de Visitas
-- [ ] Criar componente PetHistoryModal
-- [ ] Adicionar botão "Ver Histórico" em cada card de pet
-- [ ] Implementar modal com dados de visitas: data, serviço, profissional, status, observações
-- [ ] Exibir fotos antes/depois quando disponíveis
-- [ ] Exibir intercorrências
-- [ ] Exibir vínculo com pacote e valor
-- [ ] Usar dados disponíveis sem alterar regras de negócio
+- [x] Criar componente PetHistoryModal
+- [x] Adicionar botão "Ver Histórico" em cada card de pet
+- [x] Implementar modal com dados de visitas: data, serviço, profissional, status, observações
+- [x] Exibir fotos antes/depois quando disponíveis
+- [x] Exibir intercorrências
+- [x] Exibir vínculo com pacote e valor
+- [x] Usar dados disponíveis sem alterar regras de negócio
 
 ### Padronização de Ícones - Correção
-- [ ] Substituir ícones simples por ícones com fundo accent (estilo painel)
-- [ ] Usar símbolo ∞ (infinito) para botão "Todos"
-- [ ] Aplicar ícones padronizados em filtros de Clientes
+- [x] Substituir ícones simples por ícones com fundo accent (estilo painel)
+- [x] Usar símbolo ∞ (infinito) para botão "Todos"
+- [x] Aplicar ícones padronizados em filtros de Clientes
 - [ ] Aplicar ícones padronizados em filtros de Agendamentos
 - [ ] Aplicar ícones padronizados em filtros de Alunos
