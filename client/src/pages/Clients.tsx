@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { Plus, MoreVertical, AlertCircle, Edit2, Trash2 } from "lucide-react";
+import { Plus, MoreVertical, AlertCircle, Edit2, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { ClientDetailModal } from "@/components/ClientDetailModal";
 import { ClientForm } from "@/components/ClientForm";
@@ -295,6 +295,34 @@ export default function ClientsPage() {
                 <div className="text-5xl mb-3 group-hover:scale-110 transition-transform">+</div>
                 <p className="text-sm font-bold text-foreground">Adicionar Novo Cliente</p>
                 <p className="text-xs text-muted-foreground mt-2">Cadastre um novo perfil e seus pets</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Footer Navigation */}
+        {!isLoading && !error && filteredClients.length > 0 && (
+          <div className="mt-12 pt-8 border-t border-border flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>👥 {filteredClients.length} clientes encontrados</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground">Itens por página: <span className="font-semibold">12</span></span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => window.history.back()}
+                  className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-accent transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group"
+                  title="Voltar para página anterior"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => window.history.forward()}
+                  className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-accent transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group"
+                  title="Avançar para próxima página"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
               </div>
             </div>
           </div>

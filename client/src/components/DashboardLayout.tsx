@@ -227,8 +227,8 @@ export default function DashboardLayout({
         </div>
 
         {/* Navigation Buttons */}
-        <div className="bg-background border-b border-border px-6 py-3 flex items-center justify-end gap-3">
-          <div className="flex items-center gap-2 bg-muted/30 rounded-lg p-1">
+        <div className="bg-background px-6 py-3 flex items-center justify-end gap-3">
+          <div className="flex items-center gap-2 bg-transparent rounded-lg p-1">
             <button
               onClick={() => window.history.back()}
               className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-accent transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group"
