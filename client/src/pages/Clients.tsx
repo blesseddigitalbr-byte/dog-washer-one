@@ -395,10 +395,8 @@ export default function ClientsPage() {
       <ClientDetailModal
         isOpen={!!selectedClientId}
         onClose={handleCloseModal}
-        client={selectedClient || null}
-        isLoading={isLoadingDetail}
-        error={clientDetailError}
-        onEditClient={handleEditClient}
+        clientId={selectedClientId || ""}
+        onEditClient={() => handleEditClient(selectedClient)}
       />
 
       {/* Client Form Modal */}

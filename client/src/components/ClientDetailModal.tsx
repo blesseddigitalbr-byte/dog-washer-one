@@ -19,46 +19,35 @@ interface Pet {
   color?: string;
   weight?: number;
   birthDate?: string;
-  microchip?: string;
-  notes?: string;
   photo?: string;
-  status?: string;
   is_vip?: boolean;
   is_model_dog?: boolean;
+  status?: string;
+  size?: string;
+  gender?: string;
 }
 
 interface Client {
   id: string;
   name: string;
-  email: string;
-  phone: string;
-  cpf?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  isVip?: boolean;
-  status?: string;
-  totalSpent?: number;
-  lastVisit?: string;
+  email?: string;
+  phone?: string;
+  is_vip?: boolean;
+  is_model_client?: boolean;
   pets: Pet[];
 }
 
 interface ClientDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  client: Client | null;
-  isLoading?: boolean;
-  error?: Error | null;
-  onEditClient?: (client: Client) => void;
+  clientId: string;
+  onEditClient?: () => void;
 }
 
 export function ClientDetailModal({
   isOpen,
   onClose,
-  client,
-  isLoading = false,
-  error = null,
+  clientId,
   onEditClient,
 }: ClientDetailModalProps) {
   const [petFormOpen, setPetFormOpen] = useState(false);
@@ -69,6 +58,11 @@ export function ClientDetailModal({
 
   const deletePetMutation = trpc.pets.delete.useMutation();
   const utils = trpc.useUtils();
+
+  const { data: client, isLoading, error } = trpc.clients.getById.useQuery(
+    { id: clientId },
+    { enabled: isOpen }
+  );
 
   const handleEditPet = (pet: Pet) => {
     setEditingPet(pet);
@@ -129,44 +123,44 @@ export function ClientDetailModal({
             </div>
           )}
 
-          {!isLoading && !error && client && (
+          {client && (
             <div className="space-y-6">
-              {/* Client Header */}
-              <div className="flex items-start gap-4 pb-6 border-b border-accent/10">
-                <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center text-3xl font-bold text-accent flex-shrink-0">
-                  {(client.name || (client as any).nome)?.charAt(0).toUpperCase()}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <h2 className="text-2xl font-bold text-foreground">{client.name || (client as any).nome}</h2>
-                    {(client.isVip || (client as any).is_vip) && (
-                      <span className="px-2 py-1 bg-accent/10 rounded-full text-xs font-bold text-accent">
-                        ⭐ VIP
-                      </span>
-                    )}
-                    {((client as any).is_model_dog) && (
-                      <span className="px-2 py-1 bg-purple-100 rounded-full text-xs font-bold text-purple-700">
-                        🎯 Modelo
-                      </span>
-                    )}
+              {/* Client Info */}
+              <div className="flex items-start justify-between pb-4 border-b border-accent/10">
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center text-2xl font-bold text-accent flex-shrink-0">
+                    {client.name.charAt(0).toUpperCase()}
                   </div>
-                  <div className="space-y-2 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
-                      <a href={`mailto:${client.email}`} className="hover:text-accent transition-colors">
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-xl font-bold text-foreground">{client.name}</h3>
+                      {client.is_vip && (
+                        <span className="px-3 py-1 bg-accent/10 rounded-full text-xs font-bold text-accent">
+                          ⭐ VIP
+                        </span>
+                      )}
+                      {client.is_model_client && (
+                        <span className="px-3 py-1 bg-purple-100 rounded-full text-xs font-bold text-purple-700">
+                          🎯 Modelo
+                        </span>
+                      )}
+                    </div>
+                    {client.email && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+                        <Mail className="w-4 h-4" />
                         {client.email}
-                      </a>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4" />
-                      <a href={`tel:${client.phone}`} className="hover:text-accent transition-colors">
-                        {client.phone || "Não informado"}
-                      </a>
-                    </div>
+                      </div>
+                    )}
+                    {client.phone && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Phone className="w-4 h-4" />
+                        {client.phone}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <Button
-                  onClick={() => onEditClient?.(client)}
+                  onClick={onEditClient}
                   variant="outline"
                   size="sm"
                   className="gap-2"
@@ -176,53 +170,12 @@ export function ClientDetailModal({
                 </Button>
               </div>
 
-              {/* Client Details Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                {client.status && (
-                  <div className="bg-accent/5 p-3 rounded-lg">
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Status</p>
-                    <p className="text-sm font-medium text-foreground capitalize">{client.status}</p>
-                  </div>
-                )}
-                {client.address && (
-                  <div className="bg-accent/5 p-3 rounded-lg col-span-2">
-                    <div className="flex items-center gap-2 mb-1">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Endereço</p>
-                    </div>
-                    <p className="text-sm font-medium text-foreground">{client.address}</p>
-                    {(client.city || client.state || client.zipCode) && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {[client.city, client.state, client.zipCode].filter(Boolean).join(", ")}
-                      </p>
-                    )}
-                  </div>
-                )}
-                {client.totalSpent !== undefined && (
-                  <div className="bg-accent/5 p-3 rounded-lg">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Total Gasto</p>
-                    <p className="text-sm font-medium text-foreground">
-                      R$ {typeof client.totalSpent === 'number' ? client.totalSpent.toFixed(2) : '0.00'}
-                    </p>
-                  </div>
-                )}
-                {client.lastVisit && (
-                  <div className="bg-accent/5 p-3 rounded-lg">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Última Visita</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {new Date(client.lastVisit).toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                )}
-              </div>
-
               {/* Pets Section */}
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                    <Heart className="w-5 h-5 text-accent" />
-                    Pets Cadastrados ({client.pets.length})
-                  </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    ❤️ Pets Cadastrados ({client.pets.length})
+                  </h4>
                   <Button
                     onClick={() => {
                       setEditingPet(null);
@@ -238,39 +191,36 @@ export function ClientDetailModal({
 
                 {client.pets.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    <p>Nenhum pet cadastrado para este cliente</p>
+                    <p>Nenhum pet cadastrado</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {client.pets.map((pet) => (
-                      <Card
-                        key={pet.id}
-                        className="p-5 border-l-4 border-l-accent hover:shadow-md transition-shadow"
-                      >
+                    {client.pets.map((pet: Pet) => (
+                      <Card key={pet.id} className="border-l-4 border-l-accent p-4">
+                        {/* Pet Header with Photo and Basic Info */}
                         <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-start gap-4">
+                          <div className="flex items-center gap-4">
                             {pet.photo ? (
                               <img
                                 src={pet.photo}
                                 alt={pet.name}
-                                className="w-14 h-14 rounded-full object-cover flex-shrink-0"
+                                className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
                               />
                             ) : (
-                              <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center text-xl font-bold text-accent flex-shrink-0">
+                              <div className="w-20 h-20 rounded-lg bg-accent/10 flex items-center justify-center text-2xl font-bold text-accent flex-shrink-0">
                                 {pet.name.charAt(0).toUpperCase()}
                               </div>
                             )}
                             <div>
-                              <h4 className="text-lg font-bold text-foreground">{pet.name}</h4>
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="text-lg font-bold text-foreground">{pet.name}</h4>
+                                {(pet as any).gender && (
+                                  <span className="text-lg">
+                                    {(pet as any).gender === 'M' ? '♂️' : '♀️'}
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-sm text-muted-foreground">{pet.breed}</p>
-                              {(pet as any).size && (
-                                <p className="text-xs text-muted-foreground">Porte: {(pet as any).size}</p>
-                              )}
-                              {pet.birthDate && (
-                                <p className="text-xs text-muted-foreground">
-                                  {new Date(pet.birthDate).toLocaleDateString('pt-BR')}
-                                </p>
-                              )}
                             </div>
                           </div>
                           <div className="flex gap-2 flex-wrap justify-end">
@@ -284,43 +234,46 @@ export function ClientDetailModal({
                                 🎯 Modelo
                               </span>
                             )}
-                            {pet.status && (
-                              <span className="px-3 py-1 bg-blue-100 rounded-full text-xs font-bold text-blue-700 capitalize">
-                                {pet.status}
-                              </span>
-                            )}
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                        {/* Pet Details Grid */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 p-3 bg-accent/5 rounded-lg">
                           <div>
-                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
-                              Raça
+                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                              🐕 Raça
                             </p>
                             <p className="text-sm font-medium text-foreground">{pet.breed}</p>
                           </div>
-                          {pet.color && (
+                          {(pet as any).size && (
                             <div>
-                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
-                                Cor
+                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                                📏 Porte
                               </p>
-                              <p className="text-sm font-medium text-foreground">{pet.color}</p>
+                              <p className="text-sm font-medium text-foreground">{(pet as any).size}</p>
                             </div>
                           )}
                           {pet.birthDate && (
                             <div>
-                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
-                                Nascimento
+                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                                📅 Nascimento
                               </p>
                               <p className="text-sm font-medium text-foreground">
                                 {new Date(pet.birthDate).toLocaleDateString('pt-BR')}
                               </p>
                             </div>
                           )}
+                          {pet.color && (
+                            <div>
+                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                                🎨 Cor
+                              </p>
+                              <p className="text-sm font-medium text-foreground">{pet.color}</p>
+                            </div>
+                          )}
                         </div>
 
-
-
+                        {/* Action Buttons */}
                         <div className="flex gap-2 justify-end flex-wrap">
                           <Button
                             onClick={() => {
@@ -350,7 +303,7 @@ export function ClientDetailModal({
                             className="gap-2 text-red-600 hover:text-red-700"
                           >
                             <Trash2 className="w-4 h-4" />
-                            Deletar
+                            Excluir
                           </Button>
                         </div>
                       </Card>
@@ -406,7 +359,7 @@ export function ClientDetailModal({
             setHistoryOpen(false);
             setHistoryPetId(null);
           }}
-          petName={client.pets.find(p => p.id === historyPetId)?.name || "Pet"}
+          petName={client.pets.find((p: Pet) => p.id === historyPetId)?.name || "Pet"}
           visits={[]}
         />
       )}
