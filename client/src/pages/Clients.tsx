@@ -221,7 +221,7 @@ export default function ClientsPage() {
                   </DropdownMenu>
                 </div>
 
-                {/* Client Header - Avatar + Name + Email */}
+                {/* Client Header - Avatar + Name + Email + Phone */}
                 <div className="flex items-start gap-3 mb-4">
                   <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center text-lg font-bold text-accent flex-shrink-0">
                     {getInitial(client.name || client.nome)}
@@ -229,6 +229,9 @@ export default function ClientsPage() {
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-foreground text-sm truncate">{client.name || client.nome}</h3>
                     <p className="text-xs text-muted-foreground truncate">{client.email}</p>
+                    <p className="text-xs text-muted-foreground truncate mt-1 flex items-center gap-1">
+                      📱 {client.phone || "Não informado"}
+                    </p>
                   </div>
                 </div>
 
@@ -270,12 +273,6 @@ export default function ClientsPage() {
 
                 {/* Contact + Link */}
                 <div className="mt-auto">
-                  <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wide">
-                    Contato
-                  </p>
-                  <p className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1">
-                    📱 {client.phone || "Não informado"}
-                  </p>
                   <button
                     onClick={() => handleOpenModal(client.id)}
                     className="text-xs text-accent hover:text-accent/80 font-bold transition-colors inline-flex items-center gap-1"
