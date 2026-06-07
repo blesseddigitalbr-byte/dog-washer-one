@@ -241,8 +241,8 @@ export function PetForm({
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isEditing ? "Editar Pet" : "Novo Pet"}</DialogTitle>
+        <DialogHeader className="text-center">
+          <DialogTitle className="text-center">{isEditing ? "Editar Pet" : "Novo Pet"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">

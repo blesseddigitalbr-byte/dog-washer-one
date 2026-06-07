@@ -34,8 +34,7 @@ export function DeleteConfirmationDialog({
             <AlertDialogTitle className="text-red-600">{title}</AlertDialogTitle>
           </div>
           <AlertDialogDescription className="mt-2">
-            <p className="text-foreground font-semibold mb-1">Tem certeza que deseja deletar?</p>
-            <p className="text-muted-foreground">{description}</p>
+            <p className="text-foreground font-semibold mb-1">{description}</p>
             <p className="text-sm text-red-600 mt-2">
               <strong>{itemName}</strong> será removido permanentemente.
             </p>

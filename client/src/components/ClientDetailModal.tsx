@@ -390,7 +390,7 @@ export function ClientDetailModal({
         <DeleteConfirmationDialog
           isOpen={!!deletingPet}
           title="Deletar Pet"
-          description="Tem certeza que deseja deletar este pet?"
+          description="Tem certeza que deseja deletar esse pet?"
           itemName={deletingPet.name}
           onConfirm={handleDeletePet}
           onClose={() => setDeletingPet(null)}
