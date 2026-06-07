@@ -272,24 +272,44 @@ export default function ClientsPage() {
 
                 {/* Pets */}
                 <div className="mb-4 pb-4 border-b border-border">
-                  <p className="text-xs font-bold text-muted-foreground mb-2 uppercase tracking-wide">
-                    Pets Cadastrados ({client.pets?.length || 0})
+                  <p className="text-xs font-bold text-muted-foreground mb-3 uppercase tracking-wide">
+                    🐾 Pets Cadastrados
                   </p>
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex flex-wrap gap-3">
                     {client.pets && client.pets.length > 0 ? (
                       client.pets.map((pet: any) => (
                         <div
                           key={pet.id}
-                          className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center text-xs font-bold text-accent hover:bg-accent/20 transition-colors cursor-pointer"
+                          className="inline-flex items-center gap-2 px-3 py-2 bg-accent/10 rounded-full hover:bg-accent/20 transition-colors cursor-pointer"
                           title={`${pet.name} (${pet.breed})`}
                         >
-                          {pet.name.charAt(0).toUpperCase()}
+                          {pet.photo ? (
+                            <img
+                              src={pet.photo}
+                              alt={pet.name}
+                              className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+                            />
+                          ) : (
+                            <span className="w-6 h-6 rounded-full bg-accent/30 flex items-center justify-center text-xs font-bold text-accent flex-shrink-0">
+                              {pet.name.charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                          <div className="flex flex-col leading-tight">
+                            <span className="text-xs font-semibold text-accent truncate">{pet.name}</span>
+                            {pet.breed && <span className="text-xs text-accent/70 truncate">{pet.breed}</span>}
+                          </div>
                         </div>
                       ))
                     ) : (
                       <p className="text-xs text-muted-foreground italic">Sem pets cadastrados</p>
                     )}
                   </div>
+                </div>
+
+                {/* Última Visita */}
+                <div className="mb-4 pb-4 border-b border-border">
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Última Visita</p>
+                  <p className="text-sm font-semibold text-foreground mt-1">{formatDate(client.last_visit)}</p>
                 </div>
 
                 {/* Contact + Link */}

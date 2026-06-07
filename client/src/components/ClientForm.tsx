@@ -1,12 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { AlertCircle, Loader2, MapPin } from "lucide-react";
 import { trpc } from "@/lib/trpc";
-import { useEffect } from "react";
 
 interface ClientFormProps {
   isOpen: boolean;
@@ -28,43 +27,46 @@ export function ClientForm({
     email: clientData?.email || "",
     phone: clientData?.phone || "",
     cpf: clientData?.cpf || "",
+    zipCode: clientData?.zipCode || "",
     address: clientData?.address || "",
+    number: clientData?.number || "",
+    complement: clientData?.complement || "",
     city: clientData?.city || "",
     state: clientData?.state || "",
-    zipCode: clientData?.zipCode || "",
     isVip: clientData?.isVip || false,
     isModelDog: clientData?.isModelDog || false,
-    status: clientData?.status || "active",
   });
-
-  // Atualizar formData quando clientData mudar (para pré-preenchimento ao editar)
-  useEffect(() => {
-    if (clientData) {
-      setFormData({
-        name: clientData.name || "",
-        email: clientData.email || "",
-        phone: clientData.phone || "",
-        cpf: clientData.cpf || "",
-        address: clientData.address || "",
-        city: clientData.city || "",
-        state: clientData.state || "",
-        zipCode: clientData.zipCode || "",
-        isVip: clientData.isVip || false,
-        isModelDog: clientData.isModelDog || false,
-        status: clientData.status || "active",
-      });
-    }
-  }, [clientData, isOpen]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loadingCep, setLoadingCep] = useState(false);
 
   const createMutation = trpc.clients.create.useMutation();
   const updateMutation = trpc.clients.update.useMutation();
   const utils = trpc.useUtils();
 
   const isEditing = !!clientId;
-  const isLoading = createMutation.isPending || updateMutation.isPending;
+  const isLoading = createMutation.isPending || updateMutation.isPending || loadingCep;
+
+  // Atualizar formData quando clientData mudar (para pré-preenchimento ao editar)
+  useEffect(() => {
+    if (clientData && isOpen) {
+      setFormData({
+        name: clientData.name || "",
+        email: clientData.email || "",
+        phone: clientData.phone || "",
+        cpf: clientData.cpf || "",
+        zipCode: clientData.zipCode || "",
+        address: clientData.address || "",
+        number: clientData.number || "",
+        complement: clientData.complement || "",
+        city: clientData.city || "",
+        state: clientData.state || "",
+        isVip: clientData.isVip || false,
+        isModelDog: clientData.isModelDog || false,
+      });
+    }
+  }, [clientData, isOpen]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -91,6 +93,36 @@ export function ClientForm({
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleCepChange = async (cep: string) => {
+    setFormData({ ...formData, zipCode: cep });
+
+    // Remove formatação e valida CEP
+    const cleanCep = cep.replace(/\D/g, "");
+    if (cleanCep.length === 8) {
+      setLoadingCep(true);
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+        const data = await response.json();
+
+        if (!data.erro) {
+          setFormData((prev) => ({
+            ...prev,
+            address: data.logradouro || "",
+            city: data.localidade || "",
+            state: data.uf || "",
+            complement: data.complemento || "",
+          }));
+        } else {
+          setErrors((prev) => ({ ...prev, zipCode: "CEP não encontrado" }));
+        }
+      } catch (error) {
+        setErrors((prev) => ({ ...prev, zipCode: "Erro ao buscar CEP" }));
+      } finally {
+        setLoadingCep(false);
+      }
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -102,11 +134,9 @@ export function ClientForm({
 
     try {
       if (isEditing && clientId) {
-        // Para edição, enviar apenas os campos que podem ser alterados
-        const { isModelDog, ...updateData } = formData;
         await updateMutation.mutateAsync({
           id: clientId,
-          ...updateData,
+          ...formData,
         });
       } else {
         await createMutation.mutateAsync(formData);
@@ -121,13 +151,14 @@ export function ClientForm({
         email: "",
         phone: "",
         cpf: "",
+        zipCode: "",
         address: "",
+        number: "",
+        complement: "",
         city: "",
         state: "",
-        zipCode: "",
         isVip: false,
         isModelDog: false,
-        status: "active",
       });
       setErrors({});
       onClose();
@@ -149,13 +180,14 @@ export function ClientForm({
       email: "",
       phone: "",
       cpf: "",
+      zipCode: "",
       address: "",
+      number: "",
+      complement: "",
       city: "",
       state: "",
-      zipCode: "",
       isVip: false,
       isModelDog: false,
-      status: "active",
     });
     setErrors({});
     onClose();
@@ -168,7 +200,7 @@ export function ClientForm({
           <DialogTitle>{isEditing ? "Editar Cliente" : "Novo Cliente"}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Submit Error */}
           {errors.submit && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2">
@@ -177,77 +209,30 @@ export function ClientForm({
             </div>
           )}
 
-          {/* Informações Pessoais */}
-          <div className="space-y-3 border-b pb-4">
-            <h3 className="font-semibold text-sm text-foreground">Informações Pessoais</h3>
+          {/* Nome Completo */}
+          <div>
+            <Label htmlFor="name" className="text-sm font-semibold text-foreground">
+              Nome Completo *
+            </Label>
+            <Input
+              id="name"
+              type="text"
+              placeholder="Nome do cliente"
+              value={formData.name}
+              onChange={(e) => {
+                setFormData({ ...formData, name: e.target.value });
+                if (errors.name) setErrors({ ...errors, name: "" });
+              }}
+              className={errors.name ? "border-red-500 mt-1" : "mt-1"}
+              disabled={isLoading}
+            />
+            {errors.name && (
+              <p className="text-xs text-red-600 mt-1">{errors.name}</p>
+            )}
+          </div>
 
-            {/* Nome Field */}
-            <div>
-              <Label htmlFor="name" className="text-sm font-semibold text-foreground">
-                Nome *
-              </Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Ex: Helena Silveira"
-                value={formData.name}
-                onChange={(e) => {
-                  setFormData({ ...formData, name: e.target.value });
-                  if (errors.name) setErrors({ ...errors, name: "" });
-                }}
-                className={errors.name ? "border-red-500" : ""}
-                disabled={isLoading}
-              />
-              {errors.name && (
-                <p className="text-xs text-red-600 mt-1">{errors.name}</p>
-              )}
-            </div>
-
-            {/* Email Field */}
-            <div>
-              <Label htmlFor="email" className="text-sm font-semibold text-foreground">
-                Email *
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Ex: helena@email.com"
-                value={formData.email}
-                onChange={(e) => {
-                  setFormData({ ...formData, email: e.target.value });
-                  if (errors.email) setErrors({ ...errors, email: "" });
-                }}
-                className={errors.email ? "border-red-500" : ""}
-                disabled={isLoading}
-              />
-              {errors.email && (
-                <p className="text-xs text-red-600 mt-1">{errors.email}</p>
-              )}
-            </div>
-
-            {/* Phone Field */}
-            <div>
-              <Label htmlFor="phone" className="text-sm font-semibold text-foreground">
-                Telefone *
-              </Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="Ex: (11) 99999-0001"
-                value={formData.phone}
-                onChange={(e) => {
-                  setFormData({ ...formData, phone: e.target.value });
-                  if (errors.phone) setErrors({ ...errors, phone: "" });
-                }}
-                className={errors.phone ? "border-red-500" : ""}
-                disabled={isLoading}
-              />
-              {errors.phone && (
-                <p className="text-xs text-red-600 mt-1">{errors.phone}</p>
-              )}
-            </div>
-
-            {/* CPF Field */}
+          {/* CPF e Telefone */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="cpf" className="text-sm font-semibold text-foreground">
                 CPF
@@ -255,73 +240,73 @@ export function ClientForm({
               <Input
                 id="cpf"
                 type="text"
-                placeholder="Ex: 000.000.000-00"
+                placeholder="000.000.000-00"
                 value={formData.cpf}
                 onChange={(e) => {
                   setFormData({ ...formData, cpf: e.target.value });
                   if (errors.cpf) setErrors({ ...errors, cpf: "" });
                 }}
-                className={errors.cpf ? "border-red-500" : ""}
+                className={errors.cpf ? "border-red-500 mt-1" : "mt-1"}
                 disabled={isLoading}
               />
               {errors.cpf && (
                 <p className="text-xs text-red-600 mt-1">{errors.cpf}</p>
               )}
             </div>
+
+            <div>
+              <Label htmlFor="phone" className="text-sm font-semibold text-foreground">
+                Telefone *
+              </Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="(11) 99999-9999"
+                value={formData.phone}
+                onChange={(e) => {
+                  setFormData({ ...formData, phone: e.target.value });
+                  if (errors.phone) setErrors({ ...errors, phone: "" });
+                }}
+                className={errors.phone ? "border-red-500 mt-1" : "mt-1"}
+                disabled={isLoading}
+              />
+              {errors.phone && (
+                <p className="text-xs text-red-600 mt-1">{errors.phone}</p>
+              )}
+            </div>
           </div>
 
-          {/* Endereço */}
-          <div className="space-y-3 border-b pb-4">
-            <h3 className="font-semibold text-sm text-foreground">Endereço</h3>
+          {/* Email */}
+          <div>
+            <Label htmlFor="email" className="text-sm font-semibold text-foreground">
+              E-mail *
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="email@exemplo.com"
+              value={formData.email}
+              onChange={(e) => {
+                setFormData({ ...formData, email: e.target.value });
+                if (errors.email) setErrors({ ...errors, email: "" });
+              }}
+              className={errors.email ? "border-red-500 mt-1" : "mt-1"}
+              disabled={isLoading}
+            />
+            {errors.email && (
+              <p className="text-xs text-red-600 mt-1">{errors.email}</p>
+            )}
+          </div>
 
-            {/* Address Field */}
-            <div>
-              <Label htmlFor="address" className="text-sm font-semibold text-foreground">
-                Endereço
-              </Label>
-              <Input
-                id="address"
-                type="text"
-                placeholder="Ex: Rua das Flores, 123"
-                value={formData.address}
-                onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                disabled={isLoading}
-              />
+          {/* Endereço Completo */}
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              <MapPin className="w-4 h-4 text-accent" />
+              <h3 className="font-semibold text-sm text-foreground">Endereço Completo</h3>
             </div>
 
-            {/* City Field */}
-            <div>
-              <Label htmlFor="city" className="text-sm font-semibold text-foreground">
-                Cidade
-              </Label>
-              <Input
-                id="city"
-                type="text"
-                placeholder="Ex: São Paulo"
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                disabled={isLoading}
-              />
-            </div>
-
-            {/* State Field */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="state" className="text-sm font-semibold text-foreground">
-                  Estado
-                </Label>
-                <Input
-                  id="state"
-                  type="text"
-                  placeholder="Ex: SP"
-                  maxLength={2}
-                  value={formData.state}
-                  onChange={(e) => setFormData({ ...formData, state: e.target.value.toUpperCase() })}
-                  disabled={isLoading}
-                />
-              </div>
-
-              {/* Zip Code Field */}
+            {/* CEP e Logradouro */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <Label htmlFor="zipCode" className="text-sm font-semibold text-foreground">
                   CEP
@@ -329,60 +314,123 @@ export function ClientForm({
                 <Input
                   id="zipCode"
                   type="text"
-                  placeholder="Ex: 01234-567"
+                  placeholder="00000-000"
                   value={formData.zipCode}
-                  onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
+                  onChange={(e) => handleCepChange(e.target.value)}
+                  className={errors.zipCode ? "border-red-500 mt-1" : "mt-1"}
+                  disabled={isLoading}
+                />
+                {errors.zipCode && (
+                  <p className="text-xs text-red-600 mt-1">{errors.zipCode}</p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="address" className="text-sm font-semibold text-foreground">
+                  Logradouro
+                </Label>
+                <Input
+                  id="address"
+                  type="text"
+                  placeholder="Rua, Avenida..."
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  className="mt-1"
                   disabled={isLoading}
                 />
               </div>
             </div>
-          </div>
 
-          {/* Status */}
-          <div className="space-y-3 border-b pb-4">
-            <h3 className="font-semibold text-sm text-foreground">Status</h3>
+            {/* Número e Complemento */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <Label htmlFor="number" className="text-sm font-semibold text-foreground">
+                  Número
+                </Label>
+                <Input
+                  id="number"
+                  type="text"
+                  placeholder="123"
+                  value={formData.number}
+                  onChange={(e) => setFormData({ ...formData, number: e.target.value })}
+                  className="mt-1"
+                  disabled={isLoading}
+                />
+              </div>
 
-            {/* Status Field */}
-            <div>
-              <Label htmlFor="status" className="text-sm font-semibold text-foreground">
-                Status
-              </Label>
-              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })} disabled={isLoading}>
-                <SelectTrigger id="status">
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Ativo</SelectItem>
-                  <SelectItem value="inactive">Inativo</SelectItem>
-                  <SelectItem value="blocked">Bloqueado</SelectItem>
-                </SelectContent>
-              </Select>
+              <div>
+                <Label htmlFor="complement" className="text-sm font-semibold text-foreground">
+                  Complemento
+                </Label>
+                <Input
+                  id="complement"
+                  type="text"
+                  placeholder="Apto, Bloco..."
+                  value={formData.complement}
+                  onChange={(e) => setFormData({ ...formData, complement: e.target.value })}
+                  className="mt-1"
+                  disabled={isLoading}
+                />
+              </div>
             </div>
 
-            {/* VIP Checkbox */}
+            {/* Bairro, Cidade e UF */}
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="city" className="text-sm font-semibold text-foreground">
+                  Cidade
+                </Label>
+                <Input
+                  id="city"
+                  type="text"
+                  placeholder="Cidade"
+                  value={formData.city}
+                  onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  className="mt-1"
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="state" className="text-sm font-semibold text-foreground">
+                  UF
+                </Label>
+                <Input
+                  id="state"
+                  type="text"
+                  placeholder="SP"
+                  maxLength={2}
+                  value={formData.state}
+                  onChange={(e) => setFormData({ ...formData, state: e.target.value.toUpperCase() })}
+                  className="mt-1"
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div />
+            </div>
+          </div>
+
+          {/* Checkboxes VIP e Modelo lado a lado */}
+          <div className="flex items-center gap-6 pt-4">
             <div className="flex items-center gap-2">
-              <input
+              <Checkbox
                 id="isVip"
-                type="checkbox"
                 checked={formData.isVip}
-                onChange={(e) => setFormData({ ...formData, isVip: e.target.checked })}
+                onCheckedChange={(checked) => setFormData({ ...formData, isVip: checked as boolean })}
                 disabled={isLoading}
-                className="w-4 h-4 rounded border-gray-300"
               />
               <Label htmlFor="isVip" className="text-sm font-semibold text-foreground cursor-pointer">
                 ⭐ Cliente VIP
               </Label>
             </div>
 
-            {/* Model Dog Checkbox */}
             <div className="flex items-center gap-2">
-              <input
+              <Checkbox
                 id="isModelDog"
-                type="checkbox"
                 checked={formData.isModelDog}
-                onChange={(e) => setFormData({ ...formData, isModelDog: e.target.checked })}
+                onCheckedChange={(checked) => setFormData({ ...formData, isModelDog: checked as boolean })}
                 disabled={isLoading}
-                className="w-4 h-4 rounded border-gray-300"
               />
               <Label htmlFor="isModelDog" className="text-sm font-semibold text-foreground cursor-pointer">
                 🎯 Cliente Escola/Modelo
@@ -390,24 +438,24 @@ export function ClientForm({
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
+          {/* Buttons */}
+          <div className="flex gap-3 pt-6 border-t">
             <Button
               type="button"
-              onClick={handleClose}
               variant="outline"
-              className="flex-1"
+              onClick={handleClose}
               disabled={isLoading}
+              className="flex-1"
             >
               Cancelar
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-accent hover:bg-accent/90 text-foreground"
               disabled={isLoading}
+              className="flex-1 bg-accent hover:bg-accent/90"
             >
               {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {isEditing ? "Atualizar" : "Criar"} Cliente
+              {isEditing ? "Atualizar Cliente" : "Criar Cliente"}
             </Button>
           </div>
         </form>

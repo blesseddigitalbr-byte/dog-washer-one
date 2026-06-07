@@ -148,12 +148,14 @@ export const appRouter = router({
         email: z.string().email("Email inválido"),
         phone: z.string().min(1, "Telefone é obrigatório"),
         cpf: z.string().optional(),
-        address: z.string().optional(),
-        city: z.string().optional(),
-        state: z.string().optional(),
-        zipCode: z.string().optional(),
+        cep: z.string().optional(),
+        logradouro: z.string().optional(),
+        numero: z.string().optional(),
+        complemento: z.string().optional(),
+        cidade: z.string().optional(),
+        uf: z.string().optional(),
         isVip: z.boolean().default(false),
-        status: z.string().default("active"),
+        isModelDog: z.boolean().default(false),
       }))
       .mutation(async ({ input }) => {
         try {
@@ -164,12 +166,14 @@ export const appRouter = router({
               email: input.email,
               phone: input.phone,
               cpf: input.cpf || null,
-              address: input.address || null,
-              city: input.city || null,
-              state: input.state || null,
-              zip_code: input.zipCode || null,
+              cep: input.cep || null,
+              logradouro: input.logradouro || null,
+              numero: input.numero || null,
+              complemento: input.complemento || null,
+              cidade: input.cidade || null,
+              uf: input.uf || null,
               is_vip: input.isVip,
-              status: input.status,
+              is_model_dog: input.isModelDog,
             }])
             .select()
             .single();
@@ -190,12 +194,14 @@ export const appRouter = router({
         email: z.string().email("Email inválido"),
         phone: z.string().min(1, "Telefone é obrigatório"),
         cpf: z.string().optional(),
-        address: z.string().optional(),
-        city: z.string().optional(),
-        state: z.string().optional(),
-        zipCode: z.string().optional(),
+        logradouro: z.string().optional(),
+        numero: z.string().optional(),
+        complemento: z.string().optional(),
+        cidade: z.string().optional(),
+        uf: z.string().optional(),
+        cep: z.string().optional(),
         isVip: z.boolean().default(false),
-        status: z.string().default("active"),
+        isModelDog: z.boolean().default(false),
       }))
       .mutation(async ({ input }) => {
         try {
@@ -207,12 +213,14 @@ export const appRouter = router({
               email: updateData.email,
               phone: updateData.phone,
               cpf: updateData.cpf || null,
-              address: updateData.address || null,
-              city: updateData.city || null,
-              state: updateData.state || null,
-              zip_code: updateData.zipCode || null,
+              logradouro: updateData.logradouro || null,
+              numero: updateData.numero || null,
+              complemento: updateData.complemento || null,
+              cidade: updateData.cidade || null,
+              uf: updateData.uf || null,
+              cep: updateData.cep || null,
               is_vip: updateData.isVip,
-              status: updateData.status,
+              is_model_dog: updateData.isModelDog,
             })
             .eq("id", id)
             .select()
