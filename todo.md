@@ -212,3 +212,31 @@
 - [x] Verificar se badge VIP aparece no card imediatamente
 - [x] Verificar se filtro VIP exibe o cliente
 - [x] Verificar se dados de endereço são salvos corretamente
+
+
+## DELTA 10: Card do Pet com Informações Completas e Notificações
+
+### Card do Pet - Restauração de Informações
+- [x] Restaurar exibição de foto do pet (com fallback para avatar)
+- [x] Exibir nome do pet
+- [x] Exibir raça do pet
+- [x] Exibir porte (size) do pet
+- [x] Exibir data de nascimento do pet
+
+### 3 Botões no Card
+- [x] Botão "Ver Histórico" - abre modal com histórico de atendimentos
+- [x] Botão "Detalhes" - abre formulário completo de edição do pet
+- [x] Botão "Deletar" - com confirmação de segurança
+
+### Notificações de Sucesso (Toast)
+- [x] Toast ao criar cliente
+- [x] Toast ao atualizar cliente
+- [x] Toast ao criar pet
+- [x] Toast ao atualizar pet
+- [x] Toast ao deletar pet com sucesso
+- [x] Toast de erro ao deletar pet
+
+### Confirmação de Deleção
+- [x] Dialog perguntando "Tem certeza que deseja deletar este pet?"
+- [x] Mensagem de aviso que a alteração não poderá ser desfeita
+- [x] Botões de confirmar/cancelar

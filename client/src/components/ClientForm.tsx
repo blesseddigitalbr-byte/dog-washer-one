@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertCircle, Loader2, MapPin } from "lucide-react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
 interface ClientFormProps {
@@ -159,6 +160,12 @@ export function ClientForm({
 
       // Invalidate clients list to refetch
       await utils.clients.list.invalidate();
+
+      // Show success toast
+      const action = isEditing ? "atualizado" : "criado";
+      toast.success(`Cliente ${action} com sucesso!`, {
+        description: `${formData.name} foi ${action} no sistema.`,
+      });
 
       // Reset form
       setFormData({

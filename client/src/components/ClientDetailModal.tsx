@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { X, Mail, Phone, MapPin, Calendar, Weight, Heart, Edit2, Trash2, Plus, User, MapPinIcon, FileText } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { AlertCircle } from "lucide-react";
+import { toast } from "sonner";
 import { PetForm } from "./PetForm";
 import { PetHistoryModal } from "./PetHistoryModal";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
@@ -78,11 +79,18 @@ export function ClientDetailModal({
     if (!deletingPet) return;
 
     try {
+      const petName = deletingPet.name;
       await deletePetMutation.mutateAsync({ id: deletingPet.id });
       await utils.clients.getById.invalidate({ id: client?.id });
+      toast.success("Pet deletado com sucesso!", {
+        description: `${petName} foi removido do sistema.`,
+      });
       setDeletingPet(null);
     } catch (error) {
       console.error("Error deleting pet:", error);
+      toast.error("Erro ao deletar pet", {
+        description: "Tente novamente mais tarde.",
+      });
     }
   };
 
@@ -241,14 +249,27 @@ export function ClientDetailModal({
                       >
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex items-start gap-4">
-                            <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center text-xl font-bold text-accent flex-shrink-0">
-                              {pet.name.charAt(0).toUpperCase()}
-                            </div>
+                            {pet.photo ? (
+                              <img
+                                src={pet.photo}
+                                alt={pet.name}
+                                className="w-14 h-14 rounded-full object-cover flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center text-xl font-bold text-accent flex-shrink-0">
+                                {pet.name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
                             <div>
                               <h4 className="text-lg font-bold text-foreground">{pet.name}</h4>
                               <p className="text-sm text-muted-foreground">{pet.breed}</p>
-                              {pet.species && (
-                                <p className="text-xs text-muted-foreground">{pet.species}</p>
+                              {(pet as any).size && (
+                                <p className="text-xs text-muted-foreground">Porte: {(pet as any).size}</p>
+                              )}
+                              {pet.birthDate && (
+                                <p className="text-xs text-muted-foreground">
+                                  {new Date(pet.birthDate).toLocaleDateString('pt-BR')}
+                                </p>
                               )}
                             </div>
                           </div>
