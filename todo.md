@@ -79,11 +79,24 @@
 - [ ] Integração com Google Calendar (agendamentos)
 - [ ] Webhooks para eventos
 
+## DELTA 4: Cadastro Completo (Todos os Campos) ✅
+- [x] Atualizar ClientForm com todos os 13 campos de clientes
+- [x] Atualizar PetForm com todos os 13 campos de pets
+- [x] Atualizar ClientDetailModal para exibir todos os campos
+- [x] Atualizar página Clients para exibir todos os campos
+- [x] Atualizar procedures tRPC para retornar todos os campos
+- [x] Testes vitest para novos campos (11 testes, 100% passing)
+- [x] Validar fluxo completo no navegador
+- [x] Corrigir bug de duplicação de pets
+- [x] Corrigir mapeamento de dados (nome/name)
+
 ## Status Atual
-✅ **DELTA 3 COMPLETO - CRUD COMPLETO**
-- ✅ 6 procedures tRPC para CRUD (create, update, delete para clientes e pets)
-- ✅ Formulários de criação/edição com validação
-- ✅ Diálogos de confirmação para deleção
-- ✅ UI integrada com menu de ações (Editar/Deletar)
+✅ **DELTA 4 COMPLETO - CADASTRO COMPLETO COM TODOS OS CAMPOS**
+- ✅ ClientForm com 13 campos: name, email, phone, cpf, address, city, state, zipCode, isVip, status, totalSpent, lastVisit
+- ✅ PetForm com 13 campos: name, breed, species, color, weight, birthDate, microchip, notes, photo, status
+- ✅ Procedures tRPC atualizadas para retornar todos os campos
+- ✅ Modal de detalhes exibindo: nome, email, telefone, CPF, pets com todos os dados
 - ✅ 11 testes vitest passando 100%
-- ✅ Fluxo completo testado no navegador
+- ✅ Fluxo completo validado no navegador
+- ✅ Bug de duplicação de pets corrigido (filtro por client_id)
+- ✅ Mapeamento de dados flexível (nome/name)

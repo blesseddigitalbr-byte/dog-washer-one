@@ -81,7 +81,7 @@ export const appRouter = router({
       try {
         const { data: clientes, error } = await supabase
           .from("clientes")
-          .select("id, nome, email, phone")
+          .select("*")
           .order("created_at", { ascending: false });
 
         if (error) throw error;
@@ -91,7 +91,7 @@ export const appRouter = router({
           (clientes || []).map(async (cliente) => {
             const { data: pets, error: petsError } = await supabase
               .from("pets")
-              .select("id, name, breed, sexo, cor_pelagem, weight, is_vip, is_model_dog")
+              .select("*")
               .eq("client_id", cliente.id);
 
             if (petsError) console.error("Error fetching pets:", petsError);
@@ -117,7 +117,7 @@ export const appRouter = router({
         try {
           const { data: cliente, error } = await supabase
             .from("clientes")
-            .select("id, nome, email, phone")
+            .select("*")
             .eq("id", input.id)
             .single();
 
@@ -126,7 +126,7 @@ export const appRouter = router({
 
           const { data: pets, error: petsError } = await supabase
             .from("pets")
-            .select("id, name, breed, sexo, cor_pelagem, weight, is_vip, is_model_dog")
+            .select("*")
             .eq("client_id", cliente.id);
 
           if (petsError) console.error("Error fetching pets:", petsError);
@@ -141,21 +141,35 @@ export const appRouter = router({
         }
       }),
 
-    // Create a new client
+    // Create a new client with all fields
     create: publicProcedure
       .input(z.object({
-        nome: z.string().min(1, "Nome é obrigatório"),
+        name: z.string().min(1, "Nome é obrigatório"),
         email: z.string().email("Email inválido"),
         phone: z.string().min(1, "Telefone é obrigatório"),
+        cpf: z.string().optional(),
+        address: z.string().optional(),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        zipCode: z.string().optional(),
+        isVip: z.boolean().default(false),
+        status: z.string().default("active"),
       }))
       .mutation(async ({ input }) => {
         try {
           const { data, error } = await supabase
             .from("clientes")
             .insert([{
-              nome: input.nome,
+              nome: input.name,
               email: input.email,
               phone: input.phone,
+              cpf: input.cpf || null,
+              address: input.address || null,
+              city: input.city || null,
+              state: input.state || null,
+              zip_code: input.zipCode || null,
+              is_vip: input.isVip,
+              status: input.status,
             }])
             .select()
             .single();
@@ -168,24 +182,39 @@ export const appRouter = router({
         }
       }),
 
-    // Update a client
+    // Update a client with all fields
     update: publicProcedure
       .input(z.object({
         id: z.string().uuid(),
-        nome: z.string().min(1, "Nome é obrigatório"),
+        name: z.string().min(1, "Nome é obrigatório"),
         email: z.string().email("Email inválido"),
         phone: z.string().min(1, "Telefone é obrigatório"),
+        cpf: z.string().optional(),
+        address: z.string().optional(),
+        city: z.string().optional(),
+        state: z.string().optional(),
+        zipCode: z.string().optional(),
+        isVip: z.boolean().default(false),
+        status: z.string().default("active"),
       }))
       .mutation(async ({ input }) => {
         try {
+          const { id, ...updateData } = input;
           const { data, error } = await supabase
             .from("clientes")
             .update({
-              nome: input.nome,
-              email: input.email,
-              phone: input.phone,
+              nome: updateData.name,
+              email: updateData.email,
+              phone: updateData.phone,
+              cpf: updateData.cpf || null,
+              address: updateData.address || null,
+              city: updateData.city || null,
+              state: updateData.state || null,
+              zip_code: updateData.zipCode || null,
+              is_vip: updateData.isVip,
+              status: updateData.status,
             })
-            .eq("id", input.id)
+            .eq("id", id)
             .select()
             .single();
 
@@ -222,31 +251,37 @@ export const appRouter = router({
 
   // Pets router
   pets: router({
-    // Create a new pet
+    // Create a new pet with all fields
     create: publicProcedure
       .input(z.object({
-        client_id: z.string().uuid(),
+        clientId: z.string().uuid(),
         name: z.string().min(1, "Nome do pet é obrigatório"),
         breed: z.string().min(1, "Raça é obrigatória"),
-        sexo: z.enum(["M", "F"]),
-        cor_pelagem: z.string().min(1, "Cor da pelagem é obrigatória"),
+        species: z.string().optional(),
+        color: z.string().optional(),
+        birthDate: z.string().optional(),
         weight: z.string().min(1, "Peso é obrigatório"),
-        is_vip: z.boolean().default(false),
-        is_model_dog: z.boolean().default(false),
+        microchip: z.string().optional(),
+        notes: z.string().optional(),
+        photo: z.string().optional(),
+        status: z.string().default("active"),
       }))
       .mutation(async ({ input }) => {
         try {
           const { data, error } = await supabase
             .from("pets")
             .insert([{
-              client_id: input.client_id,
+              client_id: input.clientId,
               name: input.name,
               breed: input.breed,
-              sexo: input.sexo,
-              cor_pelagem: input.cor_pelagem,
+              species: input.species || null,
+              color: input.color || null,
+              birth_date: input.birthDate || null,
               weight: input.weight,
-              is_vip: input.is_vip,
-              is_model_dog: input.is_model_dog,
+              microchip: input.microchip || null,
+              notes: input.notes || null,
+              photo: input.photo || null,
+              status: input.status,
             }])
             .select()
             .single();
@@ -259,24 +294,38 @@ export const appRouter = router({
         }
       }),
 
-    // Update a pet
+    // Update a pet with all fields
     update: publicProcedure
       .input(z.object({
         id: z.string().uuid(),
         name: z.string().min(1, "Nome do pet é obrigatório"),
         breed: z.string().min(1, "Raça é obrigatória"),
-        sexo: z.enum(["M", "F"]),
-        cor_pelagem: z.string().min(1, "Cor da pelagem é obrigatória"),
+        species: z.string().optional(),
+        color: z.string().optional(),
+        birthDate: z.string().optional(),
         weight: z.string().min(1, "Peso é obrigatório"),
-        is_vip: z.boolean(),
-        is_model_dog: z.boolean(),
+        microchip: z.string().optional(),
+        notes: z.string().optional(),
+        photo: z.string().optional(),
+        status: z.string().default("active"),
       }))
       .mutation(async ({ input }) => {
         try {
           const { id, ...updateData } = input;
           const { data, error } = await supabase
             .from("pets")
-            .update(updateData)
+            .update({
+              name: updateData.name,
+              breed: updateData.breed,
+              species: updateData.species || null,
+              color: updateData.color || null,
+              birth_date: updateData.birthDate || null,
+              weight: updateData.weight,
+              microchip: updateData.microchip || null,
+              notes: updateData.notes || null,
+              photo: updateData.photo || null,
+              status: updateData.status,
+            })
             .eq("id", id)
             .select()
             .single();

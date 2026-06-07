@@ -50,9 +50,9 @@ export default function ClientsPage() {
     { id: "inativos", label: "Inativos (30d)", icon: "⏸️" },
   ];
 
-  const filteredClients = clients.filter((client) => {
-    if (filter === "vips") return client.pets?.some((pet) => pet.is_vip);
-    if (filter === "modelo") return client.pets?.some((pet) => pet.is_model_dog);
+  const filteredClients = clients.filter((client: any) => {
+    if (filter === "vips") return client.pets?.some((pet: any) => pet.is_vip);
+    if (filter === "modelo") return client.pets?.some((pet: any) => pet.is_model_dog);
     return true;
   });
 
@@ -216,7 +216,7 @@ export default function ClientsPage() {
                 </div>
 
                 {/* VIP Badge */}
-                {client.pets?.some((pet) => pet.is_vip) && (
+                {client.pets?.some((pet: any) => pet.is_vip) && (
                   <div className="absolute top-4 left-4 bg-accent/10 px-3 py-1 rounded-full">
                     <span className="text-xs font-bold text-accent">⭐ VIP</span>
                   </div>
@@ -240,7 +240,7 @@ export default function ClientsPage() {
                   </p>
                   <div className="flex gap-2 flex-wrap">
                     {client.pets && client.pets.length > 0 ? (
-                      client.pets.map((pet) => (
+                      client.pets.map((pet: any) => (
                         <div
                           key={pet.id}
                           className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-xs font-bold text-accent hover:bg-accent/20 transition-colors"

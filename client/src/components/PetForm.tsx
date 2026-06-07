@@ -12,22 +12,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 
 interface PetFormProps {
   isOpen: boolean;
   onClose: () => void;
   clientId: string;
   petId?: string | null;
-  petData?: {
-    name: string;
-    breed: string;
-    sexo: "M" | "F";
-    cor_pelagem: string;
-    weight: string;
-    is_vip: boolean;
-    is_model_dog: boolean;
-  } | null;
+  petData?: any | null;
   onSuccess?: () => void;
 }
 
@@ -42,11 +33,14 @@ export function PetForm({
   const [formData, setFormData] = useState({
     name: petData?.name || "",
     breed: petData?.breed || "",
-    sexo: (petData?.sexo || "M") as "M" | "F",
-    cor_pelagem: petData?.cor_pelagem || "",
+    species: petData?.species || "",
+    color: petData?.color || "",
+    birthDate: petData?.birthDate || "",
     weight: petData?.weight || "",
-    is_vip: petData?.is_vip || false,
-    is_model_dog: petData?.is_model_dog || false,
+    microchip: petData?.microchip || "",
+    notes: petData?.notes || "",
+    photo: petData?.photo || "",
+    status: petData?.status || "active",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -67,10 +61,6 @@ export function PetForm({
 
     if (!formData.breed.trim()) {
       newErrors.breed = "Raça é obrigatória";
-    }
-
-    if (!formData.cor_pelagem.trim()) {
-      newErrors.cor_pelagem = "Cor da pelagem é obrigatória";
     }
 
     if (!formData.weight.trim()) {
@@ -98,7 +88,7 @@ export function PetForm({
         });
       } else {
         await createMutation.mutateAsync({
-          client_id: clientId,
+          clientId: clientId,
           ...formData,
         });
       }
@@ -111,11 +101,14 @@ export function PetForm({
       setFormData({
         name: "",
         breed: "",
-        sexo: "M",
-        cor_pelagem: "",
+        species: "",
+        color: "",
+        birthDate: "",
         weight: "",
-        is_vip: false,
-        is_model_dog: false,
+        microchip: "",
+        notes: "",
+        photo: "",
+        status: "active",
       });
       setErrors({});
       onClose();
@@ -133,11 +126,14 @@ export function PetForm({
     setFormData({
       name: "",
       breed: "",
-      sexo: "M",
-      cor_pelagem: "",
+      species: "",
+      color: "",
+      birthDate: "",
       weight: "",
-      is_vip: false,
-      is_model_dog: false,
+      microchip: "",
+      notes: "",
+      photo: "",
+      status: "active",
     });
     setErrors({});
     onClose();
@@ -145,7 +141,7 @@ export function PetForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Editar Pet" : "Novo Pet"}</DialogTitle>
         </DialogHeader>
@@ -159,139 +155,192 @@ export function PetForm({
             </div>
           )}
 
-          {/* Name Field */}
-          <div>
-            <Label htmlFor="name" className="text-sm font-semibold text-foreground">
-              Nome *
-            </Label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="Ex: Bento"
-              value={formData.name}
-              onChange={(e) => {
-                setFormData({ ...formData, name: e.target.value });
-                if (errors.name) setErrors({ ...errors, name: "" });
-              }}
-              className={errors.name ? "border-red-500" : ""}
-              disabled={isLoading}
-            />
-            {errors.name && (
-              <p className="text-xs text-red-600 mt-1">{errors.name}</p>
-            )}
+          {/* Informações Básicas */}
+          <div className="space-y-3 border-b pb-4">
+            <h3 className="font-semibold text-sm text-foreground">Informações Básicas</h3>
+
+            {/* Name Field */}
+            <div>
+              <Label htmlFor="name" className="text-sm font-semibold text-foreground">
+                Nome *
+              </Label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Ex: Bento"
+                value={formData.name}
+                onChange={(e) => {
+                  setFormData({ ...formData, name: e.target.value });
+                  if (errors.name) setErrors({ ...errors, name: "" });
+                }}
+                className={errors.name ? "border-red-500" : ""}
+                disabled={isLoading}
+              />
+              {errors.name && (
+                <p className="text-xs text-red-600 mt-1">{errors.name}</p>
+              )}
+            </div>
+
+            {/* Breed Field */}
+            <div>
+              <Label htmlFor="breed" className="text-sm font-semibold text-foreground">
+                Raça *
+              </Label>
+              <Input
+                id="breed"
+                type="text"
+                placeholder="Ex: Poodle"
+                value={formData.breed}
+                onChange={(e) => {
+                  setFormData({ ...formData, breed: e.target.value });
+                  if (errors.breed) setErrors({ ...errors, breed: "" });
+                }}
+                className={errors.breed ? "border-red-500" : ""}
+                disabled={isLoading}
+              />
+              {errors.breed && (
+                <p className="text-xs text-red-600 mt-1">{errors.breed}</p>
+              )}
+            </div>
+
+            {/* Species Field */}
+            <div>
+              <Label htmlFor="species" className="text-sm font-semibold text-foreground">
+                Espécie
+              </Label>
+              <Input
+                id="species"
+                type="text"
+                placeholder="Ex: Cão"
+                value={formData.species}
+                onChange={(e) => setFormData({ ...formData, species: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Color Field */}
+            <div>
+              <Label htmlFor="color" className="text-sm font-semibold text-foreground">
+                Cor
+              </Label>
+              <Input
+                id="color"
+                type="text"
+                placeholder="Ex: Branco"
+                value={formData.color}
+                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Weight Field */}
+            <div>
+              <Label htmlFor="weight" className="text-sm font-semibold text-foreground">
+                Peso (kg) *
+              </Label>
+              <Input
+                id="weight"
+                type="number"
+                step="0.1"
+                placeholder="Ex: 8.5"
+                value={formData.weight}
+                onChange={(e) => {
+                  setFormData({ ...formData, weight: e.target.value });
+                  if (errors.weight) setErrors({ ...errors, weight: "" });
+                }}
+                className={errors.weight ? "border-red-500" : ""}
+                disabled={isLoading}
+              />
+              {errors.weight && (
+                <p className="text-xs text-red-600 mt-1">{errors.weight}</p>
+              )}
+            </div>
           </div>
 
-          {/* Breed Field */}
-          <div>
-            <Label htmlFor="breed" className="text-sm font-semibold text-foreground">
-              Raça *
-            </Label>
-            <Input
-              id="breed"
-              type="text"
-              placeholder="Ex: Poodle"
-              value={formData.breed}
-              onChange={(e) => {
-                setFormData({ ...formData, breed: e.target.value });
-                if (errors.breed) setErrors({ ...errors, breed: "" });
-              }}
-              className={errors.breed ? "border-red-500" : ""}
-              disabled={isLoading}
-            />
-            {errors.breed && (
-              <p className="text-xs text-red-600 mt-1">{errors.breed}</p>
-            )}
+          {/* Informações Médicas */}
+          <div className="space-y-3 border-b pb-4">
+            <h3 className="font-semibold text-sm text-foreground">Informações Médicas</h3>
+
+            {/* Birth Date Field */}
+            <div>
+              <Label htmlFor="birthDate" className="text-sm font-semibold text-foreground">
+                Data de Nascimento
+              </Label>
+              <Input
+                id="birthDate"
+                type="date"
+                value={formData.birthDate}
+                onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Microchip Field */}
+            <div>
+              <Label htmlFor="microchip" className="text-sm font-semibold text-foreground">
+                Microchip
+              </Label>
+              <Input
+                id="microchip"
+                type="text"
+                placeholder="Ex: 123456789"
+                value={formData.microchip}
+                onChange={(e) => setFormData({ ...formData, microchip: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
+
+            {/* Notes Field */}
+            <div>
+              <Label htmlFor="notes" className="text-sm font-semibold text-foreground">
+                Observações
+              </Label>
+              <textarea
+                id="notes"
+                placeholder="Notas adicionais sobre o pet"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                disabled={isLoading}
+                className="w-full px-3 py-2 border border-input rounded-md text-sm"
+                rows={3}
+              />
+            </div>
           </div>
 
-          {/* Sex Field */}
-          <div>
-            <Label htmlFor="sexo" className="text-sm font-semibold text-foreground">
-              Sexo *
-            </Label>
-            <Select value={formData.sexo} onValueChange={(value) => setFormData({ ...formData, sexo: value as "M" | "F" })}>
-              <SelectTrigger id="sexo" disabled={isLoading}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="M">Macho</SelectItem>
-                <SelectItem value="F">Fêmea</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Mídia e Status */}
+          <div className="space-y-3 border-b pb-4">
+            <h3 className="font-semibold text-sm text-foreground">Mídia e Status</h3>
 
-          {/* Color Field */}
-          <div>
-            <Label htmlFor="cor_pelagem" className="text-sm font-semibold text-foreground">
-              Cor da Pelagem *
-            </Label>
-            <Input
-              id="cor_pelagem"
-              type="text"
-              placeholder="Ex: Branco"
-              value={formData.cor_pelagem}
-              onChange={(e) => {
-                setFormData({ ...formData, cor_pelagem: e.target.value });
-                if (errors.cor_pelagem) setErrors({ ...errors, cor_pelagem: "" });
-              }}
-              className={errors.cor_pelagem ? "border-red-500" : ""}
-              disabled={isLoading}
-            />
-            {errors.cor_pelagem && (
-              <p className="text-xs text-red-600 mt-1">{errors.cor_pelagem}</p>
-            )}
-          </div>
+            {/* Photo Field */}
+            <div>
+              <Label htmlFor="photo" className="text-sm font-semibold text-foreground">
+                Foto (URL)
+              </Label>
+              <Input
+                id="photo"
+                type="url"
+                placeholder="Ex: https://..."
+                value={formData.photo}
+                onChange={(e) => setFormData({ ...formData, photo: e.target.value })}
+                disabled={isLoading}
+              />
+            </div>
 
-          {/* Weight Field */}
-          <div>
-            <Label htmlFor="weight" className="text-sm font-semibold text-foreground">
-              Peso (kg) *
-            </Label>
-            <Input
-              id="weight"
-              type="number"
-              step="0.1"
-              placeholder="Ex: 8.5"
-              value={formData.weight}
-              onChange={(e) => {
-                setFormData({ ...formData, weight: e.target.value });
-                if (errors.weight) setErrors({ ...errors, weight: "" });
-              }}
-              className={errors.weight ? "border-red-500" : ""}
-              disabled={isLoading}
-            />
-            {errors.weight && (
-              <p className="text-xs text-red-600 mt-1">{errors.weight}</p>
-            )}
-          </div>
-
-          {/* VIP Checkbox */}
-          <div className="flex items-center gap-3 p-3 bg-accent/5 rounded-lg">
-            <Checkbox
-              id="is_vip"
-              checked={formData.is_vip}
-              onCheckedChange={(checked) =>
-                setFormData({ ...formData, is_vip: checked as boolean })
-              }
-              disabled={isLoading}
-            />
-            <Label htmlFor="is_vip" className="text-sm font-semibold text-foreground cursor-pointer">
-              ⭐ VIP
-            </Label>
-          </div>
-
-          {/* Model Dog Checkbox */}
-          <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
-            <Checkbox
-              id="is_model_dog"
-              checked={formData.is_model_dog}
-              onCheckedChange={(checked) =>
-                setFormData({ ...formData, is_model_dog: checked as boolean })
-              }
-              disabled={isLoading}
-            />
-            <Label htmlFor="is_model_dog" className="text-sm font-semibold text-foreground cursor-pointer">
-              🎯 Modelo
-            </Label>
+            {/* Status Field */}
+            <div>
+              <Label htmlFor="status" className="text-sm font-semibold text-foreground">
+                Status
+              </Label>
+              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })} disabled={isLoading}>
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="Selecione o status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Ativo</SelectItem>
+                  <SelectItem value="inactive">Inativo</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Action Buttons */}

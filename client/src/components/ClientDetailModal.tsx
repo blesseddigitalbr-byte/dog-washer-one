@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { X, Mail, Phone, MapPin, Calendar, Weight, Heart, Edit2, Trash2, Plus } from "lucide-react";
+import { X, Mail, Phone, MapPin, Calendar, Weight, Heart, Edit2, Trash2, Plus, User, MapPinIcon, FileText } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import { AlertCircle } from "lucide-react";
 import { PetForm } from "./PetForm";
@@ -13,18 +13,32 @@ interface Pet {
   id: string;
   name: string;
   breed: string;
-  sexo: string;
-  cor_pelagem: string;
-  weight: string;
-  is_vip: boolean;
-  is_model_dog: boolean;
+  species?: string;
+  color?: string;
+  weight?: number;
+  birthDate?: string;
+  microchip?: string;
+  notes?: string;
+  photo?: string;
+  status?: string;
+  is_vip?: boolean;
+  is_model_dog?: boolean;
 }
 
 interface Client {
   id: string;
-  nome: string;
+  name: string;
   email: string;
   phone: string;
+  cpf?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  isVip?: boolean;
+  status?: string;
+  totalSpent?: number;
+  lastVisit?: string;
   pets: Pet[];
 }
 
@@ -77,7 +91,7 @@ export function ClientDetailModal({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="flex items-center justify-between">
             <DialogTitle className="text-2xl font-bold">Detalhes do Cliente</DialogTitle>
             <button
@@ -109,10 +123,17 @@ export function ClientDetailModal({
               {/* Client Header */}
               <div className="flex items-start gap-4 pb-6 border-b border-accent/10">
                 <div className="w-20 h-20 rounded-full bg-accent/10 flex items-center justify-center text-3xl font-bold text-accent flex-shrink-0">
-                  {client.nome.charAt(0).toUpperCase()}
+                  {(client.name || (client as any).nome)?.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-bold text-foreground mb-1">{client.nome}</h2>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h2 className="text-2xl font-bold text-foreground">{client.name || (client as any).nome}</h2>
+                    {client.isVip && (
+                      <span className="px-2 py-1 bg-accent/10 rounded-full text-xs font-bold text-accent">
+                        ⭐ VIP
+                      </span>
+                    )}
+                  </div>
                   <div className="space-y-2 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">
                       <Mail className="w-4 h-4" />
@@ -137,6 +158,52 @@ export function ClientDetailModal({
                   <Edit2 className="w-4 h-4" />
                   Editar
                 </Button>
+              </div>
+
+              {/* Client Details Grid */}
+              <div className="grid grid-cols-2 gap-4">
+                {client.cpf && (
+                  <div className="bg-accent/5 p-3 rounded-lg">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">CPF</p>
+                    <p className="text-sm font-medium text-foreground">{client.cpf}</p>
+                  </div>
+                )}
+                {client.status && (
+                  <div className="bg-accent/5 p-3 rounded-lg">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Status</p>
+                    <p className="text-sm font-medium text-foreground capitalize">{client.status}</p>
+                  </div>
+                )}
+                {client.address && (
+                  <div className="bg-accent/5 p-3 rounded-lg col-span-2">
+                    <div className="flex items-center gap-2 mb-1">
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
+                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Endereço</p>
+                    </div>
+                    <p className="text-sm font-medium text-foreground">{client.address}</p>
+                    {(client.city || client.state || client.zipCode) && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {[client.city, client.state, client.zipCode].filter(Boolean).join(", ")}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {client.totalSpent !== undefined && (
+                  <div className="bg-accent/5 p-3 rounded-lg">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Total Gasto</p>
+                    <p className="text-sm font-medium text-foreground">
+                      R$ {typeof client.totalSpent === 'number' ? client.totalSpent.toFixed(2) : '0.00'}
+                    </p>
+                  </div>
+                )}
+                {client.lastVisit && (
+                  <div className="bg-accent/5 p-3 rounded-lg">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Última Visita</p>
+                    <p className="text-sm font-medium text-foreground">
+                      {new Date(client.lastVisit).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Pets Section */}
@@ -178,9 +245,12 @@ export function ClientDetailModal({
                             <div>
                               <h4 className="text-lg font-bold text-foreground">{pet.name}</h4>
                               <p className="text-sm text-muted-foreground">{pet.breed}</p>
+                              {pet.species && (
+                                <p className="text-xs text-muted-foreground">{pet.species}</p>
+                              )}
                             </div>
                           </div>
-                          <div className="flex gap-2">
+                          <div className="flex gap-2 flex-wrap justify-end">
                             {pet.is_vip && (
                               <span className="px-3 py-1 bg-accent/10 rounded-full text-xs font-bold text-accent">
                                 ⭐ VIP
@@ -191,44 +261,74 @@ export function ClientDetailModal({
                                 🎯 Modelo
                               </span>
                             )}
+                            {pet.status && (
+                              <span className="px-3 py-1 bg-blue-100 rounded-full text-xs font-bold text-blue-700 capitalize">
+                                {pet.status}
+                              </span>
+                            )}
                           </div>
                         </div>
 
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                          <div>
-                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
-                              Sexo
-                            </p>
-                            <p className="text-sm font-semibold text-foreground">
-                              {pet.sexo === "M" ? "Macho" : pet.sexo === "F" ? "Fêmea" : pet.sexo}
-                            </p>
-                          </div>
-
-                          <div>
-                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
-                              Cor
-                            </p>
-                            <p className="text-sm font-semibold text-foreground">{pet.cor_pelagem}</p>
-                          </div>
-
-                          <div>
-                            <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
-                              Peso
-                            </p>
-                            <p className="text-sm font-semibold text-foreground flex items-center gap-1">
-                              <Weight className="w-4 h-4" />
-                              {pet.weight} kg
-                            </p>
-                          </div>
+                          {pet.color && (
+                            <div>
+                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
+                                Cor
+                              </p>
+                              <p className="text-sm font-medium text-foreground">{pet.color}</p>
+                            </div>
+                          )}
+                          {pet.weight && (
+                            <div>
+                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
+                                Peso
+                              </p>
+                              <p className="text-sm font-medium text-foreground">{pet.weight} kg</p>
+                            </div>
+                          )}
+                          {pet.birthDate && (
+                            <div>
+                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
+                                Data de Nascimento
+                              </p>
+                              <p className="text-sm font-medium text-foreground">
+                                {new Date(pet.birthDate).toLocaleDateString('pt-BR')}
+                              </p>
+                            </div>
+                          )}
+                          {pet.microchip && (
+                            <div className="col-span-2 md:col-span-3">
+                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
+                                Microchip
+                              </p>
+                              <p className="text-sm font-medium text-foreground font-mono">{pet.microchip}</p>
+                            </div>
+                          )}
                         </div>
 
-                        {/* Pet Actions */}
-                        <div className="flex gap-2">
+                        {pet.notes && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                            <p className="text-xs font-bold text-blue-900 uppercase tracking-wide mb-1">Observações</p>
+                            <p className="text-sm text-blue-900">{pet.notes}</p>
+                          </div>
+                        )}
+
+                        {pet.photo && (
+                          <div className="mb-4">
+                            <img
+                              src={pet.photo}
+                              alt={pet.name}
+                              className="w-full h-32 object-cover rounded-lg"
+                            />
+                          </div>
+                        )}
+
+                        <div className="flex gap-2 justify-end">
                           <Button
                             onClick={() => handleEditPet(pet)}
                             variant="outline"
                             size="sm"
-                            className="flex-1 gap-2"
+                            className="gap-2"
                           >
                             <Edit2 className="w-4 h-4" />
                             Editar
@@ -237,7 +337,7 @@ export function ClientDetailModal({
                             onClick={() => setDeletingPet(pet)}
                             variant="outline"
                             size="sm"
-                            className="flex-1 gap-2 text-red-600 hover:text-red-700"
+                            className="gap-2 text-red-600 hover:text-red-700"
                           >
                             <Trash2 className="w-4 h-4" />
                             Deletar
@@ -249,12 +349,9 @@ export function ClientDetailModal({
                 )}
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3 pt-6 border-t border-accent/10">
-                <Button
-                  onClick={onClose}
-                  className="flex-1 bg-accent hover:bg-accent/90 text-foreground rounded-lg"
-                >
+              {/* Close Button */}
+              <div className="flex justify-end gap-2 pt-4 border-t border-accent/10">
+                <Button onClick={onClose} variant="outline">
                   Fechar
                 </Button>
               </div>
@@ -264,37 +361,32 @@ export function ClientDetailModal({
       </Dialog>
 
       {/* Pet Form Modal */}
-      {client && (
+      {petFormOpen && client && (
         <PetForm
           isOpen={petFormOpen}
           onClose={handleClosePetForm}
+          petData={editingPet}
           clientId={client.id}
           petId={editingPet?.id}
-          petData={editingPet ? {
-            name: editingPet.name,
-            breed: editingPet.breed,
-            sexo: editingPet.sexo as "M" | "F",
-            cor_pelagem: editingPet.cor_pelagem,
-            weight: editingPet.weight,
-            is_vip: editingPet.is_vip,
-            is_model_dog: editingPet.is_model_dog,
-          } : null}
           onSuccess={() => {
+            handleClosePetForm();
             utils.clients.getById.invalidate({ id: client.id });
           }}
         />
       )}
 
-      {/* Delete Pet Confirmation */}
-      <DeleteConfirmationDialog
-        isOpen={!!deletingPet}
-        onClose={() => setDeletingPet(null)}
-        onConfirm={handleDeletePet}
-        title="Deletar Pet"
-        description="Esta ação não pode ser desfeita."
-        itemName={deletingPet?.name || ""}
-        isLoading={deletePetMutation.isPending}
-      />
+      {/* Delete Confirmation Dialog */}
+      {deletingPet && (
+        <DeleteConfirmationDialog
+          isOpen={!!deletingPet}
+          title="Deletar Pet"
+          description="Tem certeza que deseja deletar este pet?"
+          itemName={deletingPet.name}
+          onConfirm={handleDeletePet}
+          onClose={() => setDeletingPet(null)}
+          isLoading={deletePetMutation.isPending}
+        />
+      )}
     </>
   );
 }

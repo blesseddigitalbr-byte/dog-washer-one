@@ -5,7 +5,7 @@ import { ClientDetailModal } from "./ClientDetailModal";
 describe("ClientDetailModal", () => {
   const mockClient = {
     id: "test-id",
-    nome: "Test Client",
+    name: "Test Client",
     email: "test@example.com",
     phone: "(11) 99999-0001",
     pets: [
@@ -13,9 +13,8 @@ describe("ClientDetailModal", () => {
         id: "pet-1",
         name: "Bento",
         breed: "Poodle",
-        sexo: "M",
-        cor_pelagem: "Branco",
-        weight: "8.5",
+        color: "Branco",
+        weight: 8.5,
         is_vip: false,
         is_model_dog: false,
       },
@@ -23,9 +22,8 @@ describe("ClientDetailModal", () => {
         id: "pet-2",
         name: "Mimi",
         breed: "Shih Tzu",
-        sexo: "F",
-        cor_pelagem: "Marrom",
-        weight: "6.2",
+        color: "Marrom",
+        weight: 6.2,
         is_vip: true,
         is_model_dog: false,
       },
