@@ -157,3 +157,32 @@
 - [x] Aplicar ícones padronizados em filtros de Clientes
 - [ ] Aplicar ícones padronizados em filtros de Agendamentos
 - [ ] Aplicar ícones padronizados em filtros de Alunos
+
+
+## DELTA 8: Correções e Melhorias - Card do Pet e Upload de Foto
+
+### Card do Pet - Resumo Simplificado
+- [x] Remover "Peso" da exibição inicial do card
+- [x] Exibir apenas: nome, foto, raça (em subtítulo), data de nascimento, cor
+- [x] Adicionar botão "Ver Histórico" para exibir atendimentos
+- [x] Adicionar botão "Detalhes" para abrir formulário de edição
+
+### Modal Detalhes do Pet
+- [ ] Criar modal com todos os dados do cadastro
+- [ ] Exibir: nome, foto, raça, porte, pelagem, cor, peso, data nascimento, microchip, espécie, status
+- [ ] Exibir: vacinas, vermífugo, doenças/alergias
+
+### Modal Histórico do Pet
+- [ ] Exibir histórico de atendimentos com: data, profissional/aluno, procedimento, pacote ativo, saldo
+- [ ] Usar dados disponíveis do banco
+
+### Checkboxes com Contraste
+- [ ] Adicionar borda/estilo nas checkboxes de Vacinas
+- [ ] Adicionar borda/estilo nas checkboxes de Vermífugo
+- [ ] Adicionar borda/estilo nas checkboxes de Doenças/Alergias
+
+### Upload de Foto - Integração S3
+- [ ] Corrigir erro ao atualizar pet com upload de foto
+- [ ] Integrar com storage S3 (storagePut)
+- [ ] Atualizar foto_url no banco de dados
+- [ ] Exibir foto atualizada no card e modal

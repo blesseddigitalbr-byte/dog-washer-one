@@ -165,8 +165,29 @@ export function PetForm({
     if (!validateForm()) return;
 
     try {
+      let photoUrl = formData.photo;
+
+      // Upload photo if a new file was selected
+      if (photoFile) {
+        const formDataForUpload = new FormData();
+        formDataForUpload.append('file', photoFile);
+        
+        const uploadResponse = await fetch('/api/trpc/pets.uploadPhoto', {
+          method: 'POST',
+          body: formDataForUpload,
+        });
+        
+        if (!uploadResponse.ok) {
+          throw new Error('Erro ao fazer upload da foto');
+        }
+        
+        const uploadedData = await uploadResponse.json();
+        photoUrl = uploadedData.url || formData.photo;
+      }
+
       const submitData = {
         ...formData,
+        photo: photoUrl,
         vaccines: JSON.stringify(formData.vaccines),
         clientId,
       };
@@ -458,23 +479,25 @@ export function PetForm({
               <Label className="text-sm font-semibold text-foreground mb-2 block">
                 Vacinas Atualizadas
               </Label>
-              <div className="grid grid-cols-2 gap-3">
-                {availableVaccines.map((vaccine) => (
-                  <div key={vaccine.id} className="flex items-center gap-2">
-                    <Checkbox
-                      id={vaccine.id}
-                      checked={formData.vaccines.includes(vaccine.id)}
-                      onCheckedChange={() => handleVaccineChange(vaccine.id)}
-                      disabled={isLoading}
-                    />
-                    <label
-                      htmlFor={vaccine.id}
-                      className="text-sm font-medium text-foreground cursor-pointer"
-                    >
-                      {vaccine.label}
-                    </label>
-                  </div>
-                ))}
+              <div className="border border-accent/30 rounded-lg p-4 bg-accent/5 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  {availableVaccines.map((vaccine) => (
+                    <div key={vaccine.id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={vaccine.id}
+                        checked={formData.vaccines.includes(vaccine.id)}
+                        onCheckedChange={() => handleVaccineChange(vaccine.id)}
+                        disabled={isLoading}
+                      />
+                      <label
+                        htmlFor={vaccine.id}
+                        className="text-sm font-medium text-foreground cursor-pointer"
+                      >
+                        {vaccine.label}
+                      </label>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 

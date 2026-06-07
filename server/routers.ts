@@ -265,6 +265,8 @@ export const appRouter = router({
         clientId: z.string().uuid(),
         name: z.string().min(1, "Nome do pet é obrigatório"),
         breed: z.string().min(1, "Raça é obrigatória"),
+        size: z.string().optional(),
+        coatType: z.string().optional(),
         species: z.string().optional(),
         color: z.string().optional(),
         birthDate: z.string().optional(),
@@ -273,6 +275,10 @@ export const appRouter = router({
         notes: z.string().optional(),
         photo: z.string().optional(),
         status: z.string().default("active"),
+        vaccines: z.string().optional(),
+        dewormed: z.boolean().optional(),
+        hasDiseasesOrAllergies: z.boolean().optional(),
+        diseasesOrAllergiesDescription: z.string().optional(),
       }))
       .mutation(async ({ input }) => {
         try {
@@ -282,6 +288,8 @@ export const appRouter = router({
               client_id: input.clientId,
               name: input.name,
               breed: input.breed,
+              size: input.size || null,
+              coat_type: input.coatType || null,
               species: input.species || null,
               color: input.color || null,
               birth_date: input.birthDate || null,
@@ -290,6 +298,10 @@ export const appRouter = router({
               notes: input.notes || null,
               photo: input.photo || null,
               status: input.status,
+              vaccines: input.vaccines || null,
+              dewormed: input.dewormed || false,
+              has_diseases_or_allergies: input.hasDiseasesOrAllergies || false,
+              diseases_or_allergies_description: input.diseasesOrAllergiesDescription || null,
             }])
             .select()
             .single();
@@ -308,6 +320,8 @@ export const appRouter = router({
         id: z.string().uuid(),
         name: z.string().min(1, "Nome do pet é obrigatório"),
         breed: z.string().min(1, "Raça é obrigatória"),
+        size: z.string().optional(),
+        coatType: z.string().optional(),
         species: z.string().optional(),
         color: z.string().optional(),
         birthDate: z.string().optional(),
@@ -329,6 +343,8 @@ export const appRouter = router({
             .update({
               name: updateData.name,
               breed: updateData.breed,
+              size: updateData.size || null,
+              coat_type: updateData.coatType || null,
               species: updateData.species || null,
               color: updateData.color || null,
               birth_date: updateData.birthDate || null,

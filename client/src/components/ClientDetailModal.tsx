@@ -281,14 +281,6 @@ export function ClientDetailModal({
                               <p className="text-sm font-medium text-foreground">{pet.color}</p>
                             </div>
                           )}
-                          {pet.weight && (
-                            <div>
-                              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
-                                Peso
-                              </p>
-                              <p className="text-sm font-medium text-foreground">{pet.weight} kg</p>
-                            </div>
-                          )}
                           {pet.birthDate && (
                             <div>
                               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">
@@ -301,22 +293,7 @@ export function ClientDetailModal({
                           )}
                         </div>
 
-                        {pet.notes && (
-                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                            <p className="text-xs font-bold text-blue-900 uppercase tracking-wide mb-1">Observações</p>
-                            <p className="text-sm text-blue-900">{pet.notes}</p>
-                          </div>
-                        )}
 
-                        {pet.photo && (
-                          <div className="mb-4">
-                            <img
-                              src={pet.photo}
-                              alt={pet.name}
-                              className="w-full h-32 object-cover rounded-lg"
-                            />
-                          </div>
-                        )}
 
                         <div className="flex gap-2 justify-end flex-wrap">
                           <Button
@@ -329,7 +306,7 @@ export function ClientDetailModal({
                             className="gap-2"
                           >
                             <FileText className="w-4 h-4" />
-                            Detalhes
+                            Ver Histórico
                           </Button>
                           <Button
                             onClick={() => handleEditPet(pet)}
@@ -338,7 +315,7 @@ export function ClientDetailModal({
                             className="gap-2"
                           >
                             <Edit2 className="w-4 h-4" />
-                            Editar
+                            Detalhes
                           </Button>
                           <Button
                             onClick={() => setDeletingPet(pet)}
