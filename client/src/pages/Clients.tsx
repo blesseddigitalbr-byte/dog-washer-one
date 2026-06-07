@@ -12,12 +12,15 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+const ITEMS_PER_PAGE = 12;
+
 export default function ClientsPage() {
   const [filter, setFilter] = useState("todos");
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [clientFormOpen, setClientFormOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
   const [deletingClient, setDeletingClient] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Fetch clients from tRPC
   const { data: clients = [], isLoading, error } = trpc.clients.list.useQuery();
@@ -54,6 +57,24 @@ export default function ClientsPage() {
     if (filter === "modelo") return client.pets?.some((pet: any) => pet.is_model_dog);
     return true;
   });
+
+  const totalPages = Math.ceil(filteredClients.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedClients = filteredClients.slice(startIndex, endIndex);
+
+  const handleFilterChange = (newFilter: string) => {
+    setFilter(newFilter);
+    setCurrentPage(1);
+  };
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+  };
 
   // Get first letter of name for avatar
   const getInitial = (name: string) => {
@@ -129,7 +150,7 @@ export default function ClientsPage() {
             {filters.map((f) => (
               <button
                 key={f.id}
-                onClick={() => setFilter(f.id)}
+                onClick={() => handleFilterChange(f.id)}
                 className={`px-4 py-2 rounded-full font-medium text-sm transition-all flex items-center gap-2 border ${
                   filter === f.id
                     ? "bg-accent text-foreground border-accent shadow-sm"
@@ -192,7 +213,7 @@ export default function ClientsPage() {
         {/* Clients Grid - 4 colunas em XL, 3 em LG, 2 em MD, 1 em SM */}
         {!isLoading && !error && filteredClients.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredClients.map((client) => (
+            {paginatedClients.map((client) => (
               <div
                 key={client.id}
                 className="bg-white rounded-[16px] p-5 shadow-sm border border-border hover:shadow-md transition-all duration-200 relative group border-l-4 border-l-accent flex flex-col"
@@ -307,19 +328,22 @@ export default function ClientsPage() {
               <span>👥 {filteredClients.length} clientes encontrados</span>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">Itens por página: <span className="font-semibold">12</span></span>
+              <span className="text-sm text-muted-foreground">Itens por página: <span className="font-semibold">{ITEMS_PER_PAGE}</span></span>
+              <span className="text-sm text-muted-foreground">{startIndex + 1}-{Math.min(endIndex, filteredClients.length)} de {filteredClients.length}</span>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => window.history.back()}
-                  className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-accent transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group"
-                  title="Voltar para página anterior"
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-accent transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Página anterior"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
-                  onClick={() => window.history.forward()}
-                  className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-accent transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group"
-                  title="Avançar para próxima página"
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-accent transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Próxima página"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>

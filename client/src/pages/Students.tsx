@@ -1,7 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Users, BookOpen, Award, Calendar } from "lucide-react";
+import { Users, BookOpen, Award, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState } from "react";
+
+const ITEMS_PER_PAGE = 8;
 
 export default function StudentsPage() {
+  const [currentPage, setCurrentPage] = useState(1);
   // Dados de exemplo
   const students = [
     {
@@ -41,6 +45,20 @@ export default function StudentsPage() {
       progress: 30,
     },
   ];
+
+  // Pagination logic
+  const totalPages = Math.ceil(students.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedStudents = students.slice(startIndex, endIndex);
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -123,7 +141,7 @@ export default function StudentsPage() {
 
         {/* Students Cards */}
         <div className="space-y-4">
-          {students.map((student) => (
+          {paginatedStudents.map((student) => (
             <div
               key={student.id}
               className="bg-white rounded-xl p-6 shadow-sm border-l-4 border-l-accent hover:shadow-md transition-shadow"
@@ -177,6 +195,37 @@ export default function StudentsPage() {
             </div>
           ))}
         </div>
+
+        {/* Footer Navigation */}
+        {students.length > 0 && (
+          <div className="mt-12 pt-8 border-t border-border flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>👥 {students.length} alunos encontrados</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground">Itens por página: <span className="font-semibold">{ITEMS_PER_PAGE}</span></span>
+              <span className="text-sm text-muted-foreground">{startIndex + 1}-{Math.min(endIndex, students.length)} de {students.length}</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-accent transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Página anterior"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-accent transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Próxima página"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

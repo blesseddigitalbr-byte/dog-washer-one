@@ -2,8 +2,11 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Plus, ChevronLeft, ChevronRight, MoreVertical } from "lucide-react";
 
+const ITEMS_PER_PAGE = 10;
+
 export default function SchedulePage() {
   const [selectedDate, setSelectedDate] = useState(new Date(2024, 9, 24)); // Oct 24, 2024
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Dados de exemplo
   const appointments = [
@@ -77,6 +80,20 @@ export default function SchedulePage() {
   const weekDays = getWeekDays(selectedDate);
   const monthYear = formatMonthYear(selectedDate);
 
+  // Pagination logic
+  const totalPages = Math.ceil(appointments.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedAppointments = appointments.slice(startIndex, endIndex);
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(1, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+  };
+
   return (
     <div className="flex-1 overflow-auto p-6 bg-background">
       <div className="max-w-6xl mx-auto">
@@ -132,7 +149,7 @@ export default function SchedulePage() {
 
         {/* Appointments List */}
         <div className="space-y-4">
-          {appointments.map((appointment) => (
+          {paginatedAppointments.map((appointment) => (
             <div key={appointment.id} className="bg-white p-4 hover:bg-accent/5 transition-all duration-200 group flex items-center justify-between border-l-4 border-l-accent rounded-lg shadow-sm">
               {/* Left side - Pet info */}
               <div className="flex items-center gap-4 flex-1">
@@ -162,6 +179,37 @@ export default function SchedulePage() {
             </div>
           ))}
         </div>
+
+        {/* Footer Navigation */}
+        {appointments.length > 0 && (
+          <div className="mt-12 pt-8 border-t border-border flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>📅 {appointments.length} agendamentos encontrados</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground">Itens por página: <span className="font-semibold">{ITEMS_PER_PAGE}</span></span>
+              <span className="text-sm text-muted-foreground">{startIndex + 1}-{Math.min(endIndex, appointments.length)} de {appointments.length}</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-accent transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Página anterior"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-accent transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Próxima página"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
