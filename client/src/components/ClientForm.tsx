@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { useEffect } from "react";
 
 interface ClientFormProps {
   isOpen: boolean;
@@ -32,8 +33,28 @@ export function ClientForm({
     state: clientData?.state || "",
     zipCode: clientData?.zipCode || "",
     isVip: clientData?.isVip || false,
+    isModelDog: clientData?.isModelDog || false,
     status: clientData?.status || "active",
   });
+
+  // Atualizar formData quando clientData mudar (para pré-preenchimento ao editar)
+  useEffect(() => {
+    if (clientData) {
+      setFormData({
+        name: clientData.name || "",
+        email: clientData.email || "",
+        phone: clientData.phone || "",
+        cpf: clientData.cpf || "",
+        address: clientData.address || "",
+        city: clientData.city || "",
+        state: clientData.state || "",
+        zipCode: clientData.zipCode || "",
+        isVip: clientData.isVip || false,
+        isModelDog: clientData.isModelDog || false,
+        status: clientData.status || "active",
+      });
+    }
+  }, [clientData, isOpen]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -81,9 +102,11 @@ export function ClientForm({
 
     try {
       if (isEditing && clientId) {
+        // Para edição, enviar apenas os campos que podem ser alterados
+        const { isModelDog, ...updateData } = formData;
         await updateMutation.mutateAsync({
           id: clientId,
-          ...formData,
+          ...updateData,
         });
       } else {
         await createMutation.mutateAsync(formData);
@@ -103,6 +126,7 @@ export function ClientForm({
         state: "",
         zipCode: "",
         isVip: false,
+        isModelDog: false,
         status: "active",
       });
       setErrors({});
@@ -130,6 +154,7 @@ export function ClientForm({
       state: "",
       zipCode: "",
       isVip: false,
+      isModelDog: false,
       status: "active",
     });
     setErrors({});
@@ -346,6 +371,21 @@ export function ClientForm({
               />
               <Label htmlFor="isVip" className="text-sm font-semibold text-foreground cursor-pointer">
                 ⭐ Cliente VIP
+              </Label>
+            </div>
+
+            {/* Model Dog Checkbox */}
+            <div className="flex items-center gap-2">
+              <input
+                id="isModelDog"
+                type="checkbox"
+                checked={formData.isModelDog}
+                onChange={(e) => setFormData({ ...formData, isModelDog: e.target.checked })}
+                disabled={isLoading}
+                className="w-4 h-4 rounded border-gray-300"
+              />
+              <Label htmlFor="isModelDog" className="text-sm font-semibold text-foreground cursor-pointer">
+                🎯 Cliente Escola/Modelo
               </Label>
             </div>
           </div>

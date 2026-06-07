@@ -50,6 +50,42 @@
 - [x] Testes vitest para CRUD operations (11 testes, 100% passing)
 - [x] Validar fluxo completo no navegador
 
+## DELTA 4: Cadastro Completo (Todos os Campos)
+- [x] Atualizar ClientForm com todos os 13 campos de clientes
+- [x] Atualizar PetForm com todos os 13 campos de pets
+- [x] Atualizar ClientDetailModal para exibir todos os campos
+- [x] Atualizar página Clients para exibir todos os campos
+- [x] Atualizar procedures tRPC para retornar todos os campos
+- [x] Testes vitest para novos campos (11 testes, 100% passing)
+- [x] Validar fluxo completo no navegador
+- [x] Corrigir bug de duplicação de pets
+- [x] Corrigir mapeamento de dados (nome/name)
+
+## DELTA 5: Refinamento Visual - Tela Clientes (Piloto)
+- [x] Corrigir ClientForm com pré-preenchimento de dados ao editar
+- [x] Adicionar checkboxes "Cliente VIP" e "Cliente Escola/Modelo" no ClientForm
+- [x] Refinar layout da página Clients (container centralizado 1280px)
+- [x] Redesenhar cabeçalho (título, subtítulo, botão "+Novo Cliente" à direita)
+- [x] Ajustar filtros em formato pill
+- [x] Redesenhar cards: fundo branco/off-white, borda suave, sombra leve, border-radius 16px, borda lateral esquerda dourada
+- [x] Organizar dados nos cards: avatar, nome, email, badges, pets, contato, "Ver detalhes →"
+- [x] Atualizar card "Adicionar Novo Cliente" no mesmo padrão
+- [x] Testar fluxo completo no navegador
+- [x] Validar refinamento visual com usuário
+
+## Status Atual
+✅ **DELTA 5 COMPLETO - REFINAMENTO VISUAL DA TELA CLIENTES**
+- ✅ ClientForm com pré-preenchimento de dados ao editar
+- ✅ Checkboxes "Cliente VIP" e "Cliente Escola/Modelo" adicionados
+- ✅ Layout refinado: container centralizado (1280px), cabeçalho com título/subtítulo/botão
+- ✅ Filtros em formato pill com ícones
+- ✅ Cards redesenhados: fundo branco, borda suave, sombra leve, border-radius 16px, borda lateral esquerda dourada
+- ✅ Dados organizados: avatar, nome, email, badges VIP/Modelo, pets, contato, link "Ver detalhes →"
+- ✅ Card "Adicionar Novo Cliente" no mesmo padrão visual
+- ✅ Grid responsivo (4 colunas XL, 3 LG, 2 MD, 1 SM)
+- ✅ Identidade premium mantida: sidebar #07111E, fundo claro/off-white, detalhes dourados
+- ✅ Fluxo completo testado e validado
+
 ## Próximas Fases
 
 ### DELTA 2.2: Agendamentos
@@ -64,39 +100,8 @@
 - [ ] Implementar progresso de alunos
 - [ ] Testes vitest para alunos
 
-### DELTA 3: CRUD Completo
-- [ ] Criar novo cliente
-- [ ] Editar cliente
-- [ ] Deletar cliente
-- [ ] Criar novo pet
-- [ ] Editar pet
-- [ ] Deletar pet
-- [ ] Testes para CRUD operations
-
 ### DELTA 4: Integrações
 - [ ] Integração com Asaas (pagamentos)
 - [ ] Integração com WhatsApp (notificações)
 - [ ] Integração com Google Calendar (agendamentos)
 - [ ] Webhooks para eventos
-
-## DELTA 4: Cadastro Completo (Todos os Campos) ✅
-- [x] Atualizar ClientForm com todos os 13 campos de clientes
-- [x] Atualizar PetForm com todos os 13 campos de pets
-- [x] Atualizar ClientDetailModal para exibir todos os campos
-- [x] Atualizar página Clients para exibir todos os campos
-- [x] Atualizar procedures tRPC para retornar todos os campos
-- [x] Testes vitest para novos campos (11 testes, 100% passing)
-- [x] Validar fluxo completo no navegador
-- [x] Corrigir bug de duplicação de pets
-- [x] Corrigir mapeamento de dados (nome/name)
-
-## Status Atual
-✅ **DELTA 4 COMPLETO - CADASTRO COMPLETO COM TODOS OS CAMPOS**
-- ✅ ClientForm com 13 campos: name, email, phone, cpf, address, city, state, zipCode, isVip, status, totalSpent, lastVisit
-- ✅ PetForm com 13 campos: name, breed, species, color, weight, birthDate, microchip, notes, photo, status
-- ✅ Procedures tRPC atualizadas para retornar todos os campos
-- ✅ Modal de detalhes exibindo: nome, email, telefone, CPF, pets com todos os dados
-- ✅ 11 testes vitest passando 100%
-- ✅ Fluxo completo validado no navegador
-- ✅ Bug de duplicação de pets corrigido (filtro por client_id)
-- ✅ Mapeamento de dados flexível (nome/name)
