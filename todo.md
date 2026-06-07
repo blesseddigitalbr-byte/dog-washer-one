@@ -186,3 +186,29 @@
 - [ ] Integrar com storage S3 (storagePut)
 - [ ] Atualizar foto_url no banco de dados
 - [ ] Exibir foto atualizada no card e modal
+
+
+## DELTA 9: Sincronização de Dados e Harmonia Visual
+
+### Redução de Tamanho dos Títulos
+- [x] Reduzir tamanho do título "Pets Cadastrados" (text-lg → text-sm)
+- [x] Reduzir tamanho do título "Última Visita" (text-lg → text-sm)
+- [x] Reduzir tamanho do título "Total Gasto" (text-lg → text-sm)
+- [x] Melhorar harmonia visual com espaçamento ajustado
+
+### Sincronização de Cliente VIP
+- [x] Corrigir filtro VIP para usar cliente.is_vip em vez de apenas pet.is_vip
+- [x] Corrigir badges VIP/Modelo na página de clientes para usar cliente.is_vip
+- [x] Corrigir badges VIP/Modelo no modal de detalhes
+- [x] Garantir que alterações em "Cliente VIP" sejam salvas no banco
+- [x] Atualizar card do cliente imediatamente após salvar VIP
+
+### Sincronização de Endereço
+- [x] Corrigir mapeamento de campos de endereço no ClientForm (zipCode → cep, etc)
+- [x] Garantir que alterações de endereço sejam salvas no banco
+
+### Validação
+- [x] Marcar cliente como VIP no formulário
+- [x] Verificar se badge VIP aparece no card imediatamente
+- [x] Verificar se filtro VIP exibe o cliente
+- [x] Verificar se dados de endereço são salvos corretamente

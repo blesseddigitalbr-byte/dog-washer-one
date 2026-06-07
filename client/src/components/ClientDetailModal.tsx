@@ -129,11 +129,16 @@ export function ClientDetailModal({
                   {(client.name || (client as any).nome)?.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h2 className="text-2xl font-bold text-foreground">{client.name || (client as any).nome}</h2>
-                    {client.isVip && (
+                    {(client.isVip || (client as any).is_vip) && (
                       <span className="px-2 py-1 bg-accent/10 rounded-full text-xs font-bold text-accent">
                         ⭐ VIP
+                      </span>
+                    )}
+                    {((client as any).is_model_dog) && (
+                      <span className="px-2 py-1 bg-purple-100 rounded-full text-xs font-bold text-purple-700">
+                        🎯 Modelo
                       </span>
                     )}
                   </div>
@@ -187,7 +192,7 @@ export function ClientDetailModal({
                 )}
                 {client.totalSpent !== undefined && (
                   <div className="bg-accent/5 p-3 rounded-lg">
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Total Gasto</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Total Gasto</p>
                     <p className="text-sm font-medium text-foreground">
                       R$ {typeof client.totalSpent === 'number' ? client.totalSpent.toFixed(2) : '0.00'}
                     </p>
@@ -195,7 +200,7 @@ export function ClientDetailModal({
                 )}
                 {client.lastVisit && (
                   <div className="bg-accent/5 p-3 rounded-lg">
-                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Última Visita</p>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Última Visita</p>
                     <p className="text-sm font-medium text-foreground">
                       {new Date(client.lastVisit).toLocaleDateString('pt-BR')}
                     </p>
@@ -205,8 +210,8 @@ export function ClientDetailModal({
 
               {/* Pets Section */}
               <div>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Heart className="w-5 h-5 text-accent" />
                     Pets Cadastrados ({client.pets.length})
                   </h3>

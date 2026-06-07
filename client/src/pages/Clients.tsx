@@ -54,8 +54,8 @@ export default function ClientsPage() {
   ];
 
   const filteredClients = clients.filter((client: any) => {
-    if (filter === "vips") return client.pets?.some((pet: any) => pet.is_vip);
-    if (filter === "modelo") return client.pets?.some((pet: any) => pet.is_model_dog);
+    if (filter === "vips") return client.is_vip || client.pets?.some((pet: any) => pet.is_vip);
+    if (filter === "modelo") return client.is_model_dog || client.pets?.some((pet: any) => pet.is_model_dog);
     return true;
   });
 
@@ -274,12 +274,12 @@ export default function ClientsPage() {
 
                 {/* Badges - VIP / Modelo */}
                 <div className="flex gap-2 mb-4 flex-wrap">
-                  {client.pets?.some((pet: any) => pet.is_vip) && (
+                  {(client.is_vip || client.pets?.some((pet: any) => pet.is_vip)) && (
                     <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent/10 rounded-full text-xs font-semibold text-accent">
                       ⭐ VIP
                     </span>
                   )}
-                  {client.pets?.some((pet: any) => pet.is_model_dog) && (
+                  {(client.is_model_dog || client.pets?.some((pet: any) => pet.is_model_dog)) && (
                     <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 rounded-full text-xs font-semibold text-purple-700">
                       🎯 Modelo
                     </span>
@@ -288,7 +288,7 @@ export default function ClientsPage() {
 
                 {/* Pets */}
                 <div className="mb-4 pb-4 border-b border-border">
-                  <p className="text-xs font-bold text-muted-foreground mb-3 uppercase tracking-wide">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
                     Pets Cadastrados
                   </p>
                   <div className="flex flex-wrap gap-3">
@@ -326,7 +326,7 @@ export default function ClientsPage() {
                 <div className="mb-4 pb-4 border-b border-border">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Última Visita</p>
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Última Visita</p>
                       <p className="text-sm font-semibold text-foreground mt-1">{formatDate(client.last_visit)}</p>
                     </div>
                     <button

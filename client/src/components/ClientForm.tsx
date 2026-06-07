@@ -133,13 +133,28 @@ export function ClientForm({
     setIsSubmitting(true);
 
     try {
+      const submitData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        cpf: formData.cpf,
+        cep: formData.zipCode,
+        logradouro: formData.address,
+        numero: formData.number,
+        complemento: formData.complement,
+        cidade: formData.city,
+        uf: formData.state,
+        isVip: formData.isVip,
+        isModelDog: formData.isModelDog,
+      };
+
       if (isEditing && clientId) {
         await updateMutation.mutateAsync({
           id: clientId,
-          ...formData,
+          ...submitData,
         });
       } else {
-        await createMutation.mutateAsync(formData);
+        await createMutation.mutateAsync(submitData);
       }
 
       // Invalidate clients list to refetch
