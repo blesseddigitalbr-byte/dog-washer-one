@@ -223,44 +223,44 @@ export function ClientDetailModal({
                           {/* Pet Info */}
                           <div className="flex-1">
                             {/* Name and Gender */}
-                            <div className="flex items-center gap-2 mb-1">
-                              <h4 className="text-xl font-bold text-foreground">{petName}</h4>
+                            <div className="flex items-center gap-2 mb-2">
+                              <h4 className="text-2xl font-bold text-foreground tracking-tight">{petName}</h4>
                               {(pet as any).gender && (
-                                <span className="text-xl">
+                                <span className="text-2xl">
                                   {(pet as any).gender === 'M' ? '♂️' : '♀️'}
                                 </span>
                               )}
                             </div>
                             {/* Breed */}
-                            <p className="text-sm text-muted-foreground mb-4">{pet.breed}</p>
+                            <p className="text-sm font-medium text-muted-foreground mb-6">{pet.breed}</p>
 
                             {/* First Grid: Raça, Porte, Data de Nascimento, Idade */}
-                            <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div className="grid grid-cols-2 gap-6 mb-6">
                               <div>
-                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
                                   🐕 Raça
                                 </p>
-                                <p className="text-sm font-medium text-foreground">{pet.breed}</p>
+                                <p className="text-sm font-semibold text-foreground">{pet.breed}</p>
                               </div>
                               <div>
-                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
                                   📏 Porte
                                 </p>
-                                <p className="text-sm font-medium text-foreground">{(pet as any).size || 'Não informado'}</p>
+                                <p className="text-sm font-semibold text-foreground">{(pet as any).size || 'Não informado'}</p>
                               </div>
                               <div>
-                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
-                                  📅 Data de Nascimento
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                                  💫 Data de Nascimento
                                 </p>
-                                <p className="text-sm font-medium text-foreground">
+                                <p className="text-sm font-semibold text-foreground">
                                   {pet.birthDate ? new Date(pet.birthDate).toLocaleDateString('pt-BR') : 'Não informado'}
                                 </p>
                               </div>
                               <div>
-                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
                                   🎂 Idade
                                 </p>
-                                <p className="text-sm font-medium text-foreground">
+                                <p className="text-sm font-semibold text-foreground">
                                   {(() => {
                                     const birthDate = pet.birthDate ? new Date(pet.birthDate) : null;
                                     const age = birthDate ? Math.floor((Date.now() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null;
@@ -272,30 +272,30 @@ export function ClientDetailModal({
                             </div>
 
                             {/* Second Grid: Sexo, Pelagem, Última Visita */}
-                            <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div className="grid grid-cols-2 gap-6 mb-6">
                               {(pet as any).gender && (
                                 <div>
-                                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
                                     ♂️ Sexo
                                   </p>
-                                  <p className="text-sm font-medium text-foreground">
+                                  <p className="text-sm font-semibold text-foreground">
                                     {(pet as any).gender === 'M' ? 'Macho' : 'Fêmea'}
                                   </p>
                                 </div>
                               )}
                               {(pet as any).coat && (
                                 <div>
-                                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
+                                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
                                     🧶 Pelagem
                                   </p>
-                                  <p className="text-sm font-medium text-foreground">{(pet as any).coat}</p>
+                                  <p className="text-sm font-semibold text-foreground">{(pet as any).coat}</p>
                                 </div>
                               )}
                               <div>
-                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1 flex items-center gap-1">
-                                  📅 Última Visita
+                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                                  💫 Última Visita
                                 </p>
-                                <p className="text-sm font-medium text-foreground">02/05/2024</p>
+                                <p className="text-sm font-semibold text-foreground">02/05/2024</p>
                               </div>
                             </div>
                           </div>

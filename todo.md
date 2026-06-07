@@ -276,3 +276,51 @@
 - [x] Exibir foto, porte, cliente, total de visitas, última visita
 - [x] Timeline visual com histórico de atendimentos
 - [x] Botões: Ver ficha completa, Exportar Histórico
+
+
+## DELTA 14: Layout Premium do Card do Pet
+- [x] Foto grande (lado esquerdo) com fallback para avatar
+- [x] Nome + ícone de gênero (lado direito)
+- [x] Raça (subtítulo)
+- [x] Grid 1 (2 colunas): Raça, Porte, Data de Nascimento, Idade
+- [x] Grid 2 (2 colunas): Sexo, Pelagem, Última Visita
+- [x] 3 Botões: Ver Histórico, Detalhes, Excluir
+- [x] Sincronização total com banco de dados
+- [x] Toasts de sucesso ao salvar/deletar
+- [x] Modal de Histórico com layout premium
+- [x] Validação completa no navegador
+
+
+## DELTA 15: Refinamento Visual Premium e Correção de Upload de Foto
+
+### Correção de Upload de Foto
+- [ ] Debugar erro "Erro ao fazer upload da foto" no formulário de edição
+- [ ] Corrigir integração com S3 (storagePut)
+- [ ] Validar que foto é salva no banco de dados
+- [ ] Exibir foto atualizada no card e modal
+
+### Refinamento Visual Premium - Tipografia
+- [ ] Aumentar peso das fontes dos títulos (font-weight: 600-700)
+- [ ] Refinar tamanho dos títulos para melhor hierarquia
+- [ ] Ajustar espaçamento entre elementos (padding/margin)
+- [ ] Melhorar contraste de cores para melhor legibilidade
+- [ ] Adicionar letter-spacing sutil em títulos
+
+### Refinamento Visual Premium - Card do Pet
+- [ ] Refinar espaçamento do card (padding, gap)
+- [ ] Melhorar hierarquia visual com tamanhos de fonte
+- [ ] Ajustar ícones para melhor proporção
+- [ ] Refinar cores e contraste
+- [ ] Adicionar efeitos hover nos botões
+
+### Refinamento Visual Premium - Modal
+- [ ] Refinar espaçamento do modal
+- [ ] Melhorar hierarquia visual do conteúdo
+- [ ] Ajustar tamanhos de fonte para melhor leitura
+- [ ] Refinar cores e contraste
+
+### Validação
+- [ ] Upload de foto funcionando sem erros
+- [ ] Visual premium com tipografia elegante
+- [ ] Hierarquia visual clara e intuitiva
+- [ ] Tudo testado no navegador

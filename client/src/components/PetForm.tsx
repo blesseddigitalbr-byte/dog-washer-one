@@ -166,29 +166,9 @@ export function PetForm({
     if (!validateForm()) return;
 
     try {
-      let photoUrl = formData.photo;
-
-      // Upload photo if a new file was selected
-      if (photoFile) {
-        const formDataForUpload = new FormData();
-        formDataForUpload.append('file', photoFile);
-        
-        const uploadResponse = await fetch('/api/trpc/pets.uploadPhoto', {
-          method: 'POST',
-          body: formDataForUpload,
-        });
-        
-        if (!uploadResponse.ok) {
-          throw new Error('Erro ao fazer upload da foto');
-        }
-        
-        const uploadedData = await uploadResponse.json();
-        photoUrl = uploadedData.url || formData.photo;
-      }
-
       const submitData = {
         ...formData,
-        photo: photoUrl,
+        photo: formData.photo,
         vaccines: JSON.stringify(formData.vaccines),
         clientId,
       };
@@ -202,9 +182,7 @@ export function PetForm({
       await utils.clients.getById.invalidate({ id: clientId });
       
       const action = isEditing ? "atualizado" : "criado";
-      toast.success(`Pet ${action} com sucesso!`, {
-        description: `${formData.name} foi ${action} no sistema.`,
-      });
+      toast.success(`Pet ${action} com sucesso!`);
       
       onSuccess?.();
       handleClose();
