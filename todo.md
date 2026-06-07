@@ -240,3 +240,31 @@
 - [x] Dialog perguntando "Tem certeza que deseja deletar este pet?"
 - [x] Mensagem de aviso que a alteração não poderá ser desfeita
 - [x] Botões de confirmar/cancelar
+
+
+## DELTA 11: Ajustes de UI - Checkboxes, Título e Mensagem de Deleção
+- [x] Aumentar tamanho de checkboxes para melhor visibilidade
+- [x] Centralizar título "Editar Pet" no modal
+- [x] Ajustar mensagem do dialog de deleção: "Tem certeza que deseja deletar esse pet?" + "*Nome* será removido permanentemente."
+
+## DELTA 12: Card do Pet Restaurado com Todas as Informações Visuais
+
+### Card do Pet - Informações Completas
+- [x] Foto do pet com fallback para avatar com inicial
+- [x] Nome do pet com ícone de gênero (♂️/♀️)
+- [x] Grid visual com: 🐕 Raça, 📏 Porte, 📅 Data de Nascimento, 🎨 Cor
+- [x] Badges VIP e Modelo quando aplicável
+- [x] Ícones padronizados nas informações
+
+### 3 Botões Funcionais
+- [x] Botão "Ver Histórico" com ícone
+- [x] Botão "Detalhes" com ícone
+- [x] Botão "Excluir" com ícone e cor vermelha
+
+### Validação
+- [x] TypeScript compilado sem erros
+- [x] Testes unitários atualizados
+- [x] Card do pet exibe todas as informações solicitadas
+- [x] Botões funcionam corretamente
+- [x] Sincronização com banco de dados funcionando
+- [x] Toasts aparecem ao salvar/deletar

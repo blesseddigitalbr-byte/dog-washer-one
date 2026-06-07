@@ -93,6 +93,9 @@ export function ClientDetailModal({
     setEditingPet(null);
   };
 
+  const clientName = client?.name ?? (client as any)?.nome ?? "?";
+  const safeClientNameChar = clientName ? clientName.charAt(0).toUpperCase() : "?";
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -129,11 +132,11 @@ export function ClientDetailModal({
               <div className="flex items-start justify-between pb-4 border-b border-accent/10">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center text-2xl font-bold text-accent flex-shrink-0">
-                    {client.name.charAt(0).toUpperCase()}
+                    {safeClientNameChar}
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-bold text-foreground">{client.name}</h3>
+                      <h3 className="text-xl font-bold text-foreground">{clientName}</h3>
                       {client.is_vip && (
                         <span className="px-3 py-1 bg-accent/10 rounded-full text-xs font-bold text-accent">
                           ⭐ VIP
@@ -195,7 +198,10 @@ export function ClientDetailModal({
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {client.pets.map((pet: Pet) => (
+                    {client.pets.map((pet: Pet) => {
+                      const petName = pet.name ?? "Pet";
+                      const safePetNameChar = petName ? petName.charAt(0).toUpperCase() : "?";
+                      return (
                       <Card key={pet.id} className="border-l-4 border-l-accent p-4">
                         {/* Pet Header with Photo and Basic Info */}
                         <div className="flex items-start justify-between mb-4">
@@ -203,17 +209,17 @@ export function ClientDetailModal({
                             {pet.photo ? (
                               <img
                                 src={pet.photo}
-                                alt={pet.name}
+                                alt={petName}
                                 className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
                               />
                             ) : (
                               <div className="w-20 h-20 rounded-lg bg-accent/10 flex items-center justify-center text-2xl font-bold text-accent flex-shrink-0">
-                                {pet.name.charAt(0).toUpperCase()}
+                                {safePetNameChar}
                               </div>
                             )}
                             <div>
                               <div className="flex items-center gap-2 mb-1">
-                                <h4 className="text-lg font-bold text-foreground">{pet.name}</h4>
+                                <h4 className="text-lg font-bold text-foreground">{petName}</h4>
                                 {(pet as any).gender && (
                                   <span className="text-lg">
                                     {(pet as any).gender === 'M' ? '♂️' : '♀️'}
@@ -307,7 +313,8 @@ export function ClientDetailModal({
                           </Button>
                         </div>
                       </Card>
-                    ))}
+                    );
+                    })}
                   </div>
                 )}
               </div>
@@ -352,17 +359,25 @@ export function ClientDetailModal({
       )}
 
       {/* Pet History Modal */}
-      {historyOpen && historyPetId && client && (
-        <PetHistoryModal
-          isOpen={historyOpen}
-          onClose={() => {
-            setHistoryOpen(false);
-            setHistoryPetId(null);
-          }}
-          petName={client.pets.find((p: Pet) => p.id === historyPetId)?.name || "Pet"}
-          visits={[]}
-        />
-      )}
+      {historyOpen && historyPetId && client && (() => {
+        const pet = client.pets.find((p: Pet) => p.id === historyPetId);
+        const petName = pet?.name ?? "Pet";
+        return (
+          <PetHistoryModal
+            isOpen={historyOpen}
+            onClose={() => {
+              setHistoryOpen(false);
+              setHistoryPetId(null);
+            }}
+            petName={petName}
+            petBreed={pet?.breed}
+            petSize={pet?.size}
+            clientName={clientName}
+            petPhoto={pet?.photo}
+            visits={[]}
+          />
+        );
+      })()}
     </>
   );
 }
