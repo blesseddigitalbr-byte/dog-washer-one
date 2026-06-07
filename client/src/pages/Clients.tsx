@@ -3,12 +3,29 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Plus, MoreVertical, AlertCircle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { ClientDetailModal } from "@/components/ClientDetailModal";
 
 export default function ClientsPage() {
   const [filter, setFilter] = useState("todos");
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
 
   // Fetch clients from tRPC
   const { data: clients = [], isLoading, error } = trpc.clients.list.useQuery();
+
+  // Fetch selected client details
+  const {
+    data: selectedClient,
+    isLoading: isLoadingDetail,
+    error: detailError,
+  } = trpc.clients.getById.useQuery(
+    { id: selectedClientId! },
+    { enabled: !!selectedClientId }
+  );
+
+  // Convert tRPC error to Error object
+  const clientDetailError = detailError
+    ? new Error(detailError.message || "Erro ao carregar detalhes do cliente")
+    : null;
 
   const filters = [
     { id: "todos", label: "Todos", icon: "📋" },
@@ -41,6 +58,14 @@ export default function ClientsPage() {
     } catch {
       return "Data inválida";
     }
+  };
+
+  const handleOpenModal = (clientId: string) => {
+    setSelectedClientId(clientId);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedClientId(null);
   };
 
   return (
@@ -119,10 +144,16 @@ export default function ClientsPage() {
             {filteredClients.map((client) => (
               <div
                 key={client.id}
-                className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 relative group border-l-4 border-l-accent"
+                onClick={() => handleOpenModal(client.id)}
+                className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 relative group border-l-4 border-l-accent cursor-pointer"
               >
                 {/* Menu Button */}
-                <button className="absolute top-4 right-4 p-2 hover:bg-accent/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                  className="absolute top-4 right-4 p-2 hover:bg-accent/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                >
                   <MoreVertical className="w-4 h-4 text-foreground" />
                 </button>
 
@@ -188,6 +219,15 @@ export default function ClientsPage() {
           </div>
         )}
       </div>
+
+      {/* Client Detail Modal */}
+      <ClientDetailModal
+        isOpen={!!selectedClientId}
+        onClose={handleCloseModal}
+        client={selectedClient || null}
+        isLoading={isLoadingDetail}
+        error={clientDetailError}
+      />
     </div>
   );
 }

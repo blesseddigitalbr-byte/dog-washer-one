@@ -27,6 +27,14 @@
 - [x] Filtro Modelo funciona (filtra clientes com pets model_dog)
 - [x] Testes vitest passando 100%
 
+## DELTA 2.1.1: Modal de Detalhes do Cliente
+- [x] Criar componente ClientDetailModal
+- [x] Implementar abertura do modal ao clicar no cliente
+- [x] Exibir detalhes completos do cliente
+- [x] Exibir lista de pets com todas as informações
+- [x] Testes vitest para modal (11 testes, 100% passing)
+- [x] Validar integração com tRPC
+
 ## Próximas Fases
 
 ### DELTA 2.2: Agendamentos
