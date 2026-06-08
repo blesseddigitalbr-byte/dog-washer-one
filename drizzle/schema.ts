@@ -1,4 +1,4 @@
-import { pgTable, varchar, text, timestamp, boolean, json, decimal, uuid, serial } from "drizzle-orm/pg-core";
+import { pgTable, varchar, text, timestamp, boolean, json, decimal, uuid, serial, index } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
 /**
@@ -287,12 +287,12 @@ export const appointments = pgTable("appointments", {
   organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
   unitId: uuid("unit_id").notNull().references(() => units.id, { onDelete: "cascade" }),
   clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
-  petId: uuid("pet_id").notNull().references(() => pets.id, { onDelete: "cascade" }),
   serviceId: uuid("service_id").notNull().references(() => services.id, { onDelete: "cascade" }),
-  professionalId: uuid("professional_id").notNull().references(() => professionals.id, { onDelete: "cascade" }),
+  professionalId: uuid("professional_id").references(() => professionals.id, { onDelete: "set null" }),
+  executedBy: varchar("executed_by", { length: 50 }).default("professional"), // "professional" ou "student"
   appointmentDate: timestamp("appointment_date", { withTimezone: true }).notNull(),
-  startTime: varchar("start_time", { length: 5 }),
-  durationMinutes: serial("duration_minutes"),
+  startTime: varchar("start_time", { length: 5 }).notNull(),
+  durationMinutes: serial("duration_minutes").default(60),
   actualStartTime: varchar("actual_start_time", { length: 5 }),
   actualEndTime: varchar("actual_end_time", { length: 5 }),
   status: varchar("status", { length: 50 }).default("pending"),
@@ -309,10 +309,26 @@ export const appointments = pgTable("appointments", {
   studentHoursRecorded: boolean("student_hours_recorded").default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }),
-});
+}, (table) => ({
+  appointmentDateIdx: index("appointment_date_idx").on(table.appointmentDate),
+}));
 
 export type Appointment = typeof appointments.$inferSelect;
 export type InsertAppointment = typeof appointments.$inferInsert;
+
+/**
+ * AppointmentPets - Relação M:N entre Agendamentos e Pets (suporta até 4 pets por agendamento)
+ */
+export const appointmentPets = pgTable("appointment_pets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  appointmentId: uuid("appointment_id").notNull().references(() => appointments.id, { onDelete: "cascade" }),
+  petId: uuid("pet_id").notNull().references(() => pets.id, { onDelete: "cascade" }),
+  sequenceOrder: serial("sequence_order").default(1), // Ordem do pet no agendamento
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type AppointmentPet = typeof appointmentPets.$inferSelect;
+export type InsertAppointmentPet = typeof appointmentPets.$inferInsert;
 
 /**
  * AppointmentStudents - Relação M:N entre Agendamentos e Alunos
@@ -321,7 +337,7 @@ export const appointmentStudents = pgTable("appointment_students", {
   id: uuid("id").primaryKey().defaultRandom(),
   appointmentId: uuid("appointment_id").notNull().references(() => appointments.id, { onDelete: "cascade" }),
   studentId: uuid("student_id").notNull().references(() => students.id, { onDelete: "cascade" }),
-  role: varchar("role", { length: 50 }), // "executor", "supervisor", "participant"
+  role: varchar("role", { length: 50 }).default("executor"), // "executor", "supervisor", "participant"
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 });
 
