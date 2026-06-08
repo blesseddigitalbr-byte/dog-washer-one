@@ -7,9 +7,9 @@ const router = Router();
 
 router.post("/upload", async (req: any, res: Response) => {
   try {
-    const { file: base64File, fileName, mimeType, petId } = req.body;
+    const { file, fileName, mimeType, petId } = req.body;
 
-    if (!base64File) {
+    if (!file) {
       res.status(400).json({ error: "Nenhum arquivo foi enviado" });
       return;
     }
@@ -26,7 +26,7 @@ router.post("/upload", async (req: any, res: Response) => {
     }
 
     // Convert Base64 to Buffer
-    const base64Data = base64File.replace(/^data:image\/\w+;base64,/, "");
+    const base64Data = file.replace(/^data:image\/\w+;base64,/, "");
     const buffer = Buffer.from(base64Data, "base64");
 
     // Validate file size (5MB max)

@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, galeriaPets, InsertGaleriaPet } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -121,8 +121,6 @@ export async function closeDb() {
 // TODO: add feature queries here as your schema grows.
 
 // ========== GALERIA PETS HELPERS ==========
-
-import { galeriaPets, InsertGaleriaPet } from "../drizzle/schema";
 
 export async function addPetPhoto(data: InsertGaleriaPet) {
   const db = await getDb();
