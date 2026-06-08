@@ -119,9 +119,13 @@ export function AppointmentForm({
         });
         toast.success("Agendamento atualizado com sucesso!");
       } else {
+        // Usar organizationId e unitId do cliente ou do usuário
+        const org = selectedClient?.organization_id || "default-org";
+        const unit = selectedClient?.unit_id || "default-unit";
+        
         await createMutation.mutateAsync({
-          organizationId: "default-org",
-          unitId: "default-unit",
+          organizationId: org,
+          unitId: unit,
           clientId: formData.clientId,
           petId: formData.petId,
           serviceId: formData.serviceId,

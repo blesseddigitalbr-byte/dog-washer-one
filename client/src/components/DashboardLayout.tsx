@@ -50,7 +50,7 @@ export default function DashboardLayout({
       title: "OPERACIONAL",
       items: [
         { icon: <LayoutDashboard className="w-5 h-5" />, label: "Painel", path: "/" },
-        { icon: <Calendar className="w-5 h-5" />, label: "Agendamento", path: "/schedule" },
+        { icon: <Calendar className="w-5 h-5" />, label: "Agendamento", path: "/appointments" },
         { icon: <Users className="w-5 h-5" />, label: "Clientes", path: "/clients" },
         { icon: <Users2 className="w-5 h-5" />, label: "Alunos", path: "/students" },
       ],

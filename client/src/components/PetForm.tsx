@@ -94,13 +94,14 @@ export function PetForm({
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>(petData?.photo || "");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   const createMutation = trpc.pets.create.useMutation();
   const updateMutation = trpc.pets.update.useMutation();
   const utils = trpc.useUtils();
 
   const isEditing = !!petId;
-  const isLoading = createMutation.isPending || updateMutation.isPending;
+  const isLoading = createMutation.isPending || updateMutation.isPending || isUploadingPhoto;
 
   const availableVaccines = [
     { id: "raiva", label: "Raiva" },
@@ -142,12 +143,45 @@ export function PetForm({
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validar tamanho (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Arquivo muito grande (máx 5MB)");
+        return;
+      }
+      
       setPhotoFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhotoPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadPhoto = async (file: File): Promise<string | null> => {
+    try {
+      setIsUploadingPhoto(true);
+      const formData = new FormData();
+      formData.append("file", file);
+      
+      // Upload para S3 via endpoint
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        throw new Error("Erro ao fazer upload");
+      }
+      
+      const data = await response.json();
+      return data.url || null;
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Erro ao fazer upload da foto");
+      return null;
+    } finally {
+      setIsUploadingPhoto(false);
     }
   };
 
@@ -166,9 +200,22 @@ export function PetForm({
     if (!validateForm()) return;
 
     try {
+      let photoUrl = formData.photo;
+      
+      // Se há novo arquivo de foto, fazer upload
+      if (photoFile) {
+        const uploadedUrl = await uploadPhoto(photoFile);
+        if (uploadedUrl) {
+          photoUrl = uploadedUrl;
+        } else {
+          // Se upload falhar, usar preview local como fallback
+          photoUrl = photoPreview;
+        }
+      }
+
       const submitData = {
         ...formData,
-        photo: formData.photo,
+        photo: photoUrl,
         vaccines: JSON.stringify(formData.vaccines),
         clientId,
       };
