@@ -161,25 +161,40 @@ export function PetForm({
   const uploadPhoto = async (file: File, petId: string): Promise<string | null> => {
     try {
       setIsUploadingPhoto(true);
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("petId", petId);
+      
+      // Convert file to Base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      
+      const base64 = await base64Promise;
       
       // Upload para S3 via endpoint
       const response = await fetch("/api/upload", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          file: base64,
+          fileName: file.name,
+          mimeType: file.type,
+          petId,
+        }),
       });
       
       if (!response.ok) {
-        throw new Error("Erro ao fazer upload");
+        const error = await response.json();
+        throw new Error(error.error || "Erro ao fazer upload");
       }
       
       const data = await response.json();
+      toast.success("Foto enviada com sucesso!");
       return data.url || null;
     } catch (error) {
       console.error("Upload error:", error);
-      toast.error("Erro ao fazer upload da foto");
+      toast.error(error instanceof Error ? error.message : "Erro ao fazer upload da foto");
       return null;
     } finally {
       setIsUploadingPhoto(false);
