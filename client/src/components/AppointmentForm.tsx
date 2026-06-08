@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,28 +35,11 @@ export function AppointmentForm({
   onClose,
   onSuccess,
 }: AppointmentFormProps) {
-  const [formData, setFormData] = useState({
-    serviceId: "",
-    appointmentDate: "",
-    startTime: "",
-    durationMinutes: "60",
-    notes: "",
-  });
-
-  const [petAssignments, setPetAssignments] = useState<PetAssignment[]>([]);
-  const [currentPetSelection, setCurrentPetSelection] = useState({
-    petId: "",
-    executedBy: "professional" as "professional" | "student",
-    professionalId: "",
-    studentId: "",
-  });
-  const [allPets, setAllPets] = useState<any[]>([]);
-
-  // Fetch data
+  // Fetch data PRIMEIRO
   const { data: clients = [] } = trpc.clients.list.useQuery();
   const { data: professionals = [] } = trpc.professionals.list.useQuery();
-  
-  // Mock students - será substituído por router real
+
+  // Mock students
   const students = [
     { id: "1", name: "Aluno 1" },
     { id: "2", name: "Aluno 2" },
@@ -72,21 +55,37 @@ export function AppointmentForm({
     { id: "5", name: "Tosa Higiênica", price: 35 },
   ];
 
-  // Mutations
-  const createMutation = trpc.appointments.create.useMutation();
-  const utils = trpc.useUtils();
-
-  // Montar lista de todos os pets
-  useEffect(() => {
-    const allClientPets = clients.flatMap((client: any) =>
+  // Memoizar lista de pets
+  const allPets = useMemo(() => {
+    return clients.flatMap((client: any) =>
       (client.pets || []).map((pet: any) => ({
         ...pet,
         clientName: client.name,
         clientId: client.id,
       }))
     );
-    setAllPets(allClientPets);
   }, [clients]);
+
+  // State
+  const [formData, setFormData] = useState({
+    serviceId: "",
+    appointmentDate: "",
+    startTime: "",
+    durationMinutes: "60",
+    notes: "",
+  });
+
+  const [petAssignments, setPetAssignments] = useState<PetAssignment[]>([]);
+  const [currentPetSelection, setCurrentPetSelection] = useState({
+    petId: "",
+    executedBy: "professional" as "professional" | "student",
+    professionalId: "",
+    studentId: "",
+  });
+
+  // Mutations
+  const createMutation = trpc.appointments.create.useMutation();
+  const utils = trpc.useUtils();
 
   const handleAddPetAssignment = () => {
     if (!currentPetSelection.petId) {
@@ -115,7 +114,6 @@ export function AppointmentForm({
       return;
     }
 
-    // Verificar se pet já foi adicionado
     if (petAssignments.some((p) => p.petId === currentPetSelection.petId)) {
       toast.error("Este pet já foi adicionado");
       return;
@@ -143,8 +141,6 @@ export function AppointmentForm({
     };
 
     setPetAssignments([...petAssignments, newAssignment]);
-
-    // Limpar seleção
     setCurrentPetSelection({
       petId: "",
       executedBy: "professional",
@@ -162,7 +158,6 @@ export function AppointmentForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validações
     if (!formData.serviceId) {
       toast.error("Selecione um serviço");
       return;
@@ -181,17 +176,17 @@ export function AppointmentForm({
     }
 
     try {
-      // Criar um agendamento para cada pet
       for (const assignment of petAssignments) {
-        const clientId = allPets.find((p) => p.id === assignment.petId)?.clientId || "";
+        const clientId =
+          allPets.find((p) => p.id === assignment.petId)?.clientId || "";
         const professionalId =
           assignment.executedBy === "professional" && assignment.professionalId
             ? assignment.professionalId
-            : "550e8400-e29b-41d4-a716-446655440002"; // Placeholder
+            : "550e8400-e29b-41d4-a716-446655440002";
 
         const appointmentPayload = {
-          organizationId: "550e8400-e29b-41d4-a716-446655440000", // TODO: Pegar do contexto
-          unitId: "550e8400-e29b-41d4-a716-446655440001", // TODO: Pegar do contexto
+          organizationId: "550e8400-e29b-41d4-a716-446655440000",
+          unitId: "550e8400-e29b-41d4-a716-446655440001",
           clientId,
           petId: assignment.petId,
           serviceId: formData.serviceId,
