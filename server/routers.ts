@@ -79,31 +79,24 @@ export const appRouter = router({
     // List all clients with their associated pets
     list: publicProcedure.query(async () => {
       try {
+        // Fetch clientes com join para pets - 1 query em vez de N+1
         const { data: clientes, error } = await supabase
           .from("clientes")
-          .select("*")
+          .select(
+            `
+            *,
+            pets:pets(*)
+            `
+          )
           .order("created_at", { ascending: false });
 
         if (error) throw error;
 
-        // Fetch pets for each client
-        const clientesComPets = await Promise.all(
-          (clientes || []).map(async (cliente) => {
-            const { data: pets, error: petsError } = await supabase
-              .from("pets")
-              .select("*")
-              .eq("client_id", cliente.id);
-
-            if (petsError) console.error("Error fetching pets:", petsError);
-
-            return {
-              ...cliente,
-              pets: pets || [],
-            };
-          })
-        );
-
-        return clientesComPets;
+        // Transformar resposta para formato esperado
+        return (clientes || []).map((cliente: any) => ({
+          ...cliente,
+          pets: cliente.pets || [],
+        }));
       } catch (error) {
         console.error("Error fetching clients:", error);
         return [];
@@ -115,25 +108,25 @@ export const appRouter = router({
       .input(z.object({ id: z.string().uuid() }))
       .query(async ({ input }) => {
         try {
-          const { data: cliente, error } = await supabase
+          // Fetch cliente com join para pets - 1 query em vez de 2
+          const { data: clientes, error } = await supabase
             .from("clientes")
-            .select("*")
+            .select(
+              `
+              *,
+              pets:pets(*)
+              `
+            )
             .eq("id", input.id)
-            .single();
+            .limit(1);
 
           if (error) throw error;
-          if (!cliente) return null;
+          if (!clientes || clientes.length === 0) return null;
 
-          const { data: pets, error: petsError } = await supabase
-            .from("pets")
-            .select("*")
-            .eq("client_id", cliente.id);
-
-          if (petsError) console.error("Error fetching pets:", petsError);
-
+          const cliente = clientes[0];
           return {
             ...cliente,
-            pets: pets || [],
+            pets: cliente.pets || [],
           };
         } catch (error) {
           console.error("Error fetching client:", error);
