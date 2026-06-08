@@ -1,7 +1,6 @@
 import { useMemo } from "react";
-import { BarChart3, Users, Calendar, TrendingUp, Package, AlertCircle, PieChart, Activity } from "lucide-react";
+import { BarChart3, Users, Calendar, TrendingUp, Package } from "lucide-react";
 import { trpc } from "@/lib/trpc";
-import { LineChart, Line, PieChart as PieChartComponent, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 export default function Dashboard() {
   // Fetch data
@@ -32,22 +31,7 @@ export default function Dashboard() {
     };
   }, [packages, clients]);
 
-  // Mock data for charts and tables
-  const revenueComposition = [
-    { name: "Pacotes", value: 65, color: "#3b82f6" },
-    { name: "Serviços Avulsos", value: 25, color: "#10b981" },
-    { name: "Produtos", value: 10, color: "#f59e0b" },
-  ];
-
-  const monthlyRevenue = [
-    { month: "Jan", revenue: 8000 },
-    { month: "Fev", revenue: 8500 },
-    { month: "Mar", revenue: 9200 },
-    { month: "Abr", revenue: 8800 },
-    { month: "Mai", revenue: 9500 },
-    { month: "Jun", revenue: 10987 },
-  ];
-
+  // Mock data for tables
   const petBirthdays = [
     { pet: "Lili", tutor: "Jeane", data: "15/06", status: "Hoje" },
     { pet: "Mika", tutor: "David", data: "18/06", status: "Em 3 dias" },
@@ -75,7 +59,7 @@ export default function Dashboard() {
   const kpis = [
     { title: "Clientes Totais", value: stats.totalClients, icon: Users, color: "text-blue-600" },
     { title: "Pets Cadastrados", value: stats.totalPets, icon: Package, color: "text-green-600" },
-    { title: "Planos Ativos", value: stats.activePackages, icon: Activity, color: "text-purple-600" },
+    { title: "Planos Ativos", value: stats.activePackages, icon: Package, color: "text-purple-600" },
     { title: "Faturamento", value: stats.totalRevenue, icon: TrendingUp, color: "text-amber-600" },
   ];
 
@@ -115,40 +99,7 @@ export default function Dashboard() {
           })}
         </div>
 
-        {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Revenue Composition */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-l-accent">
-            <h2 className="text-lg font-bold text-foreground mb-6">Composição de Receita</h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChartComponent>
-                <Pie data={revenueComposition} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} dataKey="value">
-                  {revenueComposition.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChartComponent>
-            </ResponsiveContainer>
-          </div>
-
-          {/* Monthly Revenue */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-l-accent">
-            <h2 className="text-lg font-bold text-foreground mb-6">Faturamento Mensal</h2>
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={monthlyRevenue}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="revenue" fill="#3b82f6" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Tables Row */}
+        {/* Tables Row 1 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Aniversariantes */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-l-accent">
@@ -209,7 +160,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Radar de Renovação e Agenda */}
+        {/* Tables Row 2 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Radar de Renovação */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-l-accent">
