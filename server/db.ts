@@ -119,3 +119,51 @@ export async function closeDb() {
 }
 
 // TODO: add feature queries here as your schema grows.
+
+// ========== GALERIA PETS HELPERS ==========
+
+import { galeriaPets, InsertGaleriaPet } from "../drizzle/schema";
+
+export async function addPetPhoto(data: InsertGaleriaPet) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db.insert(galeriaPets).values(data).returning();
+  return result[0];
+}
+
+export async function getPetPhotos(petId: string) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  return await db.select().from(galeriaPets).where(eq(galeriaPets.petId, petId));
+}
+
+export async function getLatestPetPhoto(petId: string) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  const result = await db
+    .select()
+    .from(galeriaPets)
+    .where(eq(galeriaPets.petId, petId))
+    .orderBy((t) => t.createdAt)
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function deletePetPhoto(photoId: string) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  await db.delete(galeriaPets).where(eq(galeriaPets.id, photoId));
+}

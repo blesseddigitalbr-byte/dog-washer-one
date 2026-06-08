@@ -210,7 +210,6 @@ export const pets = pgTable("pets", {
   weight: decimal("weight", { precision: 5, scale: 2 }),
   microchip: varchar("microchip", { length: 50 }),
   notes: text("notes"),
-  photo: varchar("photo", { length: 255 }),
   vaccines: text("vaccines"), // JSON array de vacinas
   dewormed: boolean("dewormed").default(false), // Vermífugo
   hasDiseasesOrAllergies: boolean("has_diseases_or_allergies").default(false),
@@ -222,6 +221,22 @@ export const pets = pgTable("pets", {
 
 export type Pet = typeof pets.$inferSelect;
 export type InsertPet = typeof pets.$inferInsert;
+
+/**
+ * Galeria de Fotos dos Pets
+ */
+export const galeriaPets = pgTable("galeria_pets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  petId: uuid("pet_id").notNull().references(() => pets.id, { onDelete: "cascade" }),
+  url: varchar("url", { length: 500 }).notNull(),
+  fileName: varchar("file_name", { length: 255 }),
+  fileSize: serial("file_size"),
+  mimeType: varchar("mime_type", { length: 50 }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type GaleriaPet = typeof galeriaPets.$inferSelect;
+export type InsertGaleriaPet = typeof galeriaPets.$inferInsert;
 
 /**
  * Services - Serviços de Grooming

@@ -1,4 +1,3 @@
-import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import DashboardLayout from "@/components/DashboardLayout";
 import NotFound from "@/pages/NotFound";
@@ -7,9 +6,11 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Schedule from "./pages/Schedule";
+import Appointments from "./pages/Appointments";
 import Clients from "./pages/Clients";
 import Students from "./pages/Students";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { Toaster } from "sonner";
 
 function Router() {
   const { user, loading } = useAuth();
@@ -25,6 +26,7 @@ function Router() {
           <Switch>
             <Route path="/" component={Home} />
             <Route path="/schedule" component={Schedule} />
+            <Route path="/appointments" component={Appointments} />
             <Route path="/clients" component={Clients} />
             <Route path="/students" component={Students} />
             <Route path="/404" component={NotFound} />

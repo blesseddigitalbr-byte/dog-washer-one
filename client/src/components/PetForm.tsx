@@ -158,11 +158,12 @@ export function PetForm({
     }
   };
 
-  const uploadPhoto = async (file: File): Promise<string | null> => {
+  const uploadPhoto = async (file: File, petId: string): Promise<string | null> => {
     try {
       setIsUploadingPhoto(true);
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("petId", petId);
       
       // Upload para S3 via endpoint
       const response = await fetch("/api/upload", {
@@ -203,19 +204,24 @@ export function PetForm({
       let photoUrl = formData.photo;
       
       // Se há novo arquivo de foto, fazer upload
-      if (photoFile) {
-        const uploadedUrl = await uploadPhoto(photoFile);
+      if (photoFile && petId) {
+        const uploadedUrl = await uploadPhoto(photoFile, petId);
         if (uploadedUrl) {
           photoUrl = uploadedUrl;
         } else {
           // Se upload falhar, usar preview local como fallback
           photoUrl = photoPreview;
         }
+      } else if (photoFile && !petId) {
+        // Para novo pet, fazer upload primeiro
+        const uploadedUrl = await uploadPhoto(photoFile, "temp");
+        if (uploadedUrl) {
+          photoUrl = uploadedUrl;
+        }
       }
 
       const submitData = {
         ...formData,
-        photo: photoUrl,
         vaccines: JSON.stringify(formData.vaccines),
         clientId,
       };
