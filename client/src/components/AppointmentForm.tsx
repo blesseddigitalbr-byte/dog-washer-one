@@ -24,21 +24,14 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
   // Fetch data
   const { data: clients = [] } = trpc.clients.list.useQuery();
   const { data: professionals = [] } = trpc.professionals.list.useQuery();
+  const { data: services = [] } = trpc.services.list.useQuery();
+  const { data: packages = [] } = trpc.packages.list.useQuery();
 
   // Mock students
   const students = [
     { id: "550e8400-e29b-41d4-a716-446655440020", name: "Aluno 1" },
     { id: "550e8400-e29b-41d4-a716-446655440021", name: "Aluno 2" },
     { id: "550e8400-e29b-41d4-a716-446655440022", name: "Aluno 3" },
-  ];
-
-  // Mock services
-  const services = [
-    { id: "550e8400-e29b-41d4-a716-446655440010", name: "Banho e Tosa", price: 80 },
-    { id: "550e8400-e29b-41d4-a716-446655440011", name: "Banho", price: 50 },
-    { id: "550e8400-e29b-41d4-a716-446655440012", name: "Tosa", price: 60 },
-    { id: "550e8400-e29b-41d4-a716-446655440013", name: "Hidratação", price: 40 },
-    { id: "550e8400-e29b-41d4-a716-446655440014", name: "Tosa Higiênica", price: 35 },
   ];
 
   // Memoizar lista de pets
@@ -56,6 +49,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
   const [selectedClient, setSelectedClient] = useState("");
   const [selectedPets, setSelectedPets] = useState<string[]>([]);
   const [selectedService, setSelectedService] = useState("");
+  const [selectedPackage, setSelectedPackage] = useState("");
   const [executedBy, setExecutedBy] = useState<"professional" | "student">("professional");
   const [selectedProfessional, setSelectedProfessional] = useState("");
   const [selectedStudent, setSelectedStudent] = useState("");
@@ -181,7 +175,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
       {/* Pets */}
       <div>
         <Label className="text-base font-semibold mb-3 block">
-          Bicho de estimação *
+          Pet *
         </Label>
         <div className="space-y-3">
           {selectedPets.length > 0 && (
@@ -194,7 +188,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
                     className="flex items-center justify-between bg-blue-50 p-3 rounded-lg border border-blue-200"
                   >
                     <span className="font-medium text-foreground">
-                      {pet?.name} - {pet?.clientName}
+                      {pet?.displayName || `${pet?.name} (Tutor: ${pet?.clientName})`}
                     </span>
                     <button
                       type="button"
@@ -227,7 +221,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
                         }
                       }}
                     >
-                      {pet.name} - {pet.clientName}
+                      {pet.displayName || `${pet.name} (Tutor: ${pet.clientName})`}
                     </SelectItem>
                   ))}
               </SelectContent>
@@ -239,24 +233,40 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
       {/* Serviço */}
       <div>
         <Label htmlFor="service" className="text-base font-semibold">
-          Serviços *
+          Serviço *
         </Label>
-        <Input
-          id="service"
-          type="text"
-          placeholder="Digite o serviço..."
-          value={selectedService}
-          onChange={(e) => setSelectedService(e.target.value)}
-          className="mt-2"
-          list="services-list"
-        />
-        <datalist id="services-list">
-          {services.map((service) => (
-            <option key={service.id} value={service.id}>
-              {service.name}
-            </option>
-          ))}
-        </datalist>
+        <Select value={selectedService} onValueChange={setSelectedService}>
+          <SelectTrigger id="service" className="mt-2">
+            <SelectValue placeholder="Selecione o serviço" />
+          </SelectTrigger>
+          <SelectContent>
+            {services.map((service: any) => (
+              <SelectItem key={service.id} value={service.id}>
+                {service.name} - R$ {parseFloat(service.price || 0).toFixed(2)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Plano (Opcional) */}
+      <div>
+        <Label htmlFor="package" className="text-base font-semibold">
+          Plano (Opcional)
+        </Label>
+        <Select value={selectedPackage} onValueChange={setSelectedPackage}>
+          <SelectTrigger id="package" className="mt-2">
+            <SelectValue placeholder="Selecione um plano ou deixe em branco" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">Sem plano</SelectItem>
+            {packages.map((pkg: any) => (
+              <SelectItem key={pkg.id} value={pkg.id}>
+                {pkg.name} - {pkg.total_baths} banhos, {pkg.total_groomings} tosas
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Executado por */}

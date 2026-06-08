@@ -5,6 +5,7 @@ import { publicProcedure, router } from "./_core/trpc";
 import { sdk } from "./_core/sdk";
 import * as db from "./db";
 import { supabase } from "./_core/supabase";
+import { generateClientCode, generatePetCode } from "./codeGenerator";
 
 const COOKIE_NAME = "manus_session";
 
@@ -95,7 +96,10 @@ export const appRouter = router({
         // Transformar resposta para formato esperado
         return (clientes || []).map((cliente: any) => ({
           ...cliente,
-          pets: cliente.pets || [],
+          pets: (cliente.pets || []).map((pet: any) => ({
+            ...pet,
+            displayName: `${pet.name} (Tutor: ${cliente.nome})`,
+          })),
         }));
       } catch (error) {
         console.error("Error fetching clients:", error);
@@ -126,7 +130,10 @@ export const appRouter = router({
           const cliente = clientes[0];
           return {
             ...cliente,
-            pets: cliente.pets || [],
+            pets: (cliente.pets || []).map((pet: any) => ({
+              ...pet,
+              displayName: `${pet.name} (Tutor: ${cliente.nome})`,
+            })),
           };
         } catch (error) {
           console.error("Error fetching client:", error);
@@ -152,9 +159,13 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         try {
+          // Gerar código de cliente automaticamente
+          const clientCode = await generateClientCode();
+          
           const { data, error } = await supabase
             .from("clientes")
             .insert([{
+              id_cliente: clientCode,
               nome: input.name,
               email: input.email,
               phone: input.phone,
@@ -275,9 +286,13 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         try {
+          // Gerar código de pet automaticamente
+          const petCode = await generatePetCode();
+          
           const { data, error } = await supabase
             .from("pets")
             .insert([{
+              id_pet: petCode,
               client_id: input.clientId,
               name: input.name,
               breed: input.breed,
@@ -661,6 +676,258 @@ export const appRouter = router({
         } catch (error) {
           console.error("Error deleting appointment:", error);
           throw new Error("Erro ao deletar agendamento");
+        }
+      }),
+  }),
+
+  services: router({
+    // List all services
+    list: publicProcedure.query(async () => {
+      try {
+        const { data: services, error } = await supabase
+          .from("services")
+          .select("*")
+          .order("name", { ascending: true });
+
+        if (error) throw error;
+        return services || [];
+      } catch (error) {
+        console.error("Error fetching services:", error);
+        return [];
+      }
+    }),
+
+    // Get a single service by ID
+    getById: publicProcedure
+      .input(z.object({ id: z.string().uuid() }))
+      .query(async ({ input }) => {
+        try {
+          const { data: service, error } = await supabase
+            .from("services")
+            .select("*")
+            .eq("id", input.id)
+            .single();
+
+          if (error) throw error;
+          return service;
+        } catch (error) {
+          console.error("Error fetching service:", error);
+          return null;
+        }
+      }),
+
+    // Create a new service
+    create: publicProcedure
+      .input(z.object({
+        name: z.string().min(1, "Nome do serviço é obrigatório"),
+        description: z.string().optional(),
+        price: z.number().min(0, "Preço deve ser maior que 0"),
+        durationMinutes: z.number().min(15, "Duração mínima é 15 minutos"),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { data, error } = await supabase
+            .from("services")
+            .insert([{
+              name: input.name,
+              description: input.description || null,
+              price: input.price,
+              duration_minutes: input.durationMinutes,
+            }])
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          console.error("Error creating service:", error);
+          throw new Error("Erro ao criar serviço");
+        }
+      }),
+
+    // Update a service
+    update: publicProcedure
+      .input(z.object({
+        id: z.string().uuid(),
+        name: z.string().min(1, "Nome do serviço é obrigatório").optional(),
+        description: z.string().optional(),
+        price: z.number().min(0, "Preço deve ser maior que 0").optional(),
+        durationMinutes: z.number().min(15, "Duração mínima é 15 minutos").optional(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { id, ...updateData } = input;
+          const updatePayload: Record<string, any> = {};
+          
+          if (updateData.name) updatePayload.name = updateData.name;
+          if (updateData.description !== undefined) updatePayload.description = updateData.description || null;
+          if (updateData.price !== undefined) updatePayload.price = updateData.price;
+          if (updateData.durationMinutes !== undefined) updatePayload.duration_minutes = updateData.durationMinutes;
+
+          const { data, error } = await supabase
+            .from("services")
+            .update(updatePayload)
+            .eq("id", id)
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          console.error("Error updating service:", error);
+          throw new Error("Erro ao atualizar serviço");
+        }
+      }),
+
+    // Delete a service
+    delete: publicProcedure
+      .input(z.object({ id: z.string().uuid() }))
+      .mutation(async ({ input }) => {
+        try {
+          const { error } = await supabase
+            .from("services")
+            .delete()
+            .eq("id", input.id);
+
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          console.error("Error deleting service:", error);
+          throw new Error("Erro ao deletar serviço");
+        }
+      }),
+  }),
+
+  packages: router({
+    // List all packages
+    list: publicProcedure.query(async () => {
+      try {
+        const { data: packages, error } = await supabase
+          .from("packages")
+          .select("*")
+          .order("name", { ascending: true });
+
+        if (error) throw error;
+        return packages || [];
+      } catch (error) {
+        console.error("Error fetching packages:", error);
+        return [];
+      }
+    }),
+
+    // Get a single package by ID
+    getById: publicProcedure
+      .input(z.object({ id: z.string().uuid() }))
+      .query(async ({ input }) => {
+        try {
+          const { data: pkg, error } = await supabase
+            .from("packages")
+            .select("*")
+            .eq("id", input.id)
+            .single();
+
+          if (error) throw error;
+          return pkg;
+        } catch (error) {
+          console.error("Error fetching package:", error);
+          return null;
+        }
+      }),
+
+    // Create a new package
+    create: publicProcedure
+      .input(z.object({
+        name: z.string().min(1, "Nome do plano é obrigatório"),
+        description: z.string().optional(),
+        totalBaths: z.number().min(0, "Qtd de banhos deve ser >= 0"),
+        totalGroomings: z.number().min(0, "Qtd de tosas deve ser >= 0"),
+        totalPrice: z.number().min(0, "Valor total deve ser > 0"),
+        monthlyPrice: z.number().min(0, "Valor mensal deve ser >= 0").optional(),
+        recurrenceType: z.string().optional(),
+        status: z.string().default("active"),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { data, error } = await supabase
+            .from("packages")
+            .insert([{
+              name: input.name,
+              description: input.description || null,
+              total_baths: input.totalBaths,
+              total_groomings: input.totalGroomings,
+              total_price: input.totalPrice,
+              monthly_price: input.monthlyPrice || 0,
+              recurrence_type: input.recurrenceType || null,
+              status: input.status,
+            }])
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          console.error("Error creating package:", error);
+          throw new Error("Erro ao criar plano");
+        }
+      }),
+
+    // Update a package
+    update: publicProcedure
+      .input(z.object({
+        id: z.string().uuid(),
+        name: z.string().min(1).optional(),
+        description: z.string().optional(),
+        totalBaths: z.number().min(0).optional(),
+        totalGroomings: z.number().min(0).optional(),
+        totalPrice: z.number().min(0).optional(),
+        monthlyPrice: z.number().min(0).optional(),
+        recurrenceType: z.string().optional(),
+        status: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { id, ...updateData } = input;
+          const updatePayload: Record<string, any> = {};
+
+          if (updateData.name) updatePayload.name = updateData.name;
+          if (updateData.description !== undefined) updatePayload.description = updateData.description || null;
+          if (updateData.totalBaths !== undefined) updatePayload.total_baths = updateData.totalBaths;
+          if (updateData.totalGroomings !== undefined) updatePayload.total_groomings = updateData.totalGroomings;
+          if (updateData.totalPrice !== undefined) updatePayload.total_price = updateData.totalPrice;
+          if (updateData.monthlyPrice !== undefined) updatePayload.monthly_price = updateData.monthlyPrice;
+          if (updateData.recurrenceType !== undefined) updatePayload.recurrence_type = updateData.recurrenceType || null;
+          if (updateData.status) updatePayload.status = updateData.status;
+
+          const { data, error } = await supabase
+            .from("packages")
+            .update(updatePayload)
+            .eq("id", id)
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          console.error("Error updating package:", error);
+          throw new Error("Erro ao atualizar plano");
+        }
+      }),
+
+    // Delete a package
+    delete: publicProcedure
+      .input(z.object({ id: z.string().uuid() }))
+      .mutation(async ({ input }) => {
+        try {
+          const { error } = await supabase
+            .from("packages")
+            .delete()
+            .eq("id", input.id);
+
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          console.error("Error deleting package:", error);
+          throw new Error("Erro ao deletar plano");
         }
       }),
   }),

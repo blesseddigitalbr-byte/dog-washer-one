@@ -11,6 +11,7 @@ import Clients from "./pages/Clients";
 import Students from "./pages/Students";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Toaster } from "sonner";
+import { PlansPage } from "./pages/PlansPage";
 
 function Router() {
   const { user, loading } = useAuth();
@@ -29,6 +30,7 @@ function Router() {
             <Route path="/appointments" component={Appointments} />
             <Route path="/clients" component={Clients} />
             <Route path="/students" component={Students} />
+            <Route path="/plans" component={PlansPage} />
             <Route path="/404" component={NotFound} />
             <Route component={NotFound} />
           </Switch>

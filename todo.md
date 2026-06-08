@@ -324,3 +324,103 @@
 - [ ] Visual premium com tipografia elegante
 - [ ] Hierarquia visual clara e intuitiva
 - [ ] Tudo testado no navegador
+
+
+## DELTA 16: Ajustes Críticos - Códigos, Formato Pet+Tutor, Serviços
+
+### 1. Implementar Códigos de Cadastro
+- [x] Adicionar campo `registration_code` na tabela `clients` (ex: CLI-0001)
+- [x] Adicionar campo `registration_code` na tabela `pets` (ex: PET-0001)
+- [x] Gerar códigos automaticamente ao criar cliente/pet
+- [x] Exibir código no card do cliente
+- [x] Exibir código no card do pet
+- [x] Exibir código no formulário de edição
+- [x] Testes vitest para geração de códigos
+
+### 2. Implementar Formato "Pet (Tutor: Nome)"
+- [x] Atualizar query `pets.list` para retornar `displayName` (Pet (Tutor: Nome))
+- [x] Atualizar query `pets.getById` para retornar `displayName`
+- [x] Atualizar dropdown de pets no AppointmentForm com novo formato
+- [x] Validar que pets com mesmo nome são diferenciados
+- [x] Testes vitest para displayName
+
+### 3. Substituir "Bicho de Estimação" por "Pet"
+- [x] Buscar todas as ocorrências de "Bicho de Estimação" no código
+- [x] Substituir por "Pet" em:
+  - [x] Página Clients
+  - [x] Página Appointments
+  - [x] Página Students
+  - [x] Componentes (ClientDetailModal, PetHistoryModal, etc)
+  - [x] Labels de formulários
+  - [x] Mensagens de erro/sucesso
+- [x] Validar no navegador
+
+### 4. Implementar Dropdown de Serviços
+- [x] Criar tabela `services` com campos: id, name, description, duration, price
+- [x] Criar procedures tRPC `services.list`, `services.create`, `services.update`, `services.delete`
+- [x] Atualizar AppointmentForm para usar dropdown de serviços reais
+- [x] Seed com serviços básicos (Banho, Tosa, Hidratação, etc)
+- [x] Validar que serviço é salvo no agendamento
+- [x] Testes vitest para serviços
+
+### 5. Análise de Inteligência da Planilha
+- [x] Documentar padrões identificados (clientes com múltiplos pets, nomes duplicados, etc)
+- [x] Criar plano de implementação para:
+  - [x] Pacotes Familiares (desconto para 3+ pets)
+  - [x] Histórico de Atendimento
+  - [x] Recomendações de Pacotes
+  - [x] Relatório de Clientes VIP
+
+
+## DELTA 17: Sistema Completo de Pacotes/Planos (Nutri Pró Maxxi)
+
+### Fase 1: Tabelas no Banco
+- [ ] Criar tabela `packages` (planos)
+  - [ ] id (UUID)
+  - [ ] name (VARCHAR) - ex: "Nutri Pró Maxxi Trimestral Spitz"
+  - [ ] total_baths (INTEGER) - ex: 5
+  - [ ] total_groomings (INTEGER) - ex: 1
+  - [ ] total_price (DECIMAL) - ex: 400.00
+  - [ ] monthly_price (DECIMAL) - ex: 0.00
+  - [ ] recurrence_type (VARCHAR) - PIX Santander, Boleto Asaas, Cartão Crédito
+  - [ ] status (VARCHAR) - Ativo, Encerrado, Vencido
+  - [ ] created_at, updated_at
+
+- [ ] Criar tabela `package_sessions` (rastreamento de uso)
+  - [ ] id (UUID)
+  - [ ] package_id (FK)
+  - [ ] client_id (FK)
+  - [ ] baths_used (INTEGER)
+  - [ ] groomings_used (INTEGER)
+  - [ ] start_date (TIMESTAMP)
+  - [ ] end_date (TIMESTAMP)
+  - [ ] status (VARCHAR)
+
+### Fase 2: Procedures tRPC
+- [ ] `packages.list` - listar todos os planos
+- [ ] `packages.getById` - buscar plano específico
+- [ ] `packages.create` - criar novo plano
+- [ ] `packages.update` - editar plano
+- [ ] `packages.delete` - deletar plano
+- [ ] `packages.getClientBalance` - obter saldo de cliente
+
+### Fase 3: Frontend - Aba PLANOS
+- [ ] Criar página `PlansPage.tsx`
+- [ ] Listar planos em cards/tabela
+- [ ] Formulário de criação de plano
+- [ ] Formulário de edição de plano
+- [ ] Confirmação de exclusão
+- [ ] Toast de sucesso/erro
+- [ ] Validações de campos
+
+### Fase 4: Integração no AppointmentForm
+- [ ] Adicionar dropdown de planos
+- [ ] Mostrar saldo de banhos/tosas
+- [ ] Deduzir saldo ao agendar
+- [ ] Alertas de saldo baixo
+
+### Fase 5: Testes Vitest
+- [ ] Testes para CRUD de planos
+- [ ] Testes para cálculo de saldo
+- [ ] Testes de integração
+
