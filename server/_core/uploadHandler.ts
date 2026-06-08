@@ -1,7 +1,7 @@
 import { Router } from "express";
 import type { Response } from "express";
 import { storagePut } from "../storage";
-import { addPetPhoto } from "../db";
+import { supabase } from "../supabase";
 
 const router = Router();
 
@@ -39,16 +39,24 @@ router.post("/upload", async (req: any, res: Response) => {
     const storageFileName = `pets/${petId}/${Date.now()}-${fileName}`;
     const { url, key } = await storagePut(storageFileName, buffer, mimeType);
 
-    // Save metadata to database
-    await addPetPhoto({
-      petId,
-      url,
-      fileName,
-      fileSize: buffer.length,
-      mimeType,
-    });
+    // Save metadata to database using Supabase Client
+    const { data, error } = await supabase
+      .from("galeria_pets")
+      .insert({
+        pet_id: petId,
+        url,
+        file_name: fileName,
+        file_size: buffer.length,
+        mime_type: mimeType,
+      })
+      .select();
 
-    res.json({ url, key });
+    if (error) {
+      console.error("Supabase insert error:", error);
+      throw error;
+    }
+
+    res.json({ url, key, data });
   } catch (error) {
     console.error("Upload error:", error);
     res.status(500).json({
