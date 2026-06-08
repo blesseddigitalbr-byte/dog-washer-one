@@ -1,343 +1,407 @@
-import { useState } from "react";
-import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { trpc } from "@/lib/trpc";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { AppointmentForm } from "@/components/AppointmentForm";
-import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
+import { ChevronLeft, ChevronRight, Calendar, List } from "lucide-react";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, addDays, isSameDay, isSameMonth } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
-const statusConfig = {
-  pending: {
-    bg: "bg-amber-100",
-    text: "text-amber-700",
-    label: "Agendado",
-    badge: "bg-amber-500",
-  },
-  confirmed: {
-    bg: "bg-blue-100",
-    text: "text-blue-700",
-    label: "Confirmado",
-    badge: "bg-blue-500",
-  },
-  in_progress: {
-    bg: "bg-purple-100",
-    text: "text-purple-700",
-    label: "Em Andamento",
-    badge: "bg-purple-500",
-  },
-  completed: {
-    bg: "bg-green-100",
-    text: "text-green-700",
-    label: "Concluído",
-    badge: "bg-green-500",
-  },
-  cancelled: {
-    bg: "bg-red-100",
-    text: "text-red-700",
-    label: "Cancelado",
-    badge: "bg-red-500",
-  },
+type ViewType = "calendar" | "week" | "day" | "agenda";
+
+const STATUS_COLORS: Record<string, { bg: string; text: string; badge: string }> = {
+  pending: { bg: "bg-gray-100", text: "text-gray-800", badge: "bg-gray-500" },
+  confirmed: { bg: "bg-blue-100", text: "text-blue-800", badge: "bg-blue-500" },
+  in_progress: { bg: "bg-yellow-100", text: "text-yellow-800", badge: "bg-yellow-500" },
+  completed: { bg: "bg-green-100", text: "text-green-800", badge: "bg-green-500" },
+  cancelled: { bg: "bg-red-100", text: "text-red-800", badge: "bg-red-500" },
+  no_show: { bg: "bg-red-200", text: "text-red-900", badge: "bg-red-600" },
 };
 
-type ViewType = "calendar" | "agenda";
-type FilterType = "day" | "week" | "month";
+const STATUS_LABELS: Record<string, string> = {
+  pending: "Agendado",
+  confirmed: "Confirmado",
+  in_progress: "Em Andamento",
+  completed: "Concluído",
+  cancelled: "Cancelado",
+  no_show: "Não Compareceu",
+};
 
-export default function AppointmentsPage() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+export default function Appointments() {
+  const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<ViewType>("calendar");
-  const [filterType, setFilterType] = useState<FilterType>("month");
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
-  const { data: appointments = [], refetch } = trpc.appointments.list.useQuery();
-  const deleteMutation = trpc.appointments.delete.useMutation();
+  // Fetch appointments
+  const { data: appointments = [] } = trpc.appointments.list.useQuery();
 
-  // Filtrar agendamentos por data
-  const getAppointmentsForDate = (date: Date) => {
-    return appointments.filter((apt: any) => {
-      const aptDate = new Date(apt.appointmentDate);
-      return (
-        aptDate.getDate() === date.getDate() &&
-        aptDate.getMonth() === date.getMonth() &&
-        aptDate.getFullYear() === date.getFullYear()
-      );
-    });
-  };
-
-  // Gerar dias do mês
-  const getDaysInMonth = (date: Date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
-
-    const days = [];
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      days.push(null);
-    }
-    for (let i = 1; i <= daysInMonth; i++) {
-      days.push(new Date(year, month, i));
-    }
-    return days;
-  };
-
-  const monthYear = selectedDate.toLocaleDateString("pt-BR", {
-    month: "long",
-    year: "numeric",
+  // Get days for calendar view
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+  const calendarDays = eachDayOfInterval({
+    start: startOfWeek(monthStart, { weekStartsOn: 0 }),
+    end: endOfWeek(monthEnd, { weekStartsOn: 0 }),
   });
 
-  const handleDeleteAppointment = async (id: string) => {
-    if (!confirm("Tem certeza que deseja deletar este agendamento?")) return;
-    try {
-      await deleteMutation.mutateAsync({ id });
-      toast.success("Agendamento deletado!");
-      await refetch();
-    } catch (error) {
-      toast.error("Erro ao deletar agendamento");
+  // Get week days for week view
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+
+  // Get hours for timeline (07:00 às 22:00)
+  const hours = Array.from({ length: 16 }, (_, i) => i + 7);
+
+  // Filter appointments by date
+  const appointmentsByDate = useMemo(() => {
+    const map = new Map<string, any[]>();
+    appointments.forEach((apt: any) => {
+      const date = new Date(apt.appointmentDate);
+      const key = format(date, "yyyy-MM-dd");
+      if (!map.has(key)) {
+        map.set(key, []);
+      }
+      map.get(key)!.push(apt);
+    });
+    return map;
+  }, [appointments]);
+
+  const handlePrevious = () => {
+    if (viewType === "calendar") {
+      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
+    } else {
+      setCurrentDate(addDays(currentDate, -7));
     }
   };
 
-  const handlePreviousMonth = () => {
-    const newDate = new Date(selectedDate);
-    newDate.setMonth(newDate.getMonth() - 1);
-    setSelectedDate(newDate);
+  const handleNext = () => {
+    if (viewType === "calendar") {
+      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
+    } else {
+      setCurrentDate(addDays(currentDate, 7));
+    }
   };
 
-  const handleNextMonth = () => {
-    const newDate = new Date(selectedDate);
-    newDate.setMonth(newDate.getMonth() + 1);
-    setSelectedDate(newDate);
+  const handleToday = () => {
+    setCurrentDate(new Date());
   };
 
-  const daysInMonth = getDaysInMonth(selectedDate);
-  const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"];
-
-  return (
-    <div className="flex-1 overflow-auto p-6 bg-gradient-to-br from-slate-50 to-slate-100">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-accent uppercase tracking-widest mb-2">
-              {monthYear.toUpperCase()}
-            </p>
-            <h1 className="text-4xl font-bold text-foreground">Agendamento</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Gerenciamento completo de agendamentos
-            </p>
+  // Render calendar view
+  const renderCalendar = () => (
+    <div className="space-y-4">
+      <div className="grid grid-cols-7 gap-2">
+        {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sab"].map((day) => (
+          <div key={day} className="text-center font-semibold text-sm py-2 text-teal-700">
+            {day}
           </div>
-          <Button
-            onClick={() => setIsFormOpen(true)}
-            className="bg-accent hover:bg-accent/90 text-accent-foreground font-bold uppercase tracking-wide flex items-center gap-2 rounded-full px-8 h-12 shadow-lg hover:shadow-xl transition-all"
-          >
-            <Plus className="w-5 h-5" />
-            Novo Agendamento
-          </Button>
-        </div>
+        ))}
+        {calendarDays.map((day) => {
+          const dateKey = format(day, "yyyy-MM-dd");
+          const dayAppointments = appointmentsByDate.get(dateKey) || [];
+          const isCurrentMonth = isSameMonth(day, currentDate);
 
-        {/* Legend */}
-        <div className="bg-white rounded-2xl p-4 mb-8 shadow-sm border border-border flex flex-wrap gap-4">
-          <p className="text-xs font-bold text-muted-foreground uppercase">Legenda:</p>
-          {Object.entries(statusConfig).map(([key, config]) => (
-            <div key={key} className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${config.badge}`}></div>
-              <span className="text-xs font-medium text-foreground">{config.label}</span>
+          return (
+            <div
+              key={dateKey}
+              className={`min-h-24 p-2 border rounded-lg ${
+                isCurrentMonth ? "bg-white" : "bg-gray-50"
+              } ${isSameDay(day, new Date()) ? "border-teal-500 border-2" : "border-gray-200"}`}
+            >
+              <div className="font-semibold text-sm mb-1">{format(day, "d")}</div>
+              <div className="space-y-1">
+                {dayAppointments.slice(0, 2).map((apt: any) => (
+                  <div
+                    key={apt.id}
+                    className={`text-xs p-1 rounded truncate ${
+                      STATUS_COLORS[apt.status]?.bg
+                    }`}
+                  >
+                    {apt.petId}
+                  </div>
+                ))}
+                {dayAppointments.length > 2 && (
+                  <div className="text-xs text-gray-500">+{dayAppointments.length - 2}</div>
+                )}
+              </div>
             </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // Render week view
+  const renderWeek = () => (
+    <div className="space-y-4 overflow-x-auto">
+      <div className="grid gap-2" style={{ gridTemplateColumns: "80px repeat(7, 1fr)" }}>
+        <div className="font-semibold text-sm"></div>
+        {weekDays.map((day) => (
+          <div key={format(day, "yyyy-MM-dd")} className="text-center">
+            <div className="text-xs text-gray-600">{format(day, "EEE", { locale: ptBR })}</div>
+            <div className="font-semibold text-sm">{format(day, "dd")}</div>
+          </div>
+        ))}
+
+        {hours.map((hour) => (
+          <div key={`hour-${hour}`}>
+            <div className="text-xs text-gray-600 text-right pr-2">{String(hour).padStart(2, "0")}:00</div>
+            {weekDays.map((day) => {
+              const dateKey = format(day, "yyyy-MM-dd");
+              const dayAppointments = appointmentsByDate.get(dateKey) || [];
+              const hourAppointments = dayAppointments.filter((apt: any) => {
+                const aptHour = new Date(apt.appointmentDate).getHours();
+                return aptHour === hour;
+              });
+
+              return (
+                <div
+                  key={`${dateKey}-${hour}`}
+                  className="border border-gray-200 min-h-12 p-1"
+                >
+                  {hourAppointments.map((apt: any) => (
+                    <div
+                      key={apt.id}
+                      className={`text-xs p-1 rounded mb-1 ${STATUS_COLORS[apt.status]?.bg}`}
+                    >
+                      {apt.petId}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Render day view
+  const renderDay = () => {
+    const dateKey = format(currentDate, "yyyy-MM-dd");
+    const dayAppointments = appointmentsByDate.get(dateKey) || [];
+
+    return (
+      <div className="space-y-4">
+        <div className="text-center font-semibold text-lg">
+          {format(currentDate, "EEEE, dd 'de' MMMM", { locale: ptBR })}
+        </div>
+        <div className="space-y-2">
+          {hours.map((hour) => {
+            const hourAppointments = dayAppointments.filter((apt: any) => {
+              const aptHour = new Date(apt.appointmentDate).getHours();
+              return aptHour === hour;
+            });
+
+            return (
+              <div key={`day-${hour}`} className="flex gap-4">
+                <div className="w-16 text-sm font-semibold text-gray-600">
+                  {String(hour).padStart(2, "0")}:00
+                </div>
+                <div className="flex-1 space-y-2">
+                  {hourAppointments.length > 0 ? (
+                    hourAppointments.map((apt: any) => (
+                      <div
+                        key={apt.id}
+                        className={`p-3 rounded-lg border-l-4 ${STATUS_COLORS[apt.status]?.bg}`}
+                      >
+                        <div className="font-semibold">{apt.petId}</div>
+                        <div className="text-sm text-gray-600">{apt.notes}</div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="h-12 border border-dashed border-gray-300 rounded"></div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // Render agenda view - Agenda Semanal
+  const renderAgenda = () => {
+    const dayAppointments = appointmentsByDate.get(format(currentDate, "yyyy-MM-dd")) || [];
+    const sortedAppointments = [...dayAppointments].sort((a: any, b: any) => {
+      const timeA = new Date(a.appointmentDate).getTime();
+      const timeB = new Date(b.appointmentDate).getTime();
+      return timeA - timeB;
+    });
+
+    return (
+      <div className="space-y-6">
+        {/* Semana */}
+        <div className="flex gap-2 overflow-x-auto pb-2">
+          {weekDays.map((day) => (
+            <button
+              key={format(day, "yyyy-MM-dd")}
+              onClick={() => setCurrentDate(day)}
+              className={`px-4 py-2 rounded-lg font-semibold text-sm whitespace-nowrap transition ${
+                isSameDay(day, currentDate)
+                  ? "bg-yellow-400 text-black"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              <div className="text-xs text-gray-600">{format(day, "EEE", { locale: ptBR }).toUpperCase()}</div>
+              <div>{format(day, "dd")}</div>
+            </button>
           ))}
         </div>
 
-        {/* View Selector */}
-        <div className="mb-8 flex gap-3">
-          <button
-            onClick={() => setViewType("calendar")}
-            className={`px-6 py-2 rounded-full font-bold uppercase tracking-wide transition-all text-sm ${
-              viewType === "calendar"
-                ? "bg-accent text-accent-foreground shadow-md"
-                : "bg-white text-foreground border border-border hover:border-accent"
-            }`}
-          >
-            Calendário
-          </button>
-          <button
-            onClick={() => setViewType("agenda")}
-            className={`px-6 py-2 rounded-full font-bold uppercase tracking-wide transition-all text-sm ${
-              viewType === "agenda"
-                ? "bg-accent text-accent-foreground shadow-md"
-                : "bg-white text-foreground border border-border hover:border-accent"
-            }`}
-          >
-            Lista
-          </button>
-        </div>
-
-        {/* Calendar View */}
-        {viewType === "calendar" && (
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-border">
-            {/* Month Navigation */}
-            <div className="flex items-center justify-between mb-8">
-              <button
-                onClick={handlePreviousMonth}
-                className="p-2 hover:bg-accent/10 rounded-lg transition-colors text-foreground hover:text-accent"
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-
-              <h2 className="text-2xl font-bold text-foreground capitalize">
-                {monthYear}
-              </h2>
-
-              <button
-                onClick={handleNextMonth}
-                className="p-2 hover:bg-accent/10 rounded-lg transition-colors text-foreground hover:text-accent"
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
+        {/* Agendamentos do dia */}
+        <div className="space-y-4">
+          {sortedAppointments.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              Nenhum agendamento para este dia
             </div>
-
-            {/* Day Headers */}
-            <div className="grid grid-cols-7 gap-2 mb-4">
-              {dayNames.map((day) => (
-                <div
-                  key={day}
-                  className="text-center font-bold text-sm text-muted-foreground uppercase tracking-wide py-3"
-                >
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            {/* Calendar Days */}
-            <div className="grid grid-cols-7 gap-2">
-              {daysInMonth.map((day, idx) => {
-                const dayAppointments = day ? getAppointmentsForDate(day) : [];
-                const isToday =
-                  day &&
-                  day.toDateString() === new Date().toDateString();
-                const isSelected =
-                  day &&
-                  day.toDateString() === selectedDate.toDateString();
-
-                return (
-                  <div
-                    key={idx}
-                    onClick={() => day && setSelectedDate(day)}
-                    className={`min-h-24 p-2 rounded-lg border-2 transition-all cursor-pointer ${
-                      day
-                        ? isSelected
-                          ? "border-accent bg-accent/5"
-                          : isToday
-                          ? "border-accent/50 bg-accent/5"
-                          : "border-border hover:border-accent/50"
-                        : "bg-slate-50 border-transparent"
-                    }`}
-                  >
-                    {day && (
-                      <>
-                        <div
-                          className={`text-sm font-bold mb-1 ${
-                            isToday
-                              ? "text-accent"
-                              : "text-foreground"
-                          }`}
-                        >
-                          {day.getDate()}
-                        </div>
-                        <div className="space-y-1">
-                          {dayAppointments.slice(0, 2).map((apt: any) => (
-                            <div
-                              key={apt.id}
-                              className={`text-xs px-2 py-1 rounded font-medium truncate ${
-                                statusConfig[apt.status as keyof typeof statusConfig]?.bg
-                              } ${
-                                statusConfig[apt.status as keyof typeof statusConfig]?.text
-                              }`}
-                            >
-                              {apt.startTime}
-                            </div>
-                          ))}
-                          {dayAppointments.length > 2 && (
-                            <div className="text-xs text-muted-foreground px-2 font-medium">
-                              +{dayAppointments.length - 2} mais
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    )}
+          ) : (
+            sortedAppointments.map((apt: any) => {
+              const aptTime = format(new Date(apt.appointmentDate), "HH:mm");
+              return (
+                <div key={apt.id} className="flex gap-4">
+                  {/* Horário */}
+                  <div className="w-20 text-right">
+                    <div className="font-semibold text-lg text-gray-800">{aptTime}</div>
+                    <div className="text-xs text-gray-500">60 min</div>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
-        {/* Agenda View */}
-        {viewType === "agenda" && (
-          <div className="space-y-4">
-            {getAppointmentsForDate(selectedDate).length > 0 ? (
-              getAppointmentsForDate(selectedDate).map((apt: any) => (
-                <div
-                  key={apt.id}
-                  className={`bg-white rounded-2xl p-6 shadow-sm border-l-4 ${
-                    statusConfig[apt.status as keyof typeof statusConfig]?.bg
-                  } border-l-accent`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span
-                          className={`text-sm font-bold px-3 py-1 rounded-full ${
-                            statusConfig[apt.status as keyof typeof statusConfig]?.badge
-                          } text-white`}
-                        >
-                          {statusConfig[apt.status as keyof typeof statusConfig]?.label}
-                        </span>
-                        <span className="text-lg font-bold text-foreground">
-                          {apt.startTime}
-                        </span>
+                  {/* Card do agendamento */}
+                  <div className={`flex-1 p-4 rounded-lg border-l-4 ${STATUS_COLORS[apt.status]?.bg}`}>
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="font-semibold text-lg">{apt.petId}</div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          Banho & Tosa Higiênica • Prof. Letícia
+                        </div>
                       </div>
-                      <p className="text-foreground font-medium">
-                        {apt.petName || "Pet"} - {apt.clientName || "Cliente"}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {apt.serviceName || "Serviço"}
-                      </p>
+                      <Badge className={STATUS_COLORS[apt.status]?.badge}>
+                        {STATUS_LABELS[apt.status]}
+                      </Badge>
                     </div>
-                    <button
-                      onClick={() => handleDeleteAppointment(apt.id)}
-                      className="text-red-500 hover:text-red-700 font-bold text-sm uppercase"
-                    >
-                      Deletar
-                    </button>
+                    {apt.notes && (
+                      <div className="text-sm text-gray-600 mt-2">{apt.notes}</div>
+                    )}
+                    <div className="flex gap-2 mt-3">
+                      <Button size="sm" variant="outline">
+                        ✎ Editar
+                      </Button>
+                      {apt.status === "pending" && (
+                        <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white">
+                          Confirmar Agora
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="bg-white rounded-2xl p-12 shadow-sm border border-border text-center">
-                <p className="text-muted-foreground text-lg">
-                  Nenhum agendamento para {selectedDate.toLocaleDateString("pt-BR")}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
+              );
+            })
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Agendamento</h1>
+          <p className="text-gray-600 mt-1">Gerenciamento completo de agendamentos</p>
+        </div>
+        <Button
+          onClick={() => setShowForm(true)}
+          className="bg-teal-600 hover:bg-teal-700 text-white font-bold"
+        >
+          + Novo Agendamento
+        </Button>
       </div>
 
-      {/* Modal do Formulário */}
-      <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      {/* Legend */}
+      <div className="bg-white p-4 rounded-lg border border-gray-200 flex flex-wrap gap-3">
+        <span className="font-semibold">Legenda:</span>
+        {Object.entries(STATUS_LABELS).map(([key, label]) => (
+          <Badge key={key} className={STATUS_COLORS[key]?.badge}>
+            {label}
+          </Badge>
+        ))}
+      </div>
+
+      {/* View Toggle */}
+      <div className="flex gap-2 items-center flex-wrap">
+        <div className="flex gap-2">
+          <Button
+            variant={viewType === "calendar" ? "default" : "outline"}
+            onClick={() => setViewType("calendar")}
+            size="sm"
+          >
+            <Calendar size={16} className="mr-2" />
+            Mês
+          </Button>
+          <Button
+            variant={viewType === "week" ? "default" : "outline"}
+            onClick={() => setViewType("week")}
+            size="sm"
+          >
+            Semana
+          </Button>
+          <Button
+            variant={viewType === "day" ? "default" : "outline"}
+            onClick={() => setViewType("day")}
+            size="sm"
+          >
+            Dia
+          </Button>
+
+        </div>
+
+        <div className="flex gap-2 ml-auto">
+          <Button variant="outline" size="sm" onClick={handleToday}>
+            Hoje
+          </Button>
+          <Button variant="outline" size="sm" onClick={handlePrevious}>
+            <ChevronLeft size={16} />
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleNext}>
+            <ChevronRight size={16} />
+          </Button>
+        </div>
+      </div>
+
+      {/* Date Display */}
+      <div className="text-center font-semibold text-lg text-gray-700">
+        {viewType === "calendar"
+          ? format(currentDate, "MMMM 'de' yyyy", { locale: ptBR })
+          : viewType === "week"
+          ? `${format(weekStart, "dd 'de' MMM", { locale: ptBR })} - ${format(addDays(weekStart, 6), "dd 'de' MMM 'de' yyyy", { locale: ptBR })}`
+          : format(currentDate, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+      </div>
+
+      {/* Content */}
+      <div className="bg-white p-6 rounded-lg border border-gray-200">
+        {viewType === "calendar" && renderCalendar()}
+        {viewType === "week" && renderWeek()}
+        {viewType === "day" && renderDay()}
+      </div>
+
+      {/* Form Dialog */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold">Novo Agendamento</DialogTitle>
-            <p className="text-sm text-muted-foreground mt-1">
+            <DialogTitle>Novo Agendamento</DialogTitle>
+            <DialogDescription>
               Preencha os dados para criar um novo agendamento
-            </p>
+            </DialogDescription>
           </DialogHeader>
           <AppointmentForm
-            onClose={() => setIsFormOpen(false)}
-            onSuccess={() => {
-              refetch();
-              setIsFormOpen(false);
-            }}
+            onClose={() => setShowForm(false)}
+            onSuccess={() => setShowForm(false)}
           />
         </DialogContent>
       </Dialog>

@@ -15,44 +15,30 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { X, Plus } from "lucide-react";
 
-interface PetAssignment {
-  petId: string;
-  petName: string;
-  clientName: string;
-  executedBy: "professional" | "student";
-  professionalId?: string;
-  studentId?: string;
-}
-
 interface AppointmentFormProps {
-  appointmentId?: string;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
-export function AppointmentForm({
-  appointmentId,
-  onClose,
-  onSuccess,
-}: AppointmentFormProps) {
-  // Fetch data PRIMEIRO
+export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
+  // Fetch data
   const { data: clients = [] } = trpc.clients.list.useQuery();
   const { data: professionals = [] } = trpc.professionals.list.useQuery();
 
   // Mock students
   const students = [
-    { id: "1", name: "Aluno 1" },
-    { id: "2", name: "Aluno 2" },
-    { id: "3", name: "Aluno 3" },
+    { id: "550e8400-e29b-41d4-a716-446655440020", name: "Aluno 1" },
+    { id: "550e8400-e29b-41d4-a716-446655440021", name: "Aluno 2" },
+    { id: "550e8400-e29b-41d4-a716-446655440022", name: "Aluno 3" },
   ];
 
   // Mock services
   const services = [
-    { id: "1", name: "Banho e Tosa", price: 80 },
-    { id: "2", name: "Banho", price: 50 },
-    { id: "3", name: "Tosa", price: 60 },
-    { id: "4", name: "Hidratação", price: 40 },
-    { id: "5", name: "Tosa Higiênica", price: 35 },
+    { id: "550e8400-e29b-41d4-a716-446655440010", name: "Banho e Tosa", price: 80 },
+    { id: "550e8400-e29b-41d4-a716-446655440011", name: "Banho", price: 50 },
+    { id: "550e8400-e29b-41d4-a716-446655440012", name: "Tosa", price: 60 },
+    { id: "550e8400-e29b-41d4-a716-446655440013", name: "Hidratação", price: 40 },
+    { id: "550e8400-e29b-41d4-a716-446655440014", name: "Tosa Higiênica", price: 35 },
   ];
 
   // Memoizar lista de pets
@@ -67,141 +53,101 @@ export function AppointmentForm({
   }, [clients]);
 
   // State
-  const [formData, setFormData] = useState({
-    serviceId: "",
-    appointmentDate: "",
-    startTime: "",
-    durationMinutes: "60",
-    notes: "",
-  });
-
-  const [petAssignments, setPetAssignments] = useState<PetAssignment[]>([]);
-  const [currentPetSelection, setCurrentPetSelection] = useState({
-    petId: "",
-    executedBy: "professional" as "professional" | "student",
-    professionalId: "",
-    studentId: "",
-  });
+  const [selectedClient, setSelectedClient] = useState("");
+  const [selectedPets, setSelectedPets] = useState<string[]>([]);
+  const [selectedService, setSelectedService] = useState("");
+  const [executedBy, setExecutedBy] = useState<"professional" | "student">("professional");
+  const [selectedProfessional, setSelectedProfessional] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState("");
+  const [appointmentDate, setAppointmentDate] = useState("");
+  const [startTime, setStartTime] = useState("");
+  const [notes, setNotes] = useState("");
 
   // Mutations
   const createMutation = trpc.appointments.create.useMutation();
   const utils = trpc.useUtils();
 
-  const handleAddPetAssignment = () => {
-    if (!currentPetSelection.petId) {
-      toast.error("Selecione um pet");
+  // Get pets for selected client
+  const clientPets = useMemo(() => {
+    if (!selectedClient) return [];
+    const client = clients.find((c: any) => c.id === selectedClient);
+    return client?.pets || [];
+  }, [selectedClient, clients]);
+
+  const handleAddPet = () => {
+    if (!selectedClient) {
+      toast.error("Selecione um cliente primeiro");
       return;
     }
-
-    if (
-      currentPetSelection.executedBy === "professional" &&
-      !currentPetSelection.professionalId
-    ) {
-      toast.error("Selecione um profissional");
+    if (selectedPets.length >= 8) {
+      toast.error("Máximo de 8 pets por agendamento");
       return;
     }
-
-    if (
-      currentPetSelection.executedBy === "student" &&
-      !currentPetSelection.studentId
-    ) {
-      toast.error("Selecione um aluno");
-      return;
-    }
-
-    if (petAssignments.length >= 8) {
-      toast.error("Máximo de 8 pets por horário");
-      return;
-    }
-
-    if (petAssignments.some((p) => p.petId === currentPetSelection.petId)) {
-      toast.error("Este pet já foi adicionado");
-      return;
-    }
-
-    const pet = allPets.find((p) => p.id === currentPetSelection.petId);
-    if (!pet) {
-      toast.error("Pet não encontrado");
-      return;
-    }
-
-    const newAssignment: PetAssignment = {
-      petId: currentPetSelection.petId,
-      petName: pet.name,
-      clientName: pet.clientName,
-      executedBy: currentPetSelection.executedBy,
-      professionalId:
-        currentPetSelection.executedBy === "professional"
-          ? currentPetSelection.professionalId
-          : undefined,
-      studentId:
-        currentPetSelection.executedBy === "student"
-          ? currentPetSelection.studentId
-          : undefined,
-    };
-
-    setPetAssignments([...petAssignments, newAssignment]);
-    setCurrentPetSelection({
-      petId: "",
-      executedBy: "professional",
-      professionalId: "",
-      studentId: "",
-    });
-
-    toast.success("Pet adicionado!");
+    // Aqui você poderia abrir um modal para selecionar o pet
+    // Por enquanto, apenas mostramos a lista
   };
 
-  const handleRemovePetAssignment = (petId: string) => {
-    setPetAssignments(petAssignments.filter((p) => p.petId !== petId));
+  const handleRemovePet = (petId: string) => {
+    setSelectedPets(selectedPets.filter((id) => id !== petId));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.serviceId) {
+    // Validações
+    if (!selectedClient) {
+      toast.error("Selecione um cliente");
+      return;
+    }
+    if (selectedPets.length === 0) {
+      toast.error("Selecione pelo menos um pet");
+      return;
+    }
+    if (!selectedService) {
       toast.error("Selecione um serviço");
       return;
     }
-    if (!formData.appointmentDate) {
+    if (!appointmentDate) {
       toast.error("Selecione uma data");
       return;
     }
-    if (!formData.startTime) {
-      toast.error("Selecione uma hora");
+    if (!startTime) {
+      toast.error("Selecione um horário");
       return;
     }
-    if (petAssignments.length === 0) {
-      toast.error("Adicione pelo menos 1 pet");
+    if (executedBy === "professional" && !selectedProfessional) {
+      toast.error("Selecione um profissional");
+      return;
+    }
+    if (executedBy === "student" && !selectedStudent) {
+      toast.error("Selecione um aluno");
       return;
     }
 
     try {
-      for (const assignment of petAssignments) {
-        const clientId =
-          allPets.find((p) => p.id === assignment.petId)?.clientId || "";
-        const professionalId =
-          assignment.executedBy === "professional" && assignment.professionalId
-            ? assignment.professionalId
-            : "550e8400-e29b-41d4-a716-446655440002";
-
+      // Criar um agendamento para cada pet
+      for (const petId of selectedPets) {
         const appointmentPayload = {
           organizationId: "550e8400-e29b-41d4-a716-446655440000",
           unitId: "550e8400-e29b-41d4-a716-446655440001",
-          clientId,
-          petId: assignment.petId,
-          serviceId: formData.serviceId,
-          professionalId,
-          appointmentDate: new Date(formData.appointmentDate).toISOString(),
-          startTime: formData.startTime,
-          durationMinutes: parseInt(formData.durationMinutes),
+          clientId: selectedClient,
+          petId,
+          serviceId: selectedService,
+          professionalId:
+            executedBy === "professional"
+              ? selectedProfessional
+              : "550e8400-e29b-41d4-a716-446655440002",
+          appointmentDate: new Date(appointmentDate).toISOString(),
+          startTime,
+          durationMinutes: 60,
           status: "pending",
-          notes: formData.notes,
+          notes,
         };
 
         await createMutation.mutateAsync(appointmentPayload);
       }
 
-      toast.success("Agendamentos criados com sucesso!");
+      toast.success("Agendamento(s) criado(s) com sucesso!");
       await utils.appointments.list.invalidate();
       onSuccess?.();
       onClose();
@@ -211,304 +157,229 @@ export function AppointmentForm({
     }
   };
 
-  const getExecutorName = (assignment: PetAssignment) => {
-    if (assignment.executedBy === "professional") {
-      return professionals.find((p: any) => p.id === assignment.professionalId)
-        ?.name;
-    } else {
-      return students.find((s: any) => s.id === assignment.studentId)?.name;
-    }
-  };
-
   return (
-    <div className="space-y-6">
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Serviço */}
-        <div>
-          <Label htmlFor="service">Serviços *</Label>
-          <Select
-            value={formData.serviceId}
-            onValueChange={(value) =>
-              setFormData({ ...formData, serviceId: value })
-            }
-          >
-            <SelectTrigger id="service">
-              <SelectValue placeholder="Selecione o serviço" />
-            </SelectTrigger>
-            <SelectContent>
-              {services.map((service) => (
-                <SelectItem key={service.id} value={service.id}>
-                  {service.name} - R$ {service.price}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Cliente */}
+      <div>
+        <Label htmlFor="client" className="text-base font-semibold">
+          Cliente *
+        </Label>
+        <Select value={selectedClient} onValueChange={setSelectedClient}>
+          <SelectTrigger id="client" className="mt-2">
+            <SelectValue placeholder="Selecione o cliente" />
+          </SelectTrigger>
+          <SelectContent>
+            {clients.map((client: any) => (
+              <SelectItem key={client.id} value={client.id}>
+                {client.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-        {/* Data e Hora */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="date">Data *</Label>
-            <Input
-              id="date"
-              type="date"
-              value={formData.appointmentDate}
-              onChange={(e) =>
-                setFormData({ ...formData, appointmentDate: e.target.value })
-              }
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="time">Horário *</Label>
-            <Input
-              id="time"
-              type="time"
-              value={formData.startTime}
-              onChange={(e) =>
-                setFormData({ ...formData, startTime: e.target.value })
-              }
-              required
-            />
-          </div>
-        </div>
+      {/* Pets */}
+      <div>
+        <Label className="text-base font-semibold mb-3 block">
+          Bicho de estimação *
+        </Label>
+        <div className="space-y-3">
+          {selectedPets.length > 0 && (
+            <div className="space-y-2 mb-3">
+              {selectedPets.map((petId) => {
+                const pet = allPets.find((p) => p.id === petId);
+                return (
+                  <div
+                    key={petId}
+                    className="flex items-center justify-between bg-blue-50 p-3 rounded-lg border border-blue-200"
+                  >
+                    <span className="font-medium text-foreground">
+                      {pet?.name} - {pet?.clientName}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemovePet(petId)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X size={18} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
-        {/* Duração */}
-        <div>
-          <Label htmlFor="duration">Duração (minutos)</Label>
-          <Select
-            value={formData.durationMinutes}
-            onValueChange={(value) =>
-              setFormData({ ...formData, durationMinutes: value })
-            }
-          >
-            <SelectTrigger id="duration">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="30">30 minutos</SelectItem>
-              <SelectItem value="60">1 hora</SelectItem>
-              <SelectItem value="90">1h 30min</SelectItem>
-              <SelectItem value="120">2 horas</SelectItem>
-            </SelectContent>
-          </Select>
+          {selectedPets.length < 8 && (
+            <Select>
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder="Selecione o pet" />
+              </SelectTrigger>
+              <SelectContent>
+                {allPets
+                  .filter((pet) => !selectedPets.includes(pet.id))
+                  .map((pet) => (
+                    <SelectItem
+                      key={pet.id}
+                      value={pet.id}
+                      onSelect={() => {
+                        if (!selectedPets.includes(pet.id)) {
+                          setSelectedPets([...selectedPets, pet.id]);
+                        }
+                      }}
+                    >
+                      {pet.name} - {pet.clientName}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
+      </div>
 
-        {/* Seleção de Pets */}
-        <div className="bg-blue-50 p-4 rounded-lg space-y-4">
-          <div className="flex items-center justify-between">
-            <Label className="text-base font-medium">
-              Adicionar Pets ({petAssignments.length}/8) *
+      {/* Serviço */}
+      <div>
+        <Label htmlFor="service" className="text-base font-semibold">
+          Serviços *
+        </Label>
+        <Input
+          id="service"
+          type="text"
+          placeholder="Digite o serviço..."
+          value={selectedService}
+          onChange={(e) => setSelectedService(e.target.value)}
+          className="mt-2"
+          list="services-list"
+        />
+        <datalist id="services-list">
+          {services.map((service) => (
+            <option key={service.id} value={service.id}>
+              {service.name}
+            </option>
+          ))}
+        </datalist>
+      </div>
+
+      {/* Executado por */}
+      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+        <Label className="text-base font-semibold mb-3 block">
+          Executado por
+        </Label>
+        <RadioGroup value={executedBy} onValueChange={(value: any) => setExecutedBy(value)}>
+          <div className="flex items-center space-x-3 mb-3">
+            <RadioGroupItem value="professional" id="exec-prof" />
+            <Label htmlFor="exec-prof" className="font-normal cursor-pointer">
+              Profissional
             </Label>
           </div>
+          <div className="flex items-center space-x-3">
+            <RadioGroupItem value="student" id="exec-student" />
+            <Label htmlFor="exec-student" className="font-normal cursor-pointer">
+              Aluno (Salão-Escola)
+            </Label>
+          </div>
+        </RadioGroup>
 
-          {/* Pets já adicionados */}
-          {petAssignments.length > 0 && (
-            <div className="space-y-2">
-              {petAssignments.map((assignment) => (
-                <div
-                  key={assignment.petId}
-                  className="flex items-center justify-between bg-white p-3 rounded border border-blue-200"
-                >
-                  <div className="text-sm">
-                    <p className="font-medium">{assignment.petName}</p>
-                    <p className="text-gray-600">
-                      {assignment.clientName} •{" "}
-                      {assignment.executedBy === "professional"
-                        ? "Profissional"
-                        : "Aluno"}{" "}
-                      - {getExecutorName(assignment)}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleRemovePetAssignment(assignment.petId)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Adicionar novo pet */}
-          {petAssignments.length < 8 && (
-            <div className="space-y-3 pt-3 border-t border-blue-200">
-              <p className="text-sm font-medium text-gray-700">
-                Adicionar novo pet
-              </p>
-
-              {/* Seleção de Pet */}
-              <div>
-                <Label htmlFor="pet-select" className="text-sm">
-                  Pet
-                </Label>
-                <Select
-                  value={currentPetSelection.petId}
-                  onValueChange={(value) =>
-                    setCurrentPetSelection({
-                      ...currentPetSelection,
-                      petId: value,
-                    })
-                  }
-                >
-                  <SelectTrigger id="pet-select">
-                    <SelectValue placeholder="Selecione o pet" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allPets
-                      .filter(
-                        (pet) =>
-                          !petAssignments.some((p) => p.petId === pet.id)
-                      )
-                      .map((pet) => (
-                        <SelectItem key={pet.id} value={pet.id}>
-                          {pet.name} - {pet.clientName}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Executado por */}
-              <div>
-                <Label className="text-sm font-medium">Executado por</Label>
-                <RadioGroup
-                  value={currentPetSelection.executedBy}
-                  onValueChange={(value: any) =>
-                    setCurrentPetSelection({
-                      ...currentPetSelection,
-                      executedBy: value,
-                      professionalId: "",
-                      studentId: "",
-                    })
-                  }
-                  className="mt-2"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem
-                      value="professional"
-                      id="exec-professional"
-                    />
-                    <Label
-                      htmlFor="exec-professional"
-                      className="font-normal cursor-pointer text-sm"
-                    >
-                      Profissional
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="student" id="exec-student" />
-                    <Label
-                      htmlFor="exec-student"
-                      className="font-normal cursor-pointer text-sm"
-                    >
-                      Aluno (Salão-Escola)
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
-              {/* Profissional ou Aluno */}
-              {currentPetSelection.executedBy === "professional" ? (
-                <div>
-                  <Label htmlFor="prof-select" className="text-sm">
-                    Profissional
-                  </Label>
-                  <Select
-                    value={currentPetSelection.professionalId}
-                    onValueChange={(value) =>
-                      setCurrentPetSelection({
-                        ...currentPetSelection,
-                        professionalId: value,
-                      })
-                    }
-                  >
-                    <SelectTrigger id="prof-select">
-                      <SelectValue placeholder="Selecione o profissional" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {professionals.map((prof: any) => (
-                        <SelectItem key={prof.id} value={prof.id}>
-                          {prof.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ) : (
-                <div>
-                  <Label htmlFor="student-select" className="text-sm">
-                    Aluno
-                  </Label>
-                  <Select
-                    value={currentPetSelection.studentId}
-                    onValueChange={(value) =>
-                      setCurrentPetSelection({
-                        ...currentPetSelection,
-                        studentId: value,
-                      })
-                    }
-                  >
-                    <SelectTrigger id="student-select">
-                      <SelectValue placeholder="Selecione o aluno" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {students.map((student: any) => (
-                        <SelectItem key={student.id} value={student.id}>
-                          {student.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* Botão Adicionar */}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleAddPetAssignment}
-                className="w-full"
-              >
-                <Plus size={16} className="mr-2" />
-                Adicionar Pet
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Observações */}
-        <div>
-          <Label htmlFor="notes">Observações Operacionais</Label>
-          <Textarea
-            id="notes"
-            placeholder="Observações sobre o atendimento..."
-            value={formData.notes}
-            onChange={(e) =>
-              setFormData({ ...formData, notes: e.target.value })
+        {/* Profissional Responsável */}
+        <div className="mt-4">
+          <Label htmlFor="professional" className="text-sm font-semibold">
+            {executedBy === "professional" ? "Profissional" : "Aluno"} Responsável *
+          </Label>
+          <Select
+            value={
+              executedBy === "professional" ? selectedProfessional : selectedStudent
             }
-            rows={4}
+            onValueChange={(value) => {
+              if (executedBy === "professional") {
+                setSelectedProfessional(value);
+              } else {
+                setSelectedStudent(value);
+              }
+            }}
+          >
+            <SelectTrigger id="professional" className="mt-2">
+              <SelectValue
+                placeholder={`Selecione o ${
+                  executedBy === "professional" ? "profissional" : "aluno"
+                }`}
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {executedBy === "professional" ? (
+                professionals.map((prof: any) => (
+                  <SelectItem key={prof.id} value={prof.id}>
+                    {prof.name}
+                  </SelectItem>
+                ))
+              ) : (
+                students.map((student) => (
+                  <SelectItem key={student.id} value={student.id}>
+                    {student.name}
+                  </SelectItem>
+                ))
+              )}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Data e Hora */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="date" className="text-base font-semibold">
+            Data *
+          </Label>
+          <Input
+            id="date"
+            type="date"
+            value={appointmentDate}
+            onChange={(e) => setAppointmentDate(e.target.value)}
+            className="mt-2"
+            required
           />
         </div>
-
-        {/* Botões */}
-        <div className="flex gap-3 justify-end pt-4">
-          <Button type="button" variant="outline" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            className="bg-green-600 hover:bg-green-700"
-            disabled={createMutation.isPending}
-          >
-            {createMutation.isPending
-              ? "Criando..."
-              : "Criar Agendamento"}
-          </Button>
+        <div>
+          <Label htmlFor="time" className="text-base font-semibold">
+            Horário *
+          </Label>
+          <Input
+            id="time"
+            type="time"
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+            className="mt-2"
+            required
+          />
         </div>
-      </form>
-    </div>
+      </div>
+
+      {/* Observações */}
+      <div>
+        <Label htmlFor="notes" className="text-base font-semibold">
+          Observações Operacionais
+        </Label>
+        <Textarea
+          id="notes"
+          placeholder="Observações sobre o atendimento..."
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={4}
+          className="mt-2"
+        />
+      </div>
+
+      {/* Botões */}
+      <div className="flex gap-3 justify-end pt-4 border-t">
+        <Button type="button" variant="outline" onClick={onClose}>
+          Cancelar
+        </Button>
+        <Button
+          type="submit"
+          className="bg-green-600 hover:bg-green-700 text-white font-bold"
+          disabled={createMutation.isPending}
+        >
+          {createMutation.isPending ? "Criando..." : "Criar Agendamento"}
+        </Button>
+      </div>
+    </form>
   );
 }
