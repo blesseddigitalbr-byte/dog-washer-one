@@ -48,6 +48,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
   // State
   const [selectedClient, setSelectedClient] = useState("");
   const [selectedPets, setSelectedPets] = useState<string[]>([]);
+  const [petSelectValue, setPetSelectValue] = useState("");
   const [selectedService, setSelectedService] = useState("");
   const [selectedPackage, setSelectedPackage] = useState("");
   const [executedBy, setExecutedBy] = useState<"professional" | "student">("professional");
@@ -204,7 +205,12 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
           )}
 
           {selectedPets.length < 8 && (
-            <Select>
+            <Select value={petSelectValue} onValueChange={(value) => {
+              if (value && !selectedPets.includes(value)) {
+                setSelectedPets([...selectedPets, value]);
+                setPetSelectValue("");
+              }
+            }}>
               <SelectTrigger className="mt-2">
                 <SelectValue placeholder="Selecione o pet" />
               </SelectTrigger>
@@ -215,11 +221,6 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
                     <SelectItem
                       key={pet.id}
                       value={pet.id}
-                      onSelect={() => {
-                        if (!selectedPets.includes(pet.id)) {
-                          setSelectedPets([...selectedPets, pet.id]);
-                        }
-                      }}
                     >
                       {pet.displayName || `${pet.name} (Tutor: ${pet.clientName})`}
                     </SelectItem>

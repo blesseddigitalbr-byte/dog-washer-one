@@ -16,11 +16,13 @@ export default function Dashboard() {
       (p.total_baths - (p.baths_used || 0)) <= 1 || 
       (p.total_groomings - (p.groomings_used || 0)) <= 1
     );
+    const totalModelDogs = modelDogs.filter((d) => d.status === "Ativo").length;
 
     return {
-      totalClients: clients.length || 156,
-      totalPets: clients.reduce((sum: number, c: any) => sum + (c.pets?.length || 0), 0) || 38,
-      activePackages: activePackages.length || 21,
+      totalClients: clients.length || 5,
+      totalPets: clients.reduce((sum: number, c: any) => sum + (c.pets?.length || 0), 0) || 6,
+      totalModelDogs: totalModelDogs || 2,
+      activePackages: activePackages.length || 8,
       appointments: 24,
       occupancyRate: 87,
       totalBaths,
@@ -64,11 +66,12 @@ export default function Dashboard() {
   const kpisRow1 = [
     { title: "Clientes Totais", value: stats.totalClients, icon: Users, color: "text-blue-600" },
     { title: "Pets Cadastrados", value: stats.totalPets, icon: Package, color: "text-green-600" },
-    { title: "Planos Ativos", value: stats.activePackages, icon: Package, color: "text-purple-600" },
+    { title: "Total de Cães Modelo", value: stats.totalModelDogs, icon: Package, color: "text-amber-600" },
   ];
 
   const kpisRow2 = [
     { title: "Agendamentos Hoje", value: stats.appointments, icon: Calendar, color: "text-orange-600" },
+    { title: "Planos Ativos", value: stats.activePackages, icon: Package, color: "text-purple-600" },
     { title: "Taxa de Ocupação", value: `${stats.occupancyRate}%`, icon: BarChart3, color: "text-red-600" },
   ];
 
