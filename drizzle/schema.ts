@@ -382,3 +382,43 @@ export const students = pgTable("students", {
 
 export type Student = typeof students.$inferSelect;
 export type InsertStudent = typeof students.$inferInsert;
+
+/**
+ * Packages - Pacotes de Serviços (Nutri Pró Maxxi)
+ */
+export const packages = pgTable("packages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+  unitId: uuid("unit_id").notNull().references(() => units.id, { onDelete: "cascade" }),
+  clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  totalBaths: serial("total_baths").default(0),
+  totalGroomings: serial("total_groomings").default(0),
+  bathsUsed: serial("baths_used").default(0),
+  groomingsUsed: serial("groomings_used").default(0),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  startDate: timestamp("start_date", { withTimezone: true }).notNull(),
+  endDate: timestamp("end_date", { withTimezone: true }).notNull(),
+  status: varchar("status", { length: 50 }).default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+});
+
+export type Package = typeof packages.$inferSelect;
+export type InsertPackage = typeof packages.$inferInsert;
+
+/**
+ * PackageSessions - Sessões de Pacotes (Rastreamento de Uso)
+ */
+export const packageSessions = pgTable("package_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  packageId: uuid("package_id").notNull().references(() => packages.id, { onDelete: "cascade" }),
+  appointmentId: uuid("appointment_id").references(() => appointments.id, { onDelete: "set null" }),
+  sessionType: varchar("session_type", { length: 50 }).notNull(), // "bath" ou "grooming"
+  usedAt: timestamp("used_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
+export type PackageSession = typeof packageSessions.$inferSelect;
+export type InsertPackageSession = typeof packageSessions.$inferInsert;

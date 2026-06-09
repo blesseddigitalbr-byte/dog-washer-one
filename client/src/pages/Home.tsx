@@ -7,31 +7,6 @@ export default function Dashboard() {
   const { data: packages = [] } = trpc.packages.list.useQuery();
   const { data: clients = [] } = trpc.clients.list.useQuery();
 
-  // Calculate statistics
-  const stats = useMemo(() => {
-    const activePackages = packages.filter((p: any) => p.status === "active");
-    const totalBaths = activePackages.reduce((sum: number, p: any) => sum + (p.total_baths || 0), 0);
-    const totalGroomings = activePackages.reduce((sum: number, p: any) => sum + (p.total_groomings || 0), 0);
-    const lowBalance = activePackages.filter((p: any) => 
-      (p.total_baths - (p.baths_used || 0)) <= 1 || 
-      (p.total_groomings - (p.groomings_used || 0)) <= 1
-    );
-    const totalModelDogs = modelDogs.filter((d) => d.status === "Ativo").length;
-
-    return {
-      totalClients: clients.length || 5,
-      totalPets: clients.reduce((sum: number, c: any) => sum + (c.pets?.length || 0), 0) || 6,
-      totalModelDogs: totalModelDogs || 2,
-      activePackages: activePackages.length || 8,
-      appointments: 24,
-      occupancyRate: 87,
-      totalBaths,
-      totalGroomings,
-      lowBalance: lowBalance.length,
-      packages: activePackages,
-    };
-  }, [packages, clients]);
-
   // Mock data for tables
   const petBirthdays = [
     { pet: "Lili", tutor: "Jeane", data: "15/06", status: "Hoje" },
@@ -62,6 +37,31 @@ export default function Dashboard() {
     { pet: "T'chala", tutor: "Felipe", status: "Ativo", sessions: 8 },
     { pet: "Mika", tutor: "David", status: "Inativo", sessions: 5 },
   ];
+
+  // Calculate statistics
+  const stats = useMemo(() => {
+    const activePackages = packages.filter((p: any) => p.status === "active");
+    const totalBaths = activePackages.reduce((sum: number, p: any) => sum + (p.total_baths || 0), 0);
+    const totalGroomings = activePackages.reduce((sum: number, p: any) => sum + (p.total_groomings || 0), 0);
+    const lowBalance = activePackages.filter((p: any) => 
+      (p.total_baths - (p.baths_used || 0)) <= 1 || 
+      (p.total_groomings - (p.groomings_used || 0)) <= 1
+    );
+    const totalModelDogs = modelDogs.filter((d) => d.status === "Ativo").length;
+
+    return {
+      totalClients: clients.length || 5,
+      totalPets: clients.reduce((sum: number, c: any) => sum + (c.pets?.length || 0), 0) || 6,
+      totalModelDogs: totalModelDogs || 2,
+      activePackages: activePackages.length || 8,
+      appointments: 24,
+      occupancyRate: 87,
+      totalBaths,
+      totalGroomings,
+      lowBalance: lowBalance.length,
+      packages: activePackages,
+    };
+  }, [packages, clients, modelDogs]);
 
   const kpisRow1 = [
     { title: "Clientes Totais", value: stats.totalClients, icon: Users, color: "text-blue-600" },
