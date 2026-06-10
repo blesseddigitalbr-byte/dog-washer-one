@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { appRouter } from "./routers";
 import { createCallerFactory } from "./_core/trpc";
+import { sendAppointmentConfirmationEmail } from "./_core/emailService";
 
 const createCaller = createCallerFactory(appRouter);
 
@@ -238,6 +239,65 @@ describe("Professionals Router", () => {
       } catch (error) {
         expect(error).toBeDefined();
       }
+    });
+  });
+});
+
+
+describe("Email Service", () => {
+  describe("sendAppointmentConfirmationEmail", () => {
+    it("should format appointment confirmation email correctly", async () => {
+      // Mock do fetch
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        text: () => Promise.resolve(""),
+      });
+      global.fetch = mockFetch;
+
+      const result = await sendAppointmentConfirmationEmail(
+        "cliente@example.com",
+        "João Silva",
+        "Rex",
+        "Banho e Tosa",
+        "2026-06-10T10:00:00Z",
+        "10:00"
+      );
+
+      expect(result).toBe(true);
+    });
+
+    it("should handle email service errors gracefully", async () => {
+      // Mock do fetch com erro
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+        text: () => Promise.resolve("Server error"),
+      });
+      global.fetch = mockFetch;
+
+      const result = await sendAppointmentConfirmationEmail(
+        "cliente@example.com",
+        "João Silva",
+        "Rex",
+        "Banho e Tosa",
+        "2026-06-10T10:00:00Z",
+        "10:00"
+      );
+
+      expect(result).toBe(false);
+    });
+
+    it("should return false for invalid email", async () => {
+      const result = await sendAppointmentConfirmationEmail(
+        "",
+        "João Silva",
+        "Rex",
+        "Banho e Tosa",
+        "2026-06-10T10:00:00Z",
+        "10:00"
+      );
+
+      expect(result).toBe(false);
     });
   });
 });

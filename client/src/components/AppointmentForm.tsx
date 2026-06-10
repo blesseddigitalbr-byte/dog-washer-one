@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { X, Plus } from "lucide-react";
+import { X, Plus, Search } from "lucide-react";
 
 interface AppointmentFormProps {
   onClose: () => void;
@@ -47,8 +47,8 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
 
   // State
   const [selectedClient, setSelectedClient] = useState("");
-  const [selectedPets, setSelectedPets] = useState<string[]>([]);
-  const [petSelectValue, setPetSelectValue] = useState("");
+  const [clientSearchTerm, setClientSearchTerm] = useState("");
+  const [selectedPet, setSelectedPet] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState("");
   const [selectedPackage, setSelectedPackage] = useState("");
   const [executedBy, setExecutedBy] = useState<"professional" | "student">("professional");
@@ -69,22 +69,15 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
     return client?.pets || [];
   }, [selectedClient, clients]);
 
-  const handleAddPet = () => {
-    if (!selectedClient) {
-      toast.error("Selecione um cliente primeiro");
-      return;
-    }
-    if (selectedPets.length >= 8) {
-      toast.error("Máximo de 8 pets por agendamento");
-      return;
-    }
-    // Aqui você poderia abrir um modal para selecionar o pet
-    // Por enquanto, apenas mostramos a lista
-  };
 
-  const handleRemovePet = (petId: string) => {
-    setSelectedPets(selectedPets.filter((id) => id !== petId));
-  };
+
+  // Filtrar clientes por termo de busca
+  const filteredClients = useMemo(() => {
+    if (!clientSearchTerm) return clients;
+    return clients.filter((client: any) =>
+      client.name.toLowerCase().includes(clientSearchTerm.toLowerCase())
+    );
+  }, [clients, clientSearchTerm]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,8 +87,8 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
       toast.error("Selecione um cliente");
       return;
     }
-    if (selectedPets.length === 0) {
-      toast.error("Selecione pelo menos um pet");
+    if (!selectedPet) {
+      toast.error("Selecione um pet");
       return;
     }
     if (!selectedService) {
@@ -120,35 +113,34 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
     }
 
     try {
-      // Criar um agendamento para cada pet
-      for (const petId of selectedPets) {
-        const appointmentPayload = {
-          organizationId: "550e8400-e29b-41d4-a716-446655440000",
-          unitId: "550e8400-e29b-41d4-a716-446655440001",
-          clientId: selectedClient,
-          petId,
-          serviceId: selectedService,
-          professionalId:
-            executedBy === "professional"
-              ? selectedProfessional
-              : "550e8400-e29b-41d4-a716-446655440002",
-          appointmentDate: new Date(appointmentDate).toISOString(),
-          startTime,
-          durationMinutes: 60,
-          status: "pending",
-          notes,
-        };
+      // Criar um agendamento com um único pet
+      const appointmentPayload = {
+        organizationId: "550e8400-e29b-41d4-a716-446655440000",
+        unitId: "550e8400-e29b-41d4-a716-446655440001",
+        clientId: selectedClient,
+        petId: selectedPet,
+        serviceId: selectedService,
+        professionalId:
+          executedBy === "professional"
+            ? selectedProfessional
+            : "550e8400-e29b-41d4-a716-446655440002",
+        appointmentDate: new Date(appointmentDate).toISOString(),
+        startTime,
+        durationMinutes: 60,
+        status: "pending",
+        notes,
+        sendEmail: true,
+      };
 
-        await createMutation.mutateAsync(appointmentPayload);
-      }
+      await createMutation.mutateAsync(appointmentPayload);
 
-      toast.success("Agendamento(s) criado(s) com sucesso!");
+      toast.success("Agendamento criado com sucesso!");
       await utils.appointments.list.invalidate();
       onSuccess?.();
       onClose();
     } catch (error) {
-      console.error("Erro ao criar agendamentos:", error);
-      toast.error("Erro ao criar agendamentos");
+      console.error("Erro ao criar agendamento:", error);
+      toast.error("Erro ao criar agendamento");
     }
   };
 
@@ -159,18 +151,30 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
         <Label htmlFor="client" className="text-base font-semibold">
           Cliente *
         </Label>
-        <Select value={selectedClient} onValueChange={setSelectedClient}>
-          <SelectTrigger id="client" className="mt-2">
-            <SelectValue placeholder="Selecione o cliente" />
-          </SelectTrigger>
-          <SelectContent>
-            {clients.map((client: any) => (
-              <SelectItem key={client.id} value={client.id}>
-                {client.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="space-y-2">
+          <Input
+            placeholder="Buscar cliente por nome..."
+            value={clientSearchTerm}
+            onChange={(e) => setClientSearchTerm(e.target.value)}
+            className="mt-2"
+          />
+          <Select value={selectedClient} onValueChange={(value) => {
+            setSelectedClient(value);
+            setClientSearchTerm("");
+            setSelectedPet(null);
+          }}>
+            <SelectTrigger id="client" className="mt-2">
+              <SelectValue placeholder="Selecione o cliente" />
+            </SelectTrigger>
+            <SelectContent>
+              {filteredClients.map((client: any) => (
+                <SelectItem key={client.id} value={client.id}>
+                  {client.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Pets */}
@@ -179,52 +183,44 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
           Pet *
         </Label>
         <div className="space-y-3">
-          {selectedPets.length > 0 && (
+          {selectedPet && (
             <div className="space-y-2 mb-3">
-              {selectedPets.map((petId) => {
-                const pet = allPets.find((p) => p.id === petId);
-                return (
-                  <div
-                    key={petId}
-                    className="flex items-center justify-between bg-blue-50 p-3 rounded-lg border border-blue-200"
-                  >
-                    <span className="font-medium text-foreground">
-                      {pet?.displayName || `${pet?.name} (Tutor: ${pet?.clientName})`}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemovePet(petId)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <X size={18} />
-                    </button>
-                  </div>
-                );
-              })}
+              <div
+                className="flex items-center justify-between bg-blue-50 p-3 rounded-lg border border-blue-200"
+              >
+                <span className="font-medium text-foreground">
+                  {allPets.find((p) => p.id === selectedPet)?.displayName || 
+                   `${allPets.find((p) => p.id === selectedPet)?.name} (Tutor: ${allPets.find((p) => p.id === selectedPet)?.clientName})`}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPet(null)}
+                  className="text-red-500 hover:text-red-700"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
           )}
 
-          {selectedPets.length < 8 && (
-            <Select value={petSelectValue} onValueChange={(value) => {
-              if (value && !selectedPets.includes(value)) {
-                setSelectedPets([...selectedPets, value]);
-                setPetSelectValue("");
+          {!selectedPet && (
+            <Select value="" onValueChange={(value) => {
+              if (value) {
+                setSelectedPet(value);
               }
             }}>
               <SelectTrigger className="mt-2">
                 <SelectValue placeholder="Selecione o pet" />
               </SelectTrigger>
               <SelectContent>
-                {allPets
-                  .filter((pet) => !selectedPets.includes(pet.id))
-                  .map((pet) => (
-                    <SelectItem
-                      key={pet.id}
-                      value={pet.id}
-                    >
-                      {pet.displayName || `${pet.name} (Tutor: ${pet.clientName})`}
-                    </SelectItem>
-                  ))}
+                {clientPets.map((pet: any) => (
+                  <SelectItem
+                    key={pet.id}
+                    value={pet.id}
+                  >
+                    {pet.displayName || pet.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           )}

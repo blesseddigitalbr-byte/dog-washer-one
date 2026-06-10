@@ -58,7 +58,7 @@ export default function DashboardLayout({
     {
       title: "CATÁLOGO",
       items: [
-        { icon: <Scissors className="w-5 h-5" />, label: "Serviços", path: "/services", comingSoon: true },
+        { icon: <Scissors className="w-5 h-5" />, label: "Serviços", path: "/services" },
         { icon: <Package className="w-5 h-5" />, label: "Produtos", path: "/products", comingSoon: true },
         { icon: <Package className="w-5 h-5" />, label: "Planos", path: "/plans" },
       ],

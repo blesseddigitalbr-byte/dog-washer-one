@@ -6,6 +6,7 @@ import { sdk } from "./_core/sdk";
 import * as db from "./db";
 import { supabase } from "./_core/supabase";
 import { generateClientCode, generatePetCode } from "./codeGenerator";
+import { sendAppointmentConfirmationEmail } from "./_core/emailService";
 
 const COOKIE_NAME = "manus_session";
 
@@ -590,6 +591,7 @@ export const appRouter = router({
         durationMinutes: z.number().optional(),
         status: z.string().default("pending"),
         notes: z.string().optional(),
+        sendEmail: z.boolean().default(false),
       }))
       .mutation(async ({ input }) => {
         try {
@@ -612,6 +614,33 @@ export const appRouter = router({
             .single();
 
           if (error) throw error;
+
+          // Enviar email se solicitado
+          if (input.sendEmail) {
+            try {
+              // Buscar dados do cliente, pet e serviço
+              const [clientRes, petRes, serviceRes] = await Promise.all([
+                supabase.from("clientes").select("nome, email").eq("id", input.clientId).single(),
+                supabase.from("pets").select("name").eq("id", input.petId).single(),
+                supabase.from("services").select("name").eq("id", input.serviceId).single(),
+              ]);
+
+              if (clientRes.data && petRes.data && serviceRes.data) {
+                await sendAppointmentConfirmationEmail(
+                  clientRes.data.email,
+                  clientRes.data.nome,
+                  petRes.data.name,
+                  serviceRes.data.name,
+                  input.appointmentDate,
+                  input.startTime || "Horário a confirmar"
+                );
+              }
+            } catch (emailError) {
+              console.error("Erro ao enviar email:", emailError);
+              // Não lançar erro se o email falhar
+            }
+          }
+
           return data;
         } catch (error) {
           console.error("Error creating appointment:", error);

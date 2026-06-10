@@ -9,6 +9,7 @@ import Schedule from "./pages/Schedule";
 import Appointments from "./pages/Appointments";
 import Clients from "./pages/Clients";
 import Students from "./pages/Students";
+import Services from "./pages/Services";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Toaster } from "sonner";
 import { PlansPage } from "./pages/PlansPage";
@@ -30,6 +31,7 @@ function Router() {
             <Route path="/appointments" component={Appointments} />
             <Route path="/clients" component={Clients} />
             <Route path="/students" component={Students} />
+            <Route path="/services" component={Services} />
             <Route path="/plans" component={PlansPage} />
             <Route path="/404" component={NotFound} />
             <Route component={NotFound} />
