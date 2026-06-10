@@ -260,7 +260,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
             <SelectValue placeholder="Selecione um plano ou deixe em branco" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Sem plano</SelectItem>
+            {packages.length > 0 && <SelectItem value="null">Sem plano</SelectItem>}
             {packages.map((pkg: any) => (
               <SelectItem key={pkg.id} value={pkg.id}>
                 {pkg.name} - {pkg.total_baths} banhos, {pkg.total_groomings} tosas

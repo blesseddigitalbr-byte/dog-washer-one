@@ -21,25 +21,22 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
  */
 export async function testSupabaseConnection() {
   try {
-    const { data, error } = await supabase.from("users").select("count", { count: "exact", head: true });
+    const { data, error, count } = await supabase
+      .from("clientes")
+      .select("*", { count: "exact", head: true });
 
     if (error) {
+      console.error("Supabase error:", error);
       throw error;
-    }
-
-    // Get database version via raw SQL
-    const { data: versionData, error: versionError } = await supabase.rpc("get_database_version", {});
-
-    if (versionError) {
-      throw versionError;
     }
 
     return {
       connected: true,
       timestamp: new Date().toISOString(),
-      database_version: versionData?.version || "unknown",
+      record_count: count,
     };
   } catch (error) {
+    console.error("Connection error:", error);
     return {
       connected: false,
       error: error instanceof Error ? error.message : "Unknown error",
