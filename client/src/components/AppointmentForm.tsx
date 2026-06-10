@@ -75,7 +75,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
   const filteredClients = useMemo(() => {
     if (!clientSearchTerm) return clients;
     return clients.filter((client: any) =>
-      client.name.toLowerCase().includes(clientSearchTerm.toLowerCase())
+      (client?.name || "").toLowerCase().includes(clientSearchTerm.toLowerCase())
     );
   }, [clients, clientSearchTerm]);
 
