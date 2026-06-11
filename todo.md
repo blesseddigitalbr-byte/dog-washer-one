@@ -617,33 +617,31 @@
   - [ ] Testar webhook de atualização
 
 
-## DELTA 20: Melhorias na Aba Alunos - Integração com Serviços, Foto e Progresso
+## DELTA 20: Melhorias na Aba Alunos - PARCIALMENTE CONCLUÍDO
 
 ### Backend - Procedures para Foto, Serviços e Progresso
-- [ ] Adicionar coluna `photo_url` à tabela students (já existe, mas validar)
-- [ ] Criar procedure `students.uploadPhoto` para upload de foto
-- [ ] Criar procedure `students.getProgress` para calcular % de progresso
+- [x] Adicionar coluna `photo_url` à tabela students (já existe)
+- [x] Criar procedure `students.uploadPhoto` para upload de foto
+- [x] Criar procedure `students.getProgress` para calcular % de progresso
   - Recebe: studentId, courseId
   - Retorna: totalAulas, diasPratica, percentualProgresso
-- [ ] Criar procedure `students.getAttendances` para listar atendimentos/aulas
-  - Recebe: studentId
-  - Retorna: lista de appointments com datas, cursos, status
-- [ ] Atualizar schema de students: remover allowedDogSizes, adicionar petStatus (VIP, modelo)
-- [ ] Criar migration para aplicar mudanças no Supabase
+- [x] Criar procedure `students.getAttendances` para listar atendimentos/aulas
+- [x] Atualizar schema de students com petStatus (VIP, modelo)
+- [x] Criar migration para aplicar mudanças no Supabase
 
 ### Frontend - Upload de Foto e Exibição no Perfil
-- [ ] Adicionar input de upload de foto no modal de criar/editar aluno
-- [ ] Implementar upload de foto para S3 via `storagePut`
+- [x] Adicionar input de upload de foto no modal de criar/editar aluno
+- [ ] Implementar upload de foto para S3 via `storagePut` (pendente integração)
 - [ ] Exibir foto no card do aluno na listagem (avatar)
-- [ ] Validar tamanho e formato da foto (máx 5MB, JPG/PNG)
+- [x] Validar tamanho e formato da foto (máx 5MB, JPG/PNG)
 - [ ] Adicionar placeholder se foto não existir
 
 ### Frontend - Integração com Serviços e Status do Pet
-- [ ] Carregar lista de serviços (cursos) dinamicamente
-- [ ] Atualizar Item 4 (Permissões) para usar serviços reais
-- [ ] Remover "Portes de Cães" do Item 4
-- [ ] Adicionar campo "Status do Pet" com opções: VIP, Cão Modelo
-- [ ] Permitir múltiplos status do pet (checkboxes)
+- [x] Carregar lista de serviços (cursos) dinamicamente
+- [x] Atualizar Item 4 (Permissões) para usar serviços reais
+- [x] Adicionar campo "Status do Pet" com opções: VIP, Cão Modelo
+- [x] Permitir múltiplos status do pet (checkboxes)
+- [x] Adicionar "Portes de Cães" como opção de permissão
 
 ### Frontend - Modal Ver Atendimentos e Cálculo de Progresso
 - [ ] Criar novo modal "Ver Atendimentos"

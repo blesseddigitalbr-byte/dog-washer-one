@@ -24,16 +24,28 @@ export default function Students() {
     name: "",
     email: "",
     phone: "",
+    cpf: "",
+    photoUrl: "",
+    academicPortalId: "",
     course: "",
     classGroup: "",
     academicStatus: "active",
     instructorId: "",
     isAuthorized: false,
+    blockReason: "",
+    practiceLevel: "",
+    needsSupervisión: false,
+    canWorkAlone: false,
+    allowedServices: [],
+    allowedDogSizes: [],
+    petStatus: [],
+    notes: "",
   });
 
   // Queries
   const { data: students = [], isLoading, refetch } = trpc.students.list.useQuery();
   const { data: professionals = [] } = trpc.professionals.list.useQuery();
+  const { data: services = [] } = trpc.services.list.useQuery();
 
   // Mutations
   const createMutation = trpc.students.create.useMutation({
@@ -76,11 +88,22 @@ export default function Students() {
       name: "",
       email: "",
       phone: "",
+      cpf: "",
+      photoUrl: "",
+      academicPortalId: "",
       course: "",
       classGroup: "",
       academicStatus: "active",
       instructorId: "",
       isAuthorized: false,
+      blockReason: "",
+      practiceLevel: "",
+      needsSupervisión: false,
+      canWorkAlone: false,
+      allowedServices: [],
+      allowedDogSizes: [],
+      petStatus: [],
+      notes: "",
     });
     setIsEditMode(false);
     setSelectedStudent(null);
@@ -94,11 +117,22 @@ export default function Students() {
         name: student.name || "",
         email: student.email || "",
         phone: student.phone || "",
+        cpf: student.cpf || "",
+        photoUrl: student.photo_url || "",
+        academicPortalId: student.academic_portal_id || "",
         course: student.course || "",
         classGroup: student.class_group || "",
         academicStatus: student.academic_status || "active",
         instructorId: student.instructor_id || "",
         isAuthorized: student.is_authorized || false,
+        blockReason: student.block_reason || "",
+        practiceLevel: student.practice_level || "",
+        needsSupervisión: student.needs_supervision || false,
+        canWorkAlone: student.can_work_alone || false,
+        allowedServices: student.allowed_services || [],
+        allowedDogSizes: student.allowed_dog_sizes || [],
+        petStatus: student.pet_status || [],
+        notes: student.notes || "",
       });
     } else {
       resetForm();
@@ -192,7 +226,7 @@ export default function Students() {
               + Novo Aluno
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-4xl">
             <DialogHeader>
               <DialogTitle>
                 {isEditMode ? "Editar Aluno" : "Novo Aluno"}
@@ -203,6 +237,7 @@ export default function Students() {
               isEditMode={isEditMode}
               formData={formData}
               professionals={professionals}
+              services={services}
               isLoading={createMutation.isPending || updateMutation.isPending}
               onSubmit={handleSubmit}
               onChange={handleFormChange}
