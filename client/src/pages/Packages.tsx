@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Edit2, Trash2, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { NewPackageForm } from "@/components/NewPackageForm";
 
 export default function Packages() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -225,18 +226,14 @@ export default function Packages() {
           <DialogHeader>
             <DialogTitle>Novo Pacote</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-muted-foreground">
-              Funcionalidade de criar novo pacote será implementada em breve.
-            </p>
-            <Button 
+          <NewPackageForm onClose={() => setIsNewPackageOpen(false)} />
+          <Button 
               variant="outline" 
               onClick={() => setIsNewPackageOpen(false)}
-              className="w-full"
+              className="w-full mt-4"
             >
               Fechar
             </Button>
-          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -91,12 +91,12 @@ export default function Appointments() {
       if (!map.has(key)) {
         map.set(key, []);
       }
-      const pet = petMap.get(apt.petId);
+      const pet = petMap.get(apt.petId || apt.pet_id);
       map.get(key)!.push({
         ...apt,
         petName: pet?.name || apt.petId,
         clientName: pet?.clientName || "Cliente",
-        serviceName: services.find((s: any) => s.id === apt.serviceId)?.name || "Serviço",
+        serviceName: services.find((s: any) => s.id === (apt.serviceId || apt.service_id))?.name || "Serviço",
       });
     });
     return map;

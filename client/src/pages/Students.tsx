@@ -174,10 +174,8 @@ export default function Students() {
           ...updatePayload,
         });
       } else {
-        // Remove undefined values before sending
-        const cleanPayload = Object.fromEntries(
-          Object.entries(payload).filter(([, v]) => v !== undefined)
-        );
+        // Keep organizationId and unitId even if undefined - server will use defaults
+        const cleanPayload = payload;
         await createMutation.mutateAsync(cleanPayload as any);
       }
     } catch (error) {
