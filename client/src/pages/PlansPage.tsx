@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -140,21 +141,51 @@ export function PlansPage() {
     }).format(value);
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "active":
+        return "bg-blue-100 text-blue-800";
+      case "inactive":
+        return "bg-gray-100 text-gray-800";
+      case "expired":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "active":
+        return "Ativo";
+      case "inactive":
+        return "Inativo";
+      case "expired":
+        return "Vencido";
+      default:
+        return status;
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="max-w-[1280px] mx-auto px-8 py-8 space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Planos</h1>
-          <p className="text-muted-foreground mt-2">
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Planos</h1>
+          <p className="text-gray-600 mt-2">
             Gerencie os planos e pacotes de serviços
           </p>
         </div>
 
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => handleOpenDialog()}>
+            <Button
+              onClick={() => handleOpenDialog()}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
               <Plus className="mr-2 h-4 w-4" />
-              Novo Plano
+              + Novo Plano
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
@@ -163,7 +194,7 @@ export function PlansPage() {
                 {editingId ? "Editar Plano" : "Criar Novo Plano"}
               </DialogTitle>
               <DialogDescription>
-                Preencha os dados do plano (Nutri Pró Maxxi)
+                Preencha os dados do plano
               </DialogDescription>
             </DialogHeader>
 
@@ -172,7 +203,7 @@ export function PlansPage() {
                 <Label htmlFor="name">Nome do Plano *</Label>
                 <Input
                   id="name"
-                  placeholder="Ex: Nutri Pró Maxxi Trimestral Spitz"
+                  placeholder="Ex: Tipo Cão Modelo Mensal"
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
@@ -265,10 +296,10 @@ export function PlansPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="recurrenceType">Tipo de Recorrência</Label>
+                  <Label htmlFor="recurrenceType">Recorrência</Label>
                   <Input
                     id="recurrenceType"
-                    placeholder="Ex: PIX Santander, Boleto Asaas"
+                    placeholder="Ex: Sim/Não"
                     value={formData.recurrenceType}
                     onChange={(e) =>
                       setFormData({
@@ -301,7 +332,11 @@ export function PlansPage() {
               <Button variant="outline" onClick={() => setOpen(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleSave} disabled={createMutation.isPending || updateMutation.isPending}>
+              <Button
+                onClick={handleSave}
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
                 {editingId ? "Atualizar" : "Criar"} Plano
               </Button>
             </div>
@@ -309,16 +344,56 @@ export function PlansPage() {
         </Dialog>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-l-4 border-l-amber-600 rounded-[16px] shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-600 uppercase font-semibold">Total de Planos</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{packages.length}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-amber-600 rounded-[16px] shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-600 uppercase font-semibold">Planos Ativos</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {packages.filter((p: Package) => p.status === "active").length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-amber-600 rounded-[16px] shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-600 uppercase font-semibold">Planos Inativos</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {packages.filter((p: Package) => p.status !== "active").length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Plans List */}
       {isLoading ? (
-        <div className="text-center py-8">Carregando planos...</div>
+        <div className="text-center py-12 text-gray-600">Carregando planos...</div>
       ) : packages.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6 text-center">
-            <p className="text-muted-foreground">Nenhum plano cadastrado</p>
+        <Card className="rounded-[16px]">
+          <CardContent className="pt-12 pb-12 text-center">
+            <p className="text-gray-600 mb-6">Nenhum plano cadastrado</p>
             <Button
-              variant="outline"
-              className="mt-4"
               onClick={() => handleOpenDialog()}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
             >
               <Plus className="mr-2 h-4 w-4" />
               Criar Primeiro Plano
@@ -326,24 +401,63 @@ export function PlansPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4">
+        <div className="space-y-3">
           {packages.map((pkg: Package) => (
-            <Card key={pkg.id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
+            <div
+              key={pkg.id}
+              className="border-l-4 border-l-amber-600 bg-white rounded-[16px] shadow-sm p-6 flex items-center justify-between hover:shadow-md transition-shadow"
+            >
+              <div className="flex-1">
+                <div className="flex items-center gap-4">
                   <div className="flex-1">
-                    <CardTitle className="text-lg">{pkg.name}</CardTitle>
+                    <h3 className="font-bold text-gray-900">{pkg.name}</h3>
                     {pkg.description && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {pkg.description}
-                      </p>
+                      <p className="text-sm text-gray-600 mt-1">{pkg.description}</p>
                     )}
                   </div>
-                  <div className="flex gap-2">
+
+                  {/* Plan Details Grid */}
+                  <div className="grid grid-cols-5 gap-6 flex-1">
+                    <div>
+                      <p className="text-xs text-gray-600 uppercase font-semibold">Banhos</p>
+                      <p className="text-sm font-medium text-gray-900 mt-1">{pkg.total_baths}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 uppercase font-semibold">Tosas</p>
+                      <p className="text-sm font-medium text-gray-900 mt-1">{pkg.total_groomings}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 uppercase font-semibold">Valor</p>
+                      <p className="text-sm font-medium text-gray-900 mt-1">
+                        {formatCurrency(pkg.total_price)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 uppercase font-semibold">Mensalidade</p>
+                      <p className="text-sm font-medium text-gray-900 mt-1">
+                        {formatCurrency(pkg.monthly_price)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-600 uppercase font-semibold">Recorrência</p>
+                      <p className="text-sm font-medium text-gray-900 mt-1">
+                        {pkg.recurrence_type || "-"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Status Badge */}
+                  <Badge className={`${getStatusColor(pkg.status)} text-xs font-medium`}>
+                    {getStatusLabel(pkg.status)}
+                  </Badge>
+
+                  {/* Actions */}
+                  <div className="flex gap-2 ml-4">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleOpenDialog(pkg)}
+                      className="border-gray-300 text-gray-700 hover:bg-gray-50"
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>
@@ -351,69 +465,25 @@ export function PlansPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => setDeleteId(pkg.id)}
+                      className="border-gray-300 text-gray-700 hover:bg-red-50 hover:text-red-700"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-              </CardHeader>
-
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Banhos</p>
-                    <p className="text-lg font-semibold">{pkg.total_baths}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Tosas</p>
-                    <p className="text-lg font-semibold">{pkg.total_groomings}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Valor Total</p>
-                    <p className="text-lg font-semibold">
-                      {formatCurrency(pkg.total_price)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Mensalidade</p>
-                    <p className="text-lg font-semibold">
-                      {formatCurrency(pkg.monthly_price)}
-                    </p>
-                  </div>
-                </div>
-
-                {pkg.recurrence_type && (
-                  <div className="mt-4 pt-4 border-t">
-                    <p className="text-sm text-muted-foreground">Recorrência</p>
-                    <p className="text-sm font-medium">{pkg.recurrence_type}</p>
-                  </div>
-                )}
-
-                <div className="mt-4 pt-4 border-t flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    Status:{" "}
-                    <span className="font-medium">
-                      {pkg.status === "active"
-                        ? "Ativo"
-                        : pkg.status === "inactive"
-                          ? "Inativo"
-                          : "Vencido"}
-                    </span>
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       )}
 
+      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Deletar Plano?</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja deletar este plano? Esta ação não pode ser
-              desfeita.
+              Tem certeza que deseja deletar este plano? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="flex justify-end gap-3">
@@ -421,7 +491,7 @@ export function PlansPage() {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-red-600 text-white hover:bg-red-700"
             >
               Deletar
             </AlertDialogAction>

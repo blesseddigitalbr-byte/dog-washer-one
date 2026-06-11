@@ -1,104 +1,73 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Badge } from "@/components/ui/badge";
-import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Plus, Loader } from "lucide-react";
+import { StudentStats } from "@/components/StudentStats";
+import { StudentCard } from "@/components/StudentCard";
+import { StudentForm } from "@/components/StudentForm";
 
 export default function Students() {
   const [openDialog, setOpenDialog] = useState(false);
-  const [openViewModal, setOpenViewModal] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
-    cpf: "",
-    photoUrl: "",
     course: "",
     classGroup: "",
     academicStatus: "active",
-    academicId: "",
     instructorId: "",
     isAuthorized: false,
-    blockReason: "",
-    practiceLevel: "beginner",
-    petStatus: [] as string[],
-    needsSupervision: false,
-    canWorkAlone: false,
-    allowedServices: [] as string[],
-    notes: "",
   });
 
   // Queries
-  const { data: students = [], isLoading: loadingStudents, refetch: refetchStudents } = trpc.students.list.useQuery();
+  const { data: students = [], isLoading, refetch } = trpc.students.list.useQuery();
   const { data: professionals = [] } = trpc.professionals.list.useQuery();
-  const { data: services = [] } = trpc.services.list.useQuery();
-  const { data: attendances = [], isLoading: loadingAttendances } = trpc.students.getAttendances.useQuery(
-    { studentId: selectedStudent?.id },
-    { enabled: !!selectedStudent?.id }
-  );
-  const { data: progress } = trpc.students.getProgress.useQuery(
-    { studentId: selectedStudent?.id, courseId: selectedStudent?.course },
-    { enabled: !!selectedStudent?.id }
-  );
 
   // Mutations
   const createMutation = trpc.students.create.useMutation({
     onSuccess: () => {
       toast.success("Aluno criado com sucesso!");
-      refetchStudents({ throwOnError: false });
+      refetch();
       setOpenDialog(false);
       resetForm();
     },
-    onError: (error: any) => {
-      const errorMessage = error.data?.zodError?.fieldErrors ? 
-        Object.entries(error.data.zodError.fieldErrors)
-          .map(([field, msgs]: any) => `${field}: ${msgs.join(', ')}`)
-          .join('; ') :
-        error.message || 'Erro desconhecido';
-      toast.error(`Erro ao criar aluno: ${errorMessage}`);
+    onError: () => {
+      toast.error("Erro ao criar aluno");
     },
   });
 
   const updateMutation = trpc.students.update.useMutation({
     onSuccess: () => {
       toast.success("Aluno atualizado com sucesso!");
-      refetchStudents({ throwOnError: false });
+      refetch();
       setOpenDialog(false);
       resetForm();
     },
-    onError: (error: any) => {
-      const errorMessage = error.data?.zodError?.fieldErrors ? 
-        Object.entries(error.data.zodError.fieldErrors)
-          .map(([field, msgs]: any) => `${field}: ${msgs.join(', ')}`)
-          .join('; ') :
-        error.message || 'Erro desconhecido';
-      toast.error(`Erro ao atualizar aluno: ${errorMessage}`);
+    onError: () => {
+      toast.error("Erro ao atualizar aluno");
     },
   });
 
   const deleteMutation = trpc.students.delete.useMutation({
     onSuccess: () => {
       toast.success("Aluno deletado com sucesso!");
-      refetchStudents();
-      setDeleteConfirm(null);
+      refetch();
+      setDeleteId(null);
     },
-    onError: (error: any) => {
-      toast.error(`Erro ao deletar aluno: ${error.message}`);
+    onError: () => {
+      toast.error("Erro ao deletar aluno");
     },
   });
 
@@ -107,218 +76,147 @@ export default function Students() {
       name: "",
       email: "",
       phone: "",
-      cpf: "",
-      photoUrl: "",
       course: "",
       classGroup: "",
       academicStatus: "active",
-      academicId: "",
       instructorId: "",
       isAuthorized: false,
-      blockReason: "",
-      practiceLevel: "beginner",
-      petStatus: [],
-      needsSupervision: false,
-      canWorkAlone: false,
-      allowedServices: [],
-      notes: "",
     });
-    setPhotoFile(null);
-    setPhotoPreview("");
-    setSelectedStudent(null);
     setIsEditMode(false);
+    setSelectedStudent(null);
   };
 
-  const handleCreate = () => {
-    if (!formData.name) {
+  const handleOpenDialog = (student?: any) => {
+    if (student) {
+      setIsEditMode(true);
+      setSelectedStudent(student);
+      setFormData({
+        name: student.name || "",
+        email: student.email || "",
+        phone: student.phone || "",
+        course: student.course || "",
+        classGroup: student.class_group || "",
+        academicStatus: student.academic_status || "active",
+        instructorId: student.instructor_id || "",
+        isAuthorized: student.is_authorized || false,
+      });
+    } else {
+      resetForm();
+    }
+    setOpenDialog(true);
+  };
+
+  const handleFormChange = (field: string, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.name.trim()) {
       toast.error("Nome é obrigatório");
       return;
     }
 
-    const payload: any = {
-      organizationId: "550e8400-e29b-41d4-a716-446655440000",
-      unitId: "550e8400-e29b-41d4-a716-446655440001",
-      enrollmentDate: new Date(),
-      name: formData.name,
-      academicStatus: formData.academicStatus,
-      isAuthorized: formData.isAuthorized,
-      practiceLevel: formData.practiceLevel,
-      needsSupervision: formData.needsSupervision,
-      canWorkAlone: formData.canWorkAlone,
-    };
-
-    if (formData.email) payload.email = formData.email;
-    if (formData.phone) payload.phone = formData.phone;
-    if (formData.cpf) payload.cpf = formData.cpf;
-    if (formData.photoUrl) payload.photoUrl = formData.photoUrl;
-    if (formData.course) payload.course = formData.course;
-    if (formData.classGroup) payload.classGroup = formData.classGroup;
-    if (formData.academicId) payload.academicId = formData.academicId;
-    if (formData.instructorId) payload.instructorId = formData.instructorId;
-    if (formData.blockReason) payload.blockReason = formData.blockReason;
-    if (formData.allowedServices?.length > 0) payload.allowedServices = JSON.stringify(formData.allowedServices);
-    if (formData.notes) payload.notes = formData.notes;
-
-    createMutation.mutate(payload);
-  };
-
-  const handleEdit = () => {
-    if (!selectedStudent) return;
-
-    const payload: any = {
-      id: selectedStudent.id,
-      name: formData.name,
-      academicStatus: formData.academicStatus,
-      isAuthorized: formData.isAuthorized,
-      practiceLevel: formData.practiceLevel,
-      needsSupervision: formData.needsSupervision,
-      canWorkAlone: formData.canWorkAlone,
-    };
-
-    if (formData.email) payload.email = formData.email;
-    if (formData.phone) payload.phone = formData.phone;
-    if (formData.photoUrl) payload.photoUrl = formData.photoUrl;
-    if (formData.course) payload.course = formData.course;
-    if (formData.classGroup) payload.classGroup = formData.classGroup;
-    if (formData.instructorId) payload.instructorId = formData.instructorId;
-    if (formData.blockReason) payload.blockReason = formData.blockReason;
-    if (formData.allowedServices?.length > 0) payload.allowedServices = JSON.stringify(formData.allowedServices);
-    if (formData.notes) payload.notes = formData.notes;
-
-    updateMutation.mutate(payload);
-  };
-
-  const openEditDialog = (student: any) => {
-    setSelectedStudent(student);
-    setIsEditMode(true);
-    setFormData({
-      name: student.name || "",
-      email: student.email || "",
-      phone: student.phone || "",
-      cpf: student.cpf || "",
-      photoUrl: student.photo_url || "",
-      course: student.course || "",
-      classGroup: student.class_group || "",
-      academicStatus: student.academic_status || "active",
-      academicId: student.academic_id || "",
-      instructorId: student.instructor_id || "",
-      isAuthorized: student.is_authorized || false,
-      blockReason: student.block_reason || "",
-      practiceLevel: student.practice_level || "beginner",
-      petStatus: student.pet_status ? JSON.parse(student.pet_status) : [],
-      needsSupervision: student.needs_supervision || false,
-      canWorkAlone: student.can_work_alone || false,
-      allowedServices: student.allowed_services ? JSON.parse(student.allowed_services) : [],
-      notes: student.notes || "",
-    });
-    setOpenDialog(true);
-  };
-
-  const openNewDialog = () => {
-    setIsEditMode(false);
-    setSelectedStudent(null);
-    resetForm();
-    setOpenDialog(true);
-  };
-
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Foto deve ter no máximo 5MB");
-        return;
-      }
-      setPhotoFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result as string);
-        setFormData({ ...formData, photoUrl: reader.result as string });
+    try {
+      const payload = {
+        organizationId: "default-org",
+        unitId: "default-unit",
+        name: formData.name,
+        email: formData.email || undefined,
+        phone: formData.phone || undefined,
+        course: formData.course || undefined,
+        classGroup: formData.classGroup || undefined,
+        academicStatus: formData.academicStatus,
+        instructorId: formData.instructorId || undefined,
+        isAuthorized: formData.isAuthorized,
+        enrollmentDate: new Date().toISOString().split("T")[0],
       };
-      reader.readAsDataURL(file);
+
+      if (isEditMode && selectedStudent) {
+        const { organizationId, unitId, ...updatePayload } = payload;
+        await updateMutation.mutateAsync({
+          id: selectedStudent.id,
+          ...updatePayload,
+        });
+      } else {
+        await createMutation.mutateAsync(payload);
+      }
+    } catch (error) {
+      console.error("Erro ao salvar aluno:", error);
     }
   };
 
-  // Filters
-  const filteredStudents = useMemo(() => {
-    return students.filter((student: any) => {
-      const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.email.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      if (filterStatus === "authorized") return matchesSearch && student.is_authorized;
-      if (filterStatus === "blocked") return matchesSearch && !student.is_authorized;
-      return matchesSearch;
-    });
-  }, [students, searchTerm, filterStatus]);
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    try {
+      await deleteMutation.mutateAsync({ id: deleteId });
+    } catch (error) {
+      console.error("Erro ao deletar aluno:", error);
+    }
+  };
 
-  // Statistics
-  const stats = useMemo(() => {
-    const total = students.length;
-    const active = students.filter((s: any) => s.academic_status === "active").length;
-    const courses = new Set(students.map((s: any) => s.course)).size;
-    return { total, active, courses };
-  }, [students]);
+  // Filter students
+  const filteredStudents = students.filter((student: any) => {
+    const matchesSearch =
+      student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.email?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    if (filterStatus === "authorized") return matchesSearch && student.is_authorized;
+    if (filterStatus === "blocked") return matchesSearch && !student.is_authorized;
+    return matchesSearch;
+  });
+
+  const stats = {
+    total: students.length,
+    active: students.filter((s: any) => s.is_authorized).length,
+    courses: new Set(students.map((s: any) => s.course)).size,
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-[1280px] mx-auto px-8 py-8 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Alunos</h1>
-          <p className="text-gray-600 mt-1">Gerencie os alunos do salão-escola</p>
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Alunos</h1>
+          <p className="text-gray-600 mt-2">Gerencie os alunos do salão-escola</p>
         </div>
-        <Button 
-          onClick={openNewDialog}
-          className="bg-amber-600 hover:bg-amber-700 text-white"
-        >
-          + Novo Aluno
-        </Button>
+
+        <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+          <DialogTrigger asChild>
+            <Button
+              onClick={() => handleOpenDialog()}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              + Novo Aluno
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                {isEditMode ? "Editar Aluno" : "Novo Aluno"}
+              </DialogTitle>
+            </DialogHeader>
+
+            <StudentForm
+              isEditMode={isEditMode}
+              formData={formData}
+              professionals={professionals}
+              isLoading={createMutation.isPending || updateMutation.isPending}
+              onSubmit={handleSubmit}
+              onChange={handleFormChange}
+              onCancel={() => setOpenDialog(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border-l-4 border-l-amber-600 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">Total de Alunos</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
-            </div>
-            <div className="text-3xl text-gray-400">👥</div>
-          </div>
-        </div>
+      {/* Stats */}
+      <StudentStats total={stats.total} active={stats.active} courses={stats.courses} />
 
-        <div className="bg-white rounded-lg border-l-4 border-l-amber-600 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">Alunos Ativos</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.active}</p>
-            </div>
-            <div className="text-3xl text-gray-400">✓</div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border-l-4 border-l-amber-600 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">Práticas Realizadas</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">0</p>
-            </div>
-            <div className="text-3xl text-gray-400">📋</div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg border-l-4 border-l-amber-600 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">Cursos</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.courses}</p>
-            </div>
-            <div className="text-3xl text-gray-400">📚</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="flex gap-4">
+      {/* Search and Filter */}
+      <div className="flex gap-2">
         <Input
           placeholder="Buscar por nome ou email..."
           value={searchTerm}
@@ -335,415 +233,49 @@ export default function Students() {
             <SelectItem value="blocked">Bloqueados</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="outline">Relatório</Button>
       </div>
 
       {/* Students List */}
       <div className="space-y-3">
-        {loadingStudents ? (
-          <div className="text-center py-8 text-gray-500">Carregando alunos...</div>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader className="w-8 h-8 animate-spin text-gray-400" />
+          </div>
         ) : filteredStudents.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">Nenhum aluno encontrado</div>
+          <Card className="rounded-[16px]">
+            <CardContent className="pt-12 pb-12 text-center">
+              <p className="text-gray-600">
+                {students.length === 0 ? "Nenhum aluno cadastrado" : "Nenhum aluno encontrado"}
+              </p>
+            </CardContent>
+          </Card>
         ) : (
           filteredStudents.map((student: any) => (
-            <div key={student.id} className="bg-white rounded-lg border-l-4 border-l-amber-600 p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <div>
-                      <h3 className="font-bold text-gray-900">{student.name}</h3>
-                      <p className="text-sm text-gray-600">{student.email}</p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-8 mt-3">
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase font-semibold">Curso</p>
-                      <p className="text-sm font-medium text-gray-900">{student.course || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase font-semibold">Data de Inscrição</p>
-                      <p className="text-sm font-medium text-gray-900">
-                        {student.enrollment_date ? new Date(student.enrollment_date).toLocaleDateString("pt-BR") : "-"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-500 uppercase font-semibold">Progresso</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="flex-1 bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-amber-600 h-2 rounded-full"
-                            style={{ width: "0%" }}
-                          />
-                        </div>
-                        <span className="text-sm font-medium text-gray-900">0%</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Badge variant={student.is_authorized ? "default" : "secondary"}>
-                    {student.is_authorized ? "Ativo" : "Bloqueado"}
-                  </Badge>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedStudent(student);
-                      setOpenViewModal(true);
-                    }}
-                  >
-                    Ver
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openEditDialog(student)}
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setDeleteConfirm(student.id)}
-                  >
-                    Deletar
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <StudentCard
+              key={student.id}
+              student={student}
+              onEdit={handleOpenDialog}
+              onDelete={(id) => setDeleteId(id)}
+            />
           ))
         )}
       </div>
 
-      {/* Dialog */}
-      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {isEditMode ? "Editar Aluno" : "Novo Aluno"}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            {/* Seção 1: Dados Pessoais */}
-            <div className="border rounded-lg p-4 bg-blue-50">
-              <h3 className="font-bold text-gray-900 mb-3">1. Dados Pessoais</h3>
-              <div className="space-y-3">
-                <div>
-                  <Label>Nome *</Label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    placeholder="Nome completo"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Email</Label>
-                    <Input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="email@example.com"
-                    />
-                  </div>
-                  <div>
-                    <Label>Telefone</Label>
-                    <Input
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      placeholder="(11) 99999-9999"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>CPF</Label>
-                    <Input
-                      value={formData.cpf}
-                      onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-                      placeholder="000.000.000-00"
-                    />
-                  </div>
-                  <div>
-                    <Label>Foto</Label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoChange}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
-                    />
-                    {photoPreview && (
-                      <img src={photoPreview} alt="Preview" className="mt-2 w-20 h-20 rounded-lg" />
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Seção 2: Dados Acadêmicos */}
-            <div className="border rounded-lg p-4 bg-green-50">
-              <h3 className="font-bold text-gray-900 mb-3">2. Dados Acadêmicos</h3>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>ID Portal</Label>
-                    <Input
-                      value={formData.academicId}
-                      onChange={(e) => setFormData({ ...formData, academicId: e.target.value })}
-                      placeholder="ID do Portal Acadêmico"
-                    />
-                  </div>
-                  <div>
-                    <Label>Curso</Label>
-                    <Input
-                      value={formData.course}
-                      onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-                      placeholder="Ex: Dog Washer"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label>Turma</Label>
-                    <Input
-                      value={formData.classGroup}
-                      onChange={(e) => setFormData({ ...formData, classGroup: e.target.value })}
-                      placeholder="Ex: Turma A"
-                    />
-                  </div>
-                  <div>
-                    <Label>Status Acadêmico</Label>
-                    <Select value={formData.academicStatus} onValueChange={(value) => setFormData({ ...formData, academicStatus: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Ativo</SelectItem>
-                        <SelectItem value="inactive">Inativo</SelectItem>
-                        <SelectItem value="completed">Concluído</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Seção 3: Dados Operacionais */}
-            <div className="border rounded-lg p-4 bg-purple-50">
-              <h3 className="font-bold text-gray-900 mb-3">3. Dados Operacionais</h3>
-              <div className="space-y-3">
-                <div>
-                  <Label>Instrutor Responsável</Label>
-                  <Select value={formData.instructorId} onValueChange={(value) => setFormData({ ...formData, instructorId: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um instrutor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {professionals.map((prof: any) => (
-                        <SelectItem key={prof.id} value={prof.id}>
-                          {prof.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      checked={formData.isAuthorized}
-                      onCheckedChange={(checked) => setFormData({ ...formData, isAuthorized: checked as boolean })}
-                    />
-                    <Label>Liberado para Prática</Label>
-                  </div>
-                  <div>
-                    <Label>Nível Prático</Label>
-                    <Select value={formData.practiceLevel} onValueChange={(value) => setFormData({ ...formData, practiceLevel: value })}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="beginner">Iniciante</SelectItem>
-                        <SelectItem value="intermediate">Intermediário</SelectItem>
-                        <SelectItem value="advanced">Avançado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                {!formData.isAuthorized && (
-                  <div>
-                    <Label>Motivo do Bloqueio</Label>
-                    <Input
-                      value={formData.blockReason}
-                      onChange={(e) => setFormData({ ...formData, blockReason: e.target.value })}
-                      placeholder="Motivo do bloqueio"
-                    />
-                  </div>
-                )}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      checked={formData.needsSupervision}
-                      onCheckedChange={(checked) => setFormData({ ...formData, needsSupervision: checked as boolean })}
-                    />
-                    <Label>Precisa de Supervisão</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      checked={formData.canWorkAlone}
-                      onCheckedChange={(checked) => setFormData({ ...formData, canWorkAlone: checked as boolean })}
-                    />
-                    <Label>Pode Atender Sozinho</Label>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Seção 4: Status do Pet */}
-            <div className="border rounded-lg p-4 bg-orange-50">
-              <h3 className="font-bold text-gray-900 mb-3">4. Status do Pet Atendido</h3>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    checked={formData.petStatus.includes("vip")}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setFormData({ ...formData, petStatus: [...formData.petStatus, "vip"] });
-                      } else {
-                        setFormData({ ...formData, petStatus: formData.petStatus.filter(s => s !== "vip") });
-                      }
-                    }}
-                  />
-                  <Label>VIP</Label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    checked={formData.petStatus.includes("modelo")}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setFormData({ ...formData, petStatus: [...formData.petStatus, "modelo"] });
-                      } else {
-                        setFormData({ ...formData, petStatus: formData.petStatus.filter(s => s !== "modelo") });
-                      }
-                    }}
-                  />
-                  <Label>Cão Modelo</Label>
-                </div>
-              </div>
-            </div>
-
-            {/* Seção 5: Observações */}
-            <div className="border rounded-lg p-4 bg-red-50">
-              <h3 className="font-bold text-gray-900 mb-3">5. Observações</h3>
-              <Textarea
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                placeholder="Observações operacionais..."
-                rows={3}
-              />
-            </div>
-
-            {/* Buttons */}
-            <div className="flex gap-3 justify-end">
-              <Button variant="outline" onClick={() => setOpenDialog(false)}>
-                Cancelar
-              </Button>
-              <Button
-                onClick={isEditMode ? handleEdit : handleCreate}
-                className="bg-amber-600 hover:bg-amber-700"
-                disabled={createMutation.isPending || updateMutation.isPending}
-              >
-                {isEditMode ? "Atualizar" : "Criar"}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* View Student Modal */}
-      <Dialog open={openViewModal} onOpenChange={setOpenViewModal}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Detalhes do Aluno - {selectedStudent?.name}</DialogTitle>
-          </DialogHeader>
-          
-          {selectedStudent && (
-            <div className="space-y-6">
-              {/* Progresso do Curso */}
-              <div className="border-l-4 border-l-green-600 pl-4">
-                <h3 className="font-semibold text-lg mb-3">Progresso do Curso</h3>
-                <div className="space-y-2">
-                  <div>
-                    <p className="text-gray-600 text-sm">Curso: {selectedStudent.course || '-'}</p>
-                  </div>
-                  {progress && (
-                    <div>
-                      <div className="flex justify-between items-center mb-2">
-                        <p className="text-sm font-medium">Progresso</p>
-                        <p className="text-sm font-semibold text-amber-600">{progress.percentualProgresso || 0}%</p>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-3">
-                        <div
-                          className="bg-amber-600 h-3 rounded-full transition-all"
-                          style={{ width: `${progress.percentualProgresso || 0}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-gray-600 mt-2">
-                        {progress.diasPratica || 0} dias de {progress.totalAulas || 0} aulas
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Práticas Realizadas */}
-              <div className="border-l-4 border-l-blue-600 pl-4">
-                <h3 className="font-semibold text-lg mb-3">Práticas Realizadas</h3>
-                {loadingAttendances ? (
-                  <p className="text-gray-600 text-sm">Carregando...</p>
-                ) : attendances && attendances.length > 0 ? (
-                  <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {attendances.map((att: any, idx: number) => (
-                      <div key={idx} className="bg-gray-50 p-3 rounded text-sm">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium">{att.service || 'Serviço'}</p>
-                            <p className="text-gray-600 text-xs">{new Date(att.date).toLocaleDateString('pt-BR')}</p>
-                          </div>
-                          <Badge variant="outline" className="text-xs">
-                            {att.status || 'Realizado'}
-                          </Badge>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-600 text-sm">Nenhuma prática realizada ainda</p>
-                )}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
-          <AlertDialogTitle>Deletar Aluno</AlertDialogTitle>
-          <AlertDialogDescription>
-            Tem certeza que deseja deletar este aluno? Esta ação não pode ser desfeita.
-          </AlertDialogDescription>
-          <div className="flex gap-3 justify-end">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deletar Aluno?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja deletar este aluno? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex justify-end gap-3">
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                if (deleteConfirm) {
-                  deleteMutation.mutate({ id: deleteConfirm });
-                }
-              }}
-              className="bg-red-600 hover:bg-red-700"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+              className="bg-red-600 text-white hover:bg-red-700"
             >
               Deletar
             </AlertDialogAction>

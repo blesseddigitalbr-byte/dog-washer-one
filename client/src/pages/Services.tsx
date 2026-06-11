@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -10,21 +11,24 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { Plus, Edit2, Trash2, Loader } from "lucide-react";
+import { Plus, Edit2, Trash2, Loader, Clock, DollarSign } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function Services() {
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -101,37 +105,53 @@ export default function Services() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja deletar este serviço?")) return;
+  const handleDelete = async () => {
+    if (!deleteId) return;
 
     try {
-      await deleteMutation.mutateAsync({ id });
+      await deleteMutation.mutateAsync({ id: deleteId });
       toast.success("Serviço deletado com sucesso!");
       await refetch();
+      setDeleteId(null);
     } catch (error) {
       console.error("Erro ao deletar serviço:", error);
       toast.error("Erro ao deletar serviço");
     }
   };
 
+  const filteredServices = services.filter((service: any) =>
+    service.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="max-w-[1280px] mx-auto px-8 py-8 space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Serviços</h1>
-          <p className="text-muted-foreground mt-1">
-            Gerenciamento de serviços de grooming
+          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Serviços & Cursos</h1>
+          <p className="text-gray-600 mt-2">
+            Gerencie os serviços e cursos oferecidos
           </p>
         </div>
 
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => handleOpenDialog()} className="gap-2">
-              <Plus size={18} />
-              Novo Serviço
+            <Button
+              onClick={() => handleOpenDialog()}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              + Novo Serviço
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>
                 {editingId ? "Editar Serviço" : "Novo Serviço"}
@@ -162,6 +182,7 @@ export default function Services() {
                   }
                   placeholder="Descrição do serviço"
                   className="mt-2"
+                  rows={3}
                 />
               </div>
 
@@ -212,11 +233,12 @@ export default function Services() {
                   disabled={
                     createMutation.isPending || updateMutation.isPending
                   }
+                  className="bg-amber-600 hover:bg-amber-700 text-white"
                 >
                   {createMutation.isPending || updateMutation.isPending ? (
                     <Loader className="w-4 h-4 animate-spin mr-2" />
                   ) : null}
-                  {editingId ? "Atualizar" : "Criar"}
+                  {editingId ? "Atualizar" : "Criar"} Serviço
                 </Button>
               </div>
             </form>
@@ -224,70 +246,175 @@ export default function Services() {
         </Dialog>
       </div>
 
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-l-4 border-l-amber-600 rounded-[16px] shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-600 uppercase font-semibold">Serviços Ativos</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{services.length}</p>
+              </div>
+              <div className="text-amber-600 opacity-20">
+                <DollarSign size={32} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-amber-600 rounded-[16px] shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-600 uppercase font-semibold">Preço Médio</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {services.length > 0
+                    ? formatCurrency(
+                        services.reduce((sum: number, s: any) => sum + (s.price || 0), 0) /
+                          services.length
+                      )
+                    : "R$ 0,00"}
+                </p>
+              </div>
+              <div className="text-amber-600 opacity-20">
+                <DollarSign size={32} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-amber-600 rounded-[16px] shadow-sm">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-600 uppercase font-semibold">Duração Média</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">
+                  {services.length > 0
+                    ? Math.round(
+                        services.reduce((sum: number, s: any) => sum + (s.durationMinutes || 0), 0) /
+                          services.length
+                      )
+                    : 0}{" "}
+                  min
+                </p>
+              </div>
+              <div className="text-amber-600 opacity-20">
+                <Clock size={32} />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Search */}
+      <div className="flex gap-2">
+        <Input
+          placeholder="Buscar serviço..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="max-w-md"
+        />
+      </div>
+
+      {/* Services List */}
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
-          <Loader className="w-8 h-8 animate-spin text-muted-foreground" />
+          <Loader className="w-8 h-8 animate-spin text-gray-400" />
         </div>
-      ) : services.length === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">Nenhum serviço cadastrado</p>
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => handleOpenDialog()}>
-                <Plus size={18} className="mr-2" />
-                Criar Primeiro Serviço
-              </Button>
-            </DialogTrigger>
-          </Dialog>
-        </div>
+      ) : filteredServices.length === 0 ? (
+        <Card className="rounded-[16px]">
+          <CardContent className="pt-12 pb-12 text-center">
+            <p className="text-gray-600 mb-6">
+              {services.length === 0 ? "Nenhum serviço cadastrado" : "Nenhum serviço encontrado"}
+            </p>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+              <DialogTrigger asChild>
+                <Button
+                  onClick={() => handleOpenDialog()}
+                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Criar Primeiro Serviço
+                </Button>
+              </DialogTrigger>
+            </Dialog>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="border rounded-lg overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead>Nome</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Preço</TableHead>
-                <TableHead>Duração</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {services.map((service: any) => (
-                <TableRow key={service.id}>
-                  <TableCell className="font-medium">{service.name}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {service.description || "-"}
-                  </TableCell>
-                  <TableCell>
-                    R$ {parseFloat(service.price || 0).toFixed(2)}
-                  </TableCell>
-                  <TableCell>{service.durationMinutes} min</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex gap-2 justify-end">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleOpenDialog(service)}
-                      >
-                        <Edit2 size={16} />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDelete(service.id)}
-                        disabled={deleteMutation.isPending}
-                      >
-                        <Trash2 size={16} />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className="space-y-3">
+          {filteredServices.map((service: any) => (
+            <div
+              key={service.id}
+              className="border-l-4 border-l-amber-600 bg-white rounded-[16px] shadow-sm p-6 flex items-center justify-between hover:shadow-md transition-shadow"
+            >
+              <div className="flex-1">
+                <h3 className="font-bold text-gray-900">{service.name}</h3>
+                {service.description && (
+                  <p className="text-sm text-gray-600 mt-1">{service.description}</p>
+                )}
+              </div>
+
+              {/* Service Details */}
+              <div className="grid grid-cols-3 gap-8 flex-1 ml-8">
+                <div>
+                  <p className="text-xs text-gray-600 uppercase font-semibold">Preço</p>
+                  <p className="text-sm font-medium text-gray-900 mt-1">
+                    {formatCurrency(service.price || 0)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-600 uppercase font-semibold">Duração</p>
+                  <p className="text-sm font-medium text-gray-900 mt-1">
+                    {service.durationMinutes} min
+                  </p>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 ml-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOpenDialog(service)}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setDeleteId(service.id)}
+                  className="border-gray-300 text-gray-700 hover:bg-red-50 hover:text-red-700"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
         </div>
       )}
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deletar Serviço?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja deletar este serviço? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex justify-end gap-3">
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+              className="bg-red-600 text-white hover:bg-red-700"
+            >
+              Deletar
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
