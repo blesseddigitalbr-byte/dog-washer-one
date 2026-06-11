@@ -1027,6 +1027,131 @@ export const appRouter = router({
         }
       }),
 
+    // Get student progress for a course
+    getProgress: publicProcedure
+      .input(z.object({
+        studentId: z.string().uuid(),
+        courseId: z.string().uuid().optional(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          // Get student info
+          const { data: student, error: studentError } = await supabase
+            .from("students")
+            .select("id, course")
+            .eq("id", input.studentId)
+            .single();
+
+          if (studentError) throw studentError;
+          if (!student) return { totalAulas: 0, diasPratica: 0, percentualProgresso: 0 };
+
+          // Get course info (from services table)
+          const courseId = input.courseId || student.course;
+          if (!courseId) return { totalAulas: 0, diasPratica: 0, percentualProgresso: 0 };
+
+          const { data: course, error: courseError } = await supabase
+            .from("services")
+            .select("id, name, metadata")
+            .eq("id", courseId)
+            .single();
+
+          if (courseError) throw courseError;
+          if (!course) return { totalAulas: 0, diasPratica: 0, percentualProgresso: 0 };
+
+          // Parse total aulas from course metadata
+          const metadata = course.metadata ? JSON.parse(course.metadata) : {};
+          const totalAulas = metadata.totalAulas || 12; // Default 12 aulas
+
+          // Get unique practice days from appointmentStudents
+          const { data: appointmentStudents, error: appointmentsError } = await supabase
+            .from("appointmentStudents")
+            .select(`
+              appointment:appointment_id(appointment_date, service_id)
+            `)
+            .eq("student_id", input.studentId);
+
+          if (appointmentsError) throw appointmentsError;
+
+          // Count unique days for this course
+          const uniqueDays = new Set();
+          (appointmentStudents || []).forEach((as: any) => {
+            if (as.appointment && as.appointment.service_id === courseId && as.appointment.appointment_date) {
+              const dateOnly = as.appointment.appointment_date.split("T")[0];
+              uniqueDays.add(dateOnly);
+            }
+          });
+
+          const diasPratica = uniqueDays.size;
+          const percentualProgresso = Math.round((diasPratica / totalAulas) * 100);
+
+          return {
+            totalAulas,
+            diasPratica,
+            percentualProgresso,
+            courseName: course.name,
+          };
+        } catch (error) {
+          console.error("Error calculating student progress:", error);
+          return { totalAulas: 0, diasPratica: 0, percentualProgresso: 0 };
+        }
+      }),
+
+    // Get student attendances/appointments from appointmentStudents
+    getAttendances: publicProcedure
+      .input(z.object({
+        studentId: z.string().uuid(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const { data: appointmentStudents, error } = await supabase
+            .from("appointmentStudents")
+            .select(`
+              id,
+              role,
+              appointment:appointment_id(
+                id,
+                appointment_date,
+                status,
+                notes,
+                service:service_id(id, name),
+                professional:professional_id(id, name),
+                pet:pet_id(id, name)
+              )
+            `)
+            .eq("student_id", input.studentId)
+            .order("appointment_id", { ascending: false });
+
+          if (error) throw error;
+          return appointmentStudents || [];
+        } catch (error) {
+          console.error("Error fetching student attendances:", error);
+          return [];
+        }
+      }),
+
+    // Upload student photo
+    uploadPhoto: publicProcedure
+      .input(z.object({
+        studentId: z.string().uuid(),
+        photoUrl: z.string().url(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { data, error } = await supabase
+            .from("students")
+            .update({ photo_url: input.photoUrl })
+            .eq("id", input.studentId)
+            .select()
+            .single();
+
+          if (error) throw error;
+          return { success: true, photoUrl: data.photo_url };
+        } catch (error) {
+          console.error("Error uploading student photo:", error);
+          throw new Error("Erro ao fazer upload da foto");
+        }
+      }),
+
     // Validate student permissions for appointment
     validatePermissions: publicProcedure
       .input(z.object({

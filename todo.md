@@ -615,3 +615,60 @@
   - [ ] Testar atualização de dados de aluno
   - [ ] Testar webhook de criação
   - [ ] Testar webhook de atualização
+
+
+## DELTA 20: Melhorias na Aba Alunos - Integração com Serviços, Foto e Progresso
+
+### Backend - Procedures para Foto, Serviços e Progresso
+- [ ] Adicionar coluna `photo_url` à tabela students (já existe, mas validar)
+- [ ] Criar procedure `students.uploadPhoto` para upload de foto
+- [ ] Criar procedure `students.getProgress` para calcular % de progresso
+  - Recebe: studentId, courseId
+  - Retorna: totalAulas, diasPratica, percentualProgresso
+- [ ] Criar procedure `students.getAttendances` para listar atendimentos/aulas
+  - Recebe: studentId
+  - Retorna: lista de appointments com datas, cursos, status
+- [ ] Atualizar schema de students: remover allowedDogSizes, adicionar petStatus (VIP, modelo)
+- [ ] Criar migration para aplicar mudanças no Supabase
+
+### Frontend - Upload de Foto e Exibição no Perfil
+- [ ] Adicionar input de upload de foto no modal de criar/editar aluno
+- [ ] Implementar upload de foto para S3 via `storagePut`
+- [ ] Exibir foto no card do aluno na listagem (avatar)
+- [ ] Validar tamanho e formato da foto (máx 5MB, JPG/PNG)
+- [ ] Adicionar placeholder se foto não existir
+
+### Frontend - Integração com Serviços e Status do Pet
+- [ ] Carregar lista de serviços (cursos) dinamicamente
+- [ ] Atualizar Item 4 (Permissões) para usar serviços reais
+- [ ] Remover "Portes de Cães" do Item 4
+- [ ] Adicionar campo "Status do Pet" com opções: VIP, Cão Modelo
+- [ ] Permitir múltiplos status do pet (checkboxes)
+
+### Frontend - Modal Ver Atendimentos e Cálculo de Progresso
+- [ ] Criar novo modal "Ver Atendimentos"
+- [ ] Exibir lista de atendimentos/aulas do aluno
+- [ ] Mostrar: Data, Curso, Serviço, Status, Instrutor
+- [ ] Calcular % de progresso baseado em:
+  - Total de aulas do curso (campo da tabela services)
+  - Dias diferentes de participação em práticas
+  - Fórmula: (diasPratica / totalAulas) * 100
+- [ ] Exibir barra de progresso visual
+
+### Frontend - Refatorar Listagem com Progresso e Botões
+- [ ] Adicionar coluna PROGRESSO com barra percentual
+- [ ] Manter estrutura atual (cards com alunos)
+- [ ] Adicionar foto/avatar no card
+- [ ] Adicionar botões: "Ver" (modal atendimentos) e "Editar" (modal edição)
+- [ ] Remover botão de deletar da listagem (manter no modal de edição)
+- [ ] Atualizar cards para mostrar: Nome, Email, Curso, Data Inscrição, Progresso, Botões
+
+### Testes e Validação
+- [ ] Testar upload de foto
+- [ ] Testar cálculo de progresso
+- [ ] Testar modal de atendimentos
+- [ ] Testar integração com serviços
+- [ ] Testar status do pet
+
+### Checkpoint Final
+- [ ] Salvar checkpoint com todas as melhorias
