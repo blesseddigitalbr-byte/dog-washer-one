@@ -1,30 +1,27 @@
+import { useState, useMemo } from "react";
+import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Users, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Search, Filter, X, Upload, Camera } from "lucide-react";
-import { useState, useMemo } from "react";
-import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
-const ITEMS_PER_PAGE = 10;
-
-export default function StudentsPage() {
-  const [currentPage, setCurrentPage] = useState(1);
+export default function Students() {
+  const [openDialog, setOpenDialog] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string>("");
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
-  const [formData, setFormData] = useState<any>({
+  const [photoPreview, setPhotoPreview] = useState("");
+
+  const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
@@ -38,122 +35,53 @@ export default function StudentsPage() {
     isAuthorized: false,
     blockReason: "",
     practiceLevel: "beginner",
-    petStatus: [],
-    needsSupervision: true,
+    petStatus: [] as string[],
+    needsSupervision: false,
     canWorkAlone: false,
-    allowedServices: [],
+    allowedServices: [] as string[],
     notes: "",
   });
 
-  // Fetch students
-  const { data: students = [], isLoading, refetch } = trpc.students.list.useQuery({
-    filter: filterStatus === "all" ? "all" : filterStatus === "authorized" ? "authorized" : "blocked",
-  });
-
-  // Fetch professionals (for instructor selection)
+  // Queries
+  const { data: students = [], isLoading: loadingStudents, refetch: refetchStudents } = trpc.students.list.useQuery();
   const { data: professionals = [] } = trpc.professionals.list.useQuery();
-
-  // Fetch services (for course and allowed services)
   const { data: services = [] } = trpc.services.list.useQuery();
 
-  // Create mutation
+  // Mutations
   const createMutation = trpc.students.create.useMutation({
     onSuccess: () => {
       toast.success("Aluno criado com sucesso!");
-      setIsCreateDialogOpen(false);
+      refetchStudents({ throwOnError: false });
+      setOpenDialog(false);
       resetForm();
-      refetch();
     },
-    onError: (error) => {
-      toast.error(error.message || "Erro ao criar aluno");
+    onError: (error: any) => {
+      toast.error(`Erro ao criar aluno: ${error.message}`);
     },
   });
 
-  // Update mutation
   const updateMutation = trpc.students.update.useMutation({
     onSuccess: () => {
       toast.success("Aluno atualizado com sucesso!");
-      setIsEditDialogOpen(false);
+      refetchStudents({ throwOnError: false });
+      setOpenDialog(false);
       resetForm();
-      refetch();
     },
-    onError: (error) => {
-      toast.error(error.message || "Erro ao atualizar aluno");
+    onError: (error: any) => {
+      toast.error(`Erro ao atualizar aluno: ${error.message}`);
     },
   });
 
-  // Delete mutation
   const deleteMutation = trpc.students.delete.useMutation({
     onSuccess: () => {
       toast.success("Aluno deletado com sucesso!");
-      setIsDeleteDialogOpen(false);
-      setSelectedStudent(null);
-      refetch();
+      refetchStudents();
+      setDeleteConfirm(null);
     },
-    onError: (error) => {
-      toast.error(error.message || "Erro ao deletar aluno");
-    },
-  });
-
-  // Upload photo mutation
-  const uploadPhotoMutation = trpc.students.uploadPhoto.useMutation({
-    onSuccess: (data) => {
-      toast.success("Foto enviada com sucesso!");
-      setFormData({ ...formData, photoUrl: data.photoUrl });
-      setPhotoFile(null);
-      setPhotoPreview("");
-      refetch();
-    },
-    onError: (error) => {
-      toast.error(error.message || "Erro ao enviar foto");
+    onError: (error: any) => {
+      toast.error(`Erro ao deletar aluno: ${error.message}`);
     },
   });
-
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Foto deve ter no máximo 5MB");
-      return;
-    }
-
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast.error("Arquivo deve ser uma imagem (JPG, PNG, etc)");
-      return;
-    }
-
-    setPhotoFile(file);
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setPhotoPreview(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleUploadPhoto = async () => {
-    if (!photoFile || !selectedStudent) return;
-
-    setIsUploadingPhoto(true);
-    try {
-      // Convert file to base64
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64 = e.target?.result as string;
-        await uploadPhotoMutation.mutateAsync({
-          studentId: selectedStudent.id,
-          photoUrl: base64,
-        });
-      };
-      reader.readAsDataURL(photoFile);
-    } catch (error) {
-      console.error("Error uploading photo:", error);
-    } finally {
-      setIsUploadingPhoto(false);
-    }
-  };
 
   const resetForm = () => {
     setFormData({
@@ -171,13 +99,15 @@ export default function StudentsPage() {
       blockReason: "",
       practiceLevel: "beginner",
       petStatus: [],
-      needsSupervision: true,
+      needsSupervision: false,
       canWorkAlone: false,
       allowedServices: [],
       notes: "",
     });
     setPhotoFile(null);
     setPhotoPreview("");
+    setSelectedStudent(null);
+    setIsEditMode(false);
   };
 
   const handleCreate = () => {
@@ -186,53 +116,60 @@ export default function StudentsPage() {
       return;
     }
 
-    createMutation.mutate({
-      organizationId: "default-org",
+    const payload: any = {
+      organizationId: "550e8400-e29b-41d4-a716-446655440000",
       name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      cpf: formData.cpf,
-      photoUrl: formData.photoUrl,
-      course: formData.course,
-      classGroup: formData.classGroup,
       academicStatus: formData.academicStatus,
-      academicId: formData.academicId,
-      instructorId: formData.instructorId,
       isAuthorized: formData.isAuthorized,
-      blockReason: formData.blockReason,
       practiceLevel: formData.practiceLevel,
       needsSupervision: formData.needsSupervision,
       canWorkAlone: formData.canWorkAlone,
-      allowedServices: formData.allowedServices,
-      notes: formData.notes,
-    });
+    };
+
+    if (formData.email) payload.email = formData.email;
+    if (formData.phone) payload.phone = formData.phone;
+    if (formData.cpf) payload.cpf = formData.cpf;
+    if (formData.photoUrl) payload.photoUrl = formData.photoUrl;
+    if (formData.course) payload.course = formData.course;
+    if (formData.classGroup) payload.classGroup = formData.classGroup;
+    if (formData.academicId) payload.academicId = formData.academicId;
+    if (formData.instructorId) payload.instructorId = formData.instructorId;
+    if (formData.blockReason) payload.blockReason = formData.blockReason;
+    if (formData.allowedServices?.length > 0) payload.allowedServices = JSON.stringify(formData.allowedServices);
+    if (formData.notes) payload.notes = formData.notes;
+
+    createMutation.mutate(payload);
   };
 
   const handleEdit = () => {
     if (!selectedStudent) return;
 
-    updateMutation.mutate({
+    const payload: any = {
       id: selectedStudent.id,
       name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      photoUrl: formData.photoUrl,
-      course: formData.course,
-      classGroup: formData.classGroup,
       academicStatus: formData.academicStatus,
-      instructorId: formData.instructorId,
       isAuthorized: formData.isAuthorized,
-      blockReason: formData.blockReason,
       practiceLevel: formData.practiceLevel,
       needsSupervision: formData.needsSupervision,
       canWorkAlone: formData.canWorkAlone,
-      allowedServices: formData.allowedServices,
-      notes: formData.notes,
-    });
+    };
+
+    if (formData.email) payload.email = formData.email;
+    if (formData.phone) payload.phone = formData.phone;
+    if (formData.photoUrl) payload.photoUrl = formData.photoUrl;
+    if (formData.course) payload.course = formData.course;
+    if (formData.classGroup) payload.classGroup = formData.classGroup;
+    if (formData.instructorId) payload.instructorId = formData.instructorId;
+    if (formData.blockReason) payload.blockReason = formData.blockReason;
+    if (formData.allowedServices?.length > 0) payload.allowedServices = JSON.stringify(formData.allowedServices);
+    if (formData.notes) payload.notes = formData.notes;
+
+    updateMutation.mutate(payload);
   };
 
   const openEditDialog = (student: any) => {
     setSelectedStudent(student);
+    setIsEditMode(true);
     setFormData({
       name: student.name || "",
       email: student.email || "",
@@ -248,635 +185,474 @@ export default function StudentsPage() {
       blockReason: student.block_reason || "",
       practiceLevel: student.practice_level || "beginner",
       petStatus: student.pet_status ? JSON.parse(student.pet_status) : [],
-      needsSupervision: student.needs_supervision || true,
+      needsSupervision: student.needs_supervision || false,
       canWorkAlone: student.can_work_alone || false,
       allowedServices: student.allowed_services ? JSON.parse(student.allowed_services) : [],
       notes: student.notes || "",
     });
-    setIsEditDialogOpen(true);
+    setOpenDialog(true);
   };
 
-  const getAuthorizationBadge = (isAuthorized: boolean) => (
-    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-      isAuthorized ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
-    }`}>
-      {isAuthorized ? "Autorizado" : "Bloqueado"}
-    </span>
-  );
-
-  const getPracticeLevelBadge = (level: string) => {
-    const colors: Record<string, string> = {
-      beginner: "bg-blue-100 text-blue-700",
-      intermediate: "bg-yellow-100 text-yellow-700",
-      advanced: "bg-purple-100 text-purple-700",
-    };
-    return (
-      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${colors[level] || colors.beginner}`}>
-        {level === "beginner" ? "Iniciante" : level === "intermediate" ? "Intermediário" : "Avançado"}
-      </span>
-    );
+  const openNewDialog = () => {
+    setIsEditMode(false);
+    setSelectedStudent(null);
+    resetForm();
+    setOpenDialog(true);
   };
 
-  // Pagination
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Foto deve ter no máximo 5MB");
+        return;
+      }
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+        setFormData({ ...formData, photoUrl: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Filters
   const filteredStudents = useMemo(() => {
-    return students.filter(student =>
-      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [students, searchTerm]);
+    return students.filter((student: any) => {
+      const matchesSearch = student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.email.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      if (filterStatus === "authorized") return matchesSearch && student.is_authorized;
+      if (filterStatus === "blocked") return matchesSearch && !student.is_authorized;
+      return matchesSearch;
+    });
+  }, [students, searchTerm, filterStatus]);
 
-  const totalPages = Math.ceil(filteredStudents.length / ITEMS_PER_PAGE);
-  const paginatedStudents = filteredStudents.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
-
-  const stats = {
-    total: students.length,
-    authorized: students.filter((s: any) => s.is_authorized).length,
-    blocked: students.filter((s: any) => !s.is_authorized).length,
-    courses: new Set(students.map((s: any) => s.course)).size,
-  };
+  // Statistics
+  const stats = useMemo(() => {
+    const total = students.length;
+    const active = students.filter((s: any) => s.academic_status === "active").length;
+    const courses = new Set(students.map((s: any) => s.course)).size;
+    return { total, active, courses };
+  }, [students]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2 flex items-center gap-3">
-            <Users className="w-10 h-10 text-blue-600" />
-            Alunos
-          </h1>
-          <p className="text-muted-foreground">Gerencie os alunos do salão-escola</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Alunos</h1>
+          <p className="text-gray-600 mt-1">Gerencie os alunos do salão-escola</p>
         </div>
+        <Button 
+          onClick={openNewDialog}
+          className="bg-amber-600 hover:bg-amber-700 text-white"
+        >
+          + Novo Aluno
+        </Button>
+      </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-lg border-l-4 border-blue-500 p-4 shadow-sm">
-            <p className="text-sm text-muted-foreground">Total de Alunos</p>
-            <p className="text-3xl font-bold text-foreground">{stats.total}</p>
-          </div>
-          <div className="bg-white rounded-lg border-l-4 border-green-500 p-4 shadow-sm">
-            <p className="text-sm text-muted-foreground">Alunos Ativos</p>
-            <p className="text-3xl font-bold text-foreground">{stats.authorized}</p>
-          </div>
-          <div className="bg-white rounded-lg border-l-4 border-red-500 p-4 shadow-sm">
-            <p className="text-sm text-muted-foreground">Bloqueados</p>
-            <p className="text-3xl font-bold text-foreground">{stats.blocked}</p>
-          </div>
-          <div className="bg-white rounded-lg border-l-4 border-purple-500 p-4 shadow-sm">
-            <p className="text-sm text-muted-foreground">Cursos</p>
-            <p className="text-3xl font-bold text-foreground">{stats.courses}</p>
-          </div>
-        </div>
-
-        {/* Toolbar */}
-        <div className="flex gap-4 mb-6">
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Aluno
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Criar Novo Aluno</DialogTitle>
-              </DialogHeader>
-              <StudentForm
-                formData={formData}
-                setFormData={setFormData}
-                professionals={professionals}
-                services={services}
-                photoPreview={photoPreview}
-                photoFile={photoFile}
-                onPhotoChange={handlePhotoChange}
-                onUploadPhoto={handleUploadPhoto}
-                isUploadingPhoto={isUploadingPhoto}
-                onRemovePhoto={() => {
-                  setPhotoFile(null);
-                  setPhotoPreview("");
-                }}
-              />
-              <div className="flex gap-2 justify-end">
-                <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button onClick={handleCreate} className="bg-blue-600 hover:bg-blue-700">
-                  Criar Aluno
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome ou email..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="pl-10"
-            />
-          </div>
-
-          <Select value={filterStatus} onValueChange={(value) => {
-            setFilterStatus(value);
-            setCurrentPage(1);
-          }}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              <SelectItem value="authorized">Autorizados</SelectItem>
-              <SelectItem value="blocked">Bloqueados</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Students List */}
-        <div className="space-y-4">
-          {isLoading ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Carregando alunos...</p>
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-4 gap-4">
+        <div className="bg-white rounded-lg border-l-4 border-l-amber-600 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm font-medium">Total de Alunos</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.total}</p>
             </div>
-          ) : paginatedStudents.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-lg">
-              <Users className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-              <p className="text-muted-foreground">Nenhum aluno encontrado</p>
+            <div className="text-3xl text-gray-400">👥</div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg border-l-4 border-l-amber-600 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm font-medium">Alunos Ativos</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.active}</p>
             </div>
-          ) : (
-            paginatedStudents.map((student: any) => (
-              <div key={student.id} className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-start gap-4 flex-1">
-                    {/* Avatar */}
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-white shadow-md">
-                      {student.photo_url ? (
-                        <img src={student.photo_url} alt={student.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <Users className="w-8 h-8 text-white" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-foreground">{student.name}</h3>
-                      <p className="text-sm text-muted-foreground">{student.email}</p>
+            <div className="text-3xl text-gray-400">✓</div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg border-l-4 border-l-amber-600 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm font-medium">ConUSs</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">0</p>
+            </div>
+            <div className="text-3xl text-gray-400">🎓</div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg border-l-4 border-l-amber-600 p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm font-medium">Cursos</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">{stats.courses}</p>
+            </div>
+            <div className="text-3xl text-gray-400">📚</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex gap-4">
+        <Input
+          placeholder="Buscar por nome ou email..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="flex-1"
+        />
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-48">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            <SelectItem value="authorized">Autorizados</SelectItem>
+            <SelectItem value="blocked">Bloqueados</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button variant="outline">Relatório</Button>
+      </div>
+
+      {/* Students List */}
+      <div className="space-y-3">
+        {loadingStudents ? (
+          <div className="text-center py-8 text-gray-500">Carregando alunos...</div>
+        ) : filteredStudents.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">Nenhum aluno encontrado</div>
+        ) : (
+          filteredStudents.map((student: any) => (
+            <div key={student.id} className="bg-white rounded-lg border-l-4 border-l-amber-600 p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <h3 className="font-bold text-gray-900">{student.name}</h3>
+                      <p className="text-sm text-gray-600">{student.email}</p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    {getAuthorizationBadge(student.is_authorized)}
-                    {getPracticeLevelBadge(student.practice_level)}
+
+                  <div className="grid grid-cols-3 gap-8 mt-3">
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase font-semibold">Curso</p>
+                      <p className="text-sm font-medium text-gray-900">{student.course || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase font-semibold">Data de Inscrição</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {student.enrollment_date ? new Date(student.enrollment_date).toLocaleDateString("pt-BR") : "-"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 uppercase font-semibold">Progresso</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex-1 bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-amber-600 h-2 rounded-full"
+                            style={{ width: "0%" }}
+                          />
+                        </div>
+                        <span className="text-sm font-medium text-gray-900">0%</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">CURSO</p>
-                    <p className="font-semibold text-foreground">{student.course || "-"}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">DATA DE INSCRIÇÃO</p>
-                    <p className="font-semibold text-foreground">
-                      {student.created_at ? new Date(student.created_at).toLocaleDateString("pt-BR") : "-"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">INSTRUTOR</p>
-                    <p className="font-semibold text-foreground">{student.instructor?.name || "-"}</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
+                <div className="flex items-center gap-3">
+                  <Badge variant={student.is_authorized ? "default" : "secondary"}>
+                    {student.is_authorized ? "Ativo" : "Bloqueado"}
+                  </Badge>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => openEditDialog(student)}
                   >
-                    <Edit className="w-4 h-4 mr-2" />
                     Editar
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-red-600 hover:text-red-700"
-                    onClick={() => {
-                      setSelectedStudent(student);
-                      setIsDeleteDialogOpen(true);
-                    }}
+                    onClick={() => setDeleteConfirm(student.id)}
                   >
-                    <Trash2 className="w-4 h-4 mr-2" />
                     Deletar
                   </Button>
                 </div>
               </div>
-            ))
-          )}
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-8">
-            <p className="text-sm text-muted-foreground">
-              Página {currentPage} de {totalPages}
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-              >
-                <ChevronRight className="w-4 h-4" />
-              </Button>
             </div>
-          </div>
+          ))
         )}
+      </div>
 
-        {/* Edit Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Editar Aluno</DialogTitle>
-            </DialogHeader>
-            <StudentForm
-              formData={formData}
-              setFormData={setFormData}
-              professionals={professionals}
-              services={services}
-              photoPreview={photoPreview}
-              photoFile={photoFile}
-              onPhotoChange={handlePhotoChange}
-              onUploadPhoto={handleUploadPhoto}
-              isUploadingPhoto={isUploadingPhoto}
-              onRemovePhoto={() => {
-                setPhotoFile(null);
-                setPhotoPreview("");
-              }}
-            />
-            <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+      {/* Dialog */}
+      <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {isEditMode ? "Editar Aluno" : "Novo Aluno"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Seção 1: Dados Pessoais */}
+            <div className="border rounded-lg p-4 bg-blue-50">
+              <h3 className="font-bold text-gray-900 mb-3">1. Dados Pessoais</h3>
+              <div className="space-y-3">
+                <div>
+                  <Label>Nome *</Label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Nome completo"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Email</Label>
+                    <Input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      placeholder="email@example.com"
+                    />
+                  </div>
+                  <div>
+                    <Label>Telefone</Label>
+                    <Input
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      placeholder="(11) 99999-9999"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>CPF</Label>
+                    <Input
+                      value={formData.cpf}
+                      onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                      placeholder="000.000.000-00"
+                    />
+                  </div>
+                  <div>
+                    <Label>Foto</Label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoChange}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-50 file:text-amber-700 hover:file:bg-amber-100"
+                    />
+                    {photoPreview && (
+                      <img src={photoPreview} alt="Preview" className="mt-2 w-20 h-20 rounded-lg" />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Seção 2: Dados Acadêmicos */}
+            <div className="border rounded-lg p-4 bg-green-50">
+              <h3 className="font-bold text-gray-900 mb-3">2. Dados Acadêmicos</h3>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>ID Portal</Label>
+                    <Input
+                      value={formData.academicId}
+                      onChange={(e) => setFormData({ ...formData, academicId: e.target.value })}
+                      placeholder="ID do Portal Acadêmico"
+                    />
+                  </div>
+                  <div>
+                    <Label>Curso</Label>
+                    <Input
+                      value={formData.course}
+                      onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                      placeholder="Ex: Dog Washer"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Turma</Label>
+                    <Input
+                      value={formData.classGroup}
+                      onChange={(e) => setFormData({ ...formData, classGroup: e.target.value })}
+                      placeholder="Ex: Turma A"
+                    />
+                  </div>
+                  <div>
+                    <Label>Status Acadêmico</Label>
+                    <Select value={formData.academicStatus} onValueChange={(value) => setFormData({ ...formData, academicStatus: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">Ativo</SelectItem>
+                        <SelectItem value="inactive">Inativo</SelectItem>
+                        <SelectItem value="completed">Concluído</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Seção 3: Dados Operacionais */}
+            <div className="border rounded-lg p-4 bg-purple-50">
+              <h3 className="font-bold text-gray-900 mb-3">3. Dados Operacionais</h3>
+              <div className="space-y-3">
+                <div>
+                  <Label>Instrutor Responsável</Label>
+                  <Select value={formData.instructorId} onValueChange={(value) => setFormData({ ...formData, instructorId: value })}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um instrutor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {professionals.map((prof: any) => (
+                        <SelectItem key={prof.id} value={prof.id}>
+                          {prof.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={formData.isAuthorized}
+                      onCheckedChange={(checked) => setFormData({ ...formData, isAuthorized: checked as boolean })}
+                    />
+                    <Label>Liberado para Prática</Label>
+                  </div>
+                  <div>
+                    <Label>Nível Prático</Label>
+                    <Select value={formData.practiceLevel} onValueChange={(value) => setFormData({ ...formData, practiceLevel: value })}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="beginner">Iniciante</SelectItem>
+                        <SelectItem value="intermediate">Intermediário</SelectItem>
+                        <SelectItem value="advanced">Avançado</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                {!formData.isAuthorized && (
+                  <div>
+                    <Label>Motivo do Bloqueio</Label>
+                    <Input
+                      value={formData.blockReason}
+                      onChange={(e) => setFormData({ ...formData, blockReason: e.target.value })}
+                      placeholder="Motivo do bloqueio"
+                    />
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={formData.needsSupervision}
+                      onCheckedChange={(checked) => setFormData({ ...formData, needsSupervision: checked as boolean })}
+                    />
+                    <Label>Precisa de Supervisão</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      checked={formData.canWorkAlone}
+                      onCheckedChange={(checked) => setFormData({ ...formData, canWorkAlone: checked as boolean })}
+                    />
+                    <Label>Pode Atender Sozinho</Label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Seção 4: Status do Pet */}
+            <div className="border rounded-lg p-4 bg-orange-50">
+              <h3 className="font-bold text-gray-900 mb-3">4. Status do Pet Atendido</h3>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    checked={formData.petStatus.includes("vip")}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setFormData({ ...formData, petStatus: [...formData.petStatus, "vip"] });
+                      } else {
+                        setFormData({ ...formData, petStatus: formData.petStatus.filter(s => s !== "vip") });
+                      }
+                    }}
+                  />
+                  <Label>VIP</Label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    checked={formData.petStatus.includes("modelo")}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setFormData({ ...formData, petStatus: [...formData.petStatus, "modelo"] });
+                      } else {
+                        setFormData({ ...formData, petStatus: formData.petStatus.filter(s => s !== "modelo") });
+                      }
+                    }}
+                  />
+                  <Label>Cão Modelo</Label>
+                </div>
+              </div>
+            </div>
+
+            {/* Seção 5: Observações */}
+            <div className="border rounded-lg p-4 bg-red-50">
+              <h3 className="font-bold text-gray-900 mb-3">5. Observações</h3>
+              <Textarea
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Observações operacionais..."
+                rows={3}
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => setOpenDialog(false)}>
                 Cancelar
               </Button>
-              <Button onClick={handleEdit} className="bg-blue-600 hover:bg-blue-700">
-                Salvar Alterações
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Delete Dialog */}
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogTitle>Deletar Aluno</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja deletar {selectedStudent?.name}? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-            <div className="flex gap-2 justify-end">
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => selectedStudent && deleteMutation.mutate({ id: selectedStudent.id })}
-                className="bg-red-600 hover:bg-red-700"
-              >
-                Deletar
-              </AlertDialogAction>
-            </div>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-    </div>
-  );
-}
-
-// Student Form Component
-function StudentForm({
-  formData,
-  setFormData,
-  professionals,
-  services,
-  photoPreview,
-  photoFile,
-  onPhotoChange,
-  onUploadPhoto,
-  isUploadingPhoto,
-  onRemovePhoto,
-}: any) {
-  return (
-    <div className="space-y-6 py-4">
-      {/* Section 1: Personal Data */}
-      <div>
-        <h3 className="font-bold text-base mb-4 flex items-center gap-2">
-          <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">1</span>
-          Dados Pessoais
-        </h3>
-        <div className="space-y-3">
-          <div>
-            <Label className="font-semibold">Nome *</Label>
-            <Input
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Nome completo do aluno"
-              className="mt-1"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="font-semibold">Email</Label>
-              <Input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="email@example.com"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label className="font-semibold">Telefone</Label>
-              <Input
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="(11) 9999-9999"
-                className="mt-1"
-              />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="font-semibold">CPF</Label>
-              <Input
-                value={formData.cpf}
-                onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-                placeholder="000.000.000-00"
-                className="mt-1"
-              />
-            </div>
-          </div>
-
-          {/* Photo Upload */}
-          <div>
-            <Label className="font-semibold">Foto do Aluno</Label>
-            <div className="mt-2 flex gap-3">
-              <div className="flex-1">
-                <label className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-accent hover:bg-accent/5 transition-colors">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Camera className="w-4 h-4" />
-                    <span>Clique para fazer upload</span>
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={onPhotoChange}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-              {photoPreview && (
-                <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-gray-200">
-                  <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
-                  <button
-                    onClick={onRemovePhoto}
-                    className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-bl"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </div>
-              )}
-            </div>
-            {photoFile && (
               <Button
-                onClick={onUploadPhoto}
-                disabled={isUploadingPhoto}
-                className="mt-2 w-full bg-blue-600 hover:bg-blue-700"
+                onClick={isEditMode ? handleEdit : handleCreate}
+                className="bg-amber-600 hover:bg-amber-700"
+                disabled={createMutation.isPending || updateMutation.isPending}
               >
-                {isUploadingPhoto ? "Enviando..." : "Enviar Foto"}
+                {isEditMode ? "Atualizar" : "Criar"}
               </Button>
-            )}
+            </div>
           </div>
-        </div>
-      </div>
+        </DialogContent>
+      </Dialog>
 
-      {/* Section 2: Academic Data */}
-      <div>
-        <h3 className="font-bold text-base mb-4 flex items-center gap-2">
-          <span className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-sm font-bold">2</span>
-          Dados Acadêmicos
-        </h3>
-        <div className="space-y-3">
-          <div>
-            <Label className="font-semibold">ID do Portal Acadêmico</Label>
-            <Input
-              value={formData.academicId}
-              onChange={(e) => setFormData({ ...formData, academicId: e.target.value })}
-              placeholder="ID do aluno no Portal"
-              className="mt-1"
-            />
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogTitle>Deletar Aluno</AlertDialogTitle>
+          <AlertDialogDescription>
+            Tem certeza que deseja deletar este aluno? Esta ação não pode ser desfeita.
+          </AlertDialogDescription>
+          <div className="flex gap-3 justify-end">
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteConfirm) {
+                  deleteMutation.mutate({ id: deleteConfirm });
+                }
+              }}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Deletar
+            </AlertDialogAction>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label className="font-semibold">Curso</Label>
-              <Select value={formData.course} onValueChange={(value) => setFormData({ ...formData, course: value })}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Selecione um curso" />
-                </SelectTrigger>
-                <SelectContent>
-                  {services.map((service: any) => (
-                    <SelectItem key={service.id} value={service.id}>
-                      {service.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="font-semibold">Turma</Label>
-              <Input
-                value={formData.classGroup}
-                onChange={(e) => setFormData({ ...formData, classGroup: e.target.value })}
-                placeholder="Ex: Turma A"
-                className="mt-1"
-              />
-            </div>
-          </div>
-          <div>
-            <Label className="font-semibold">Status Acadêmico</Label>
-            <Select value={formData.academicStatus} onValueChange={(value) => setFormData({ ...formData, academicStatus: value })}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Ativo</SelectItem>
-                <SelectItem value="inactive">Inativo</SelectItem>
-                <SelectItem value="graduated">Formado</SelectItem>
-                <SelectItem value="suspended">Suspenso</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-
-      {/* Section 3: Operational Data */}
-      <div>
-        <h3 className="font-bold text-base mb-4 flex items-center gap-2">
-          <span className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-sm font-bold">3</span>
-          Dados Operacionais
-        </h3>
-        <div className="space-y-3">
-          <div>
-            <Label className="font-semibold">Instrutor Responsável</Label>
-            <Select value={formData.instructorId} onValueChange={(value) => setFormData({ ...formData, instructorId: value })}>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Selecione um instrutor" />
-              </SelectTrigger>
-              <SelectContent>
-                {professionals.map((prof: any) => (
-                  <SelectItem key={prof.id} value={prof.id}>
-                    {prof.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center gap-2 pt-2">
-              <Checkbox
-                checked={formData.isAuthorized}
-                onCheckedChange={(checked) => setFormData({ ...formData, isAuthorized: checked })}
-              />
-              <Label className="font-semibold cursor-pointer">Liberado para Prática</Label>
-            </div>
-            <div>
-              <Label className="font-semibold">Nível Prático</Label>
-              <Select value={formData.practiceLevel} onValueChange={(value) => setFormData({ ...formData, practiceLevel: value })}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="beginner">Iniciante</SelectItem>
-                  <SelectItem value="intermediate">Intermediário</SelectItem>
-                  <SelectItem value="advanced">Avançado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          {!formData.isAuthorized && (
-            <div>
-              <Label className="font-semibold">Motivo do Bloqueio</Label>
-              <Input
-                value={formData.blockReason}
-                onChange={(e) => setFormData({ ...formData, blockReason: e.target.value })}
-                placeholder="Ex: Documentação incompleta"
-                className="mt-1"
-              />
-            </div>
-          )}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center gap-2 pt-2">
-              <Checkbox
-                checked={formData.needsSupervision}
-                onCheckedChange={(checked) => setFormData({ ...formData, needsSupervision: checked })}
-              />
-              <Label className="font-semibold cursor-pointer">Precisa de Supervisão</Label>
-            </div>
-            <div className="flex items-center gap-2 pt-2">
-              <Checkbox
-                checked={formData.canWorkAlone}
-                onCheckedChange={(checked) => setFormData({ ...formData, canWorkAlone: checked })}
-              />
-              <Label className="font-semibold cursor-pointer">Pode Atender Sozinho</Label>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Section 4: Pet Status */}
-      <div>
-        <h3 className="font-bold text-base mb-4 flex items-center gap-2">
-          <span className="w-8 h-8 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center text-sm font-bold">4</span>
-          Status do Pet Atendido
-        </h3>
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={formData.petStatus?.includes("VIP")}
-                onCheckedChange={(checked) => {
-                  const newStatus = checked
-                    ? [...(formData.petStatus || []), "VIP"]
-                    : (formData.petStatus || []).filter((s: string) => s !== "VIP");
-                  setFormData({ ...formData, petStatus: newStatus });
-                }}
-              />
-              <Label className="font-semibold cursor-pointer">VIP</Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                checked={formData.petStatus?.includes("modelo")}
-                onCheckedChange={(checked) => {
-                  const newStatus = checked
-                    ? [...(formData.petStatus || []), "modelo"]
-                    : (formData.petStatus || []).filter((s: string) => s !== "modelo");
-                  setFormData({ ...formData, petStatus: newStatus });
-                }}
-              />
-              <Label className="font-semibold cursor-pointer">Cão Modelo</Label>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Section 5: Allowed Services */}
-      <div>
-        <h3 className="font-bold text-base mb-4 flex items-center gap-2">
-          <span className="w-8 h-8 rounded-full bg-red-100 text-red-700 flex items-center justify-center text-sm font-bold">5</span>
-          Serviços Permitidos
-        </h3>
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">Selecione os serviços que o aluno está autorizado a realizar</p>
-          <div className="grid grid-cols-2 gap-3">
-            {services.map((service: any) => (
-              <div key={service.id} className="flex items-center gap-2">
-                <Checkbox
-                  checked={formData.allowedServices?.includes(service.id)}
-                  onCheckedChange={(checked) => {
-                    const newServices = checked
-                      ? [...(formData.allowedServices || []), service.id]
-                      : (formData.allowedServices || []).filter((s: string) => s !== service.id);
-                    setFormData({ ...formData, allowedServices: newServices });
-                  }}
-                />
-                <Label className="font-semibold cursor-pointer">{service.name}</Label>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Section 6: Notes */}
-      <div>
-        <h3 className="font-bold text-base mb-4 flex items-center gap-2">
-          <span className="w-8 h-8 rounded-full bg-gray-100 text-gray-700 flex items-center justify-center text-sm font-bold">6</span>
-          Observações Operacionais
-        </h3>
-        <div className="space-y-3">
-          <Textarea
-            value={formData.notes}
-            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            placeholder="Adicione observações sobre o aluno..."
-            className="mt-1"
-            rows={4}
-          />
-        </div>
-      </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
