@@ -13,6 +13,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 
 export default function Students() {
   const [openDialog, setOpenDialog] = useState(false);
+  const [openViewModal, setOpenViewModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -46,6 +47,14 @@ export default function Students() {
   const { data: students = [], isLoading: loadingStudents, refetch: refetchStudents } = trpc.students.list.useQuery();
   const { data: professionals = [] } = trpc.professionals.list.useQuery();
   const { data: services = [] } = trpc.services.list.useQuery();
+  const { data: attendances = [], isLoading: loadingAttendances } = trpc.students.getAttendances.useQuery(
+    { studentId: selectedStudent?.id },
+    { enabled: !!selectedStudent?.id }
+  );
+  const { data: progress } = trpc.students.getProgress.useQuery(
+    { studentId: selectedStudent?.id, courseId: selectedStudent?.course },
+    { enabled: !!selectedStudent?.id }
+  );
 
   // Mutations
   const createMutation = trpc.students.create.useMutation({
@@ -56,7 +65,12 @@ export default function Students() {
       resetForm();
     },
     onError: (error: any) => {
-      toast.error(`Erro ao criar aluno: ${error.message}`);
+      const errorMessage = error.data?.zodError?.fieldErrors ? 
+        Object.entries(error.data.zodError.fieldErrors)
+          .map(([field, msgs]: any) => `${field}: ${msgs.join(', ')}`)
+          .join('; ') :
+        error.message || 'Erro desconhecido';
+      toast.error(`Erro ao criar aluno: ${errorMessage}`);
     },
   });
 
@@ -68,7 +82,12 @@ export default function Students() {
       resetForm();
     },
     onError: (error: any) => {
-      toast.error(`Erro ao atualizar aluno: ${error.message}`);
+      const errorMessage = error.data?.zodError?.fieldErrors ? 
+        Object.entries(error.data.zodError.fieldErrors)
+          .map(([field, msgs]: any) => `${field}: ${msgs.join(', ')}`)
+          .join('; ') :
+        error.message || 'Erro desconhecido';
+      toast.error(`Erro ao atualizar aluno: ${errorMessage}`);
     },
   });
 
@@ -118,6 +137,8 @@ export default function Students() {
 
     const payload: any = {
       organizationId: "550e8400-e29b-41d4-a716-446655440000",
+      unitId: "550e8400-e29b-41d4-a716-446655440001",
+      enrollmentDate: new Date(),
       name: formData.name,
       academicStatus: formData.academicStatus,
       isAuthorized: formData.isAuthorized,
@@ -365,6 +386,16 @@ export default function Students() {
                   <Badge variant={student.is_authorized ? "default" : "secondary"}>
                     {student.is_authorized ? "Ativo" : "Bloqueado"}
                   </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedStudent(student);
+                      setOpenViewModal(true);
+                    }}
+                  >
+                    Ver
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"
@@ -628,6 +659,72 @@ export default function Students() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Student Modal */}
+      <Dialog open={openViewModal} onOpenChange={setOpenViewModal}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Aluno - {selectedStudent?.name}</DialogTitle>
+          </DialogHeader>
+          
+          {selectedStudent && (
+            <div className="space-y-6">
+              {/* Progresso do Curso */}
+              <div className="border-l-4 border-l-green-600 pl-4">
+                <h3 className="font-semibold text-lg mb-3">Progresso do Curso</h3>
+                <div className="space-y-2">
+                  <div>
+                    <p className="text-gray-600 text-sm">Curso: {selectedStudent.course || '-'}</p>
+                  </div>
+                  {progress && (
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <p className="text-sm font-medium">Progresso</p>
+                        <p className="text-sm font-semibold text-amber-600">{progress.percentualProgresso || 0}%</p>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-3">
+                        <div
+                          className="bg-amber-600 h-3 rounded-full transition-all"
+                          style={{ width: `${progress.percentualProgresso || 0}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-gray-600 mt-2">
+                        {progress.diasPratica || 0} dias de {progress.totalAulas || 0} aulas
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Práticas Realizadas */}
+              <div className="border-l-4 border-l-blue-600 pl-4">
+                <h3 className="font-semibold text-lg mb-3">Práticas Realizadas</h3>
+                {loadingAttendances ? (
+                  <p className="text-gray-600 text-sm">Carregando...</p>
+                ) : attendances && attendances.length > 0 ? (
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {attendances.map((att: any, idx: number) => (
+                      <div key={idx} className="bg-gray-50 p-3 rounded text-sm">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium">{att.service || 'Serviço'}</p>
+                            <p className="text-gray-600 text-xs">{new Date(att.date).toLocaleDateString('pt-BR')}</p>
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            {att.status || 'Realizado'}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-600 text-sm">Nenhuma prática realizada ainda</p>
+                )}
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
