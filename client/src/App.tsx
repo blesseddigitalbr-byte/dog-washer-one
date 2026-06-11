@@ -13,6 +13,7 @@ import Services from "./pages/Services";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Toaster } from "sonner";
 import { PlansPage } from "./pages/PlansPage";
+import Packages from "./pages/Packages";
 
 function Router() {
   const { user, loading } = useAuth();
@@ -33,6 +34,7 @@ function Router() {
             <Route path="/students" component={Students} />
             <Route path="/services" component={Services} />
             <Route path="/plans" component={PlansPage} />
+            <Route path="/packages" component={Packages} />
             <Route path="/404" component={NotFound} />
             <Route component={NotFound} />
           </Switch>

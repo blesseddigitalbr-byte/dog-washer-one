@@ -103,7 +103,7 @@ export const appRouter = router({
           cpf: cliente.cpf,
           pets: (cliente.pets || []).map((pet: any) => ({
             ...pet,
-            displayName: `Pet e tutor - ${pet.name} (tutor ${cliente.nome})`,
+            displayName: `${pet.name} (${cliente.nome})`,
           })),
         }));
       } catch (error) {
@@ -141,7 +141,7 @@ export const appRouter = router({
             cpf: cliente.cpf,
             pets: (cliente.pets || []).map((pet: any) => ({
               ...pet,
-              displayName: `Pet e tutor - ${pet.name} (tutor ${cliente.nome})`,
+              displayName: `${pet.name} (${cliente.nome})`,
             })),
           };
         } catch (error) {
@@ -603,6 +603,19 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         try {
+          // Validar que cliente, pet e serviço existem
+          const [clientRes, petRes, serviceRes, profRes] = await Promise.all([
+            supabase.from("clientes").select("id").eq("id", input.clientId).single(),
+            supabase.from("pets").select("id").eq("id", input.petId).single(),
+            supabase.from("services").select("id").eq("id", input.serviceId).single(),
+            supabase.from("professionals").select("id").eq("id", input.professionalId).single(),
+          ]);
+
+          if (!clientRes.data) throw new Error("Cliente não encontrado");
+          if (!petRes.data) throw new Error("Pet não encontrado");
+          if (!serviceRes.data) throw new Error("Serviço não encontrado");
+          if (!profRes.data) throw new Error("Profissional não encontrado");
+
           // Buscar organization e unit reais do banco
           const { data: orgData } = await supabase
             .from("organizations")

@@ -53,6 +53,7 @@ export default function DashboardLayout({
         { icon: <Calendar className="w-5 h-5" />, label: "Agendamento", path: "/appointments" },
         { icon: <Users className="w-5 h-5" />, label: "Clientes", path: "/clients" },
         { icon: <Users2 className="w-5 h-5" />, label: "Alunos", path: "/students" },
+        { icon: <Package className="w-5 h-5" />, label: "Pacotes", path: "/packages" },
       ],
     },
     {
