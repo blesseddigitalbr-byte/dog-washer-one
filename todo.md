@@ -89,15 +89,15 @@
 ## Próximas Fases
 
 ### DELTA 2.2: Agendamentos
-- [ ] Criar procedures tRPC para agendamentos
-- [ ] Conectar página `/schedule` a dados reais
-- [ ] Implementar filtros de agendamentos
+- [x] Criar procedures tRPC para agendamentos (list, getById, create, update, delete)
+- [x] Conectar página `/schedule` a dados reais (Schedule.tsx e Appointments.tsx usam tRPC)
+- [x] Implementar filtros de agendamentos (filtros por status com ícones)
 - [ ] Testes vitest para agendamentos
 
 ### DELTA 2.3: Alunos/Cursos
-- [ ] Criar procedures tRPC para alunos
-- [ ] Conectar página `/students` a dados reais
-- [ ] Implementar progresso de alunos
+- [x] Criar procedures tRPC para alunos (list, getById, create, update, delete)
+- [x] Conectar página `/students` a dados reais (Students.tsx usa tRPC)
+- [ ] Implementar progresso de alunos (cálculo de % de prática)
 - [ ] Testes vitest para alunos
 
 ### DELTA 4: Integrações
@@ -177,9 +177,9 @@
 - [x] Usar dados disponíveis do banco
 
 ### Checkboxes com Contraste
-- [ ] Adicionar borda/estilo nas checkboxes de Vacinas
-- [ ] Adicionar borda/estilo nas checkboxes de Vermífugo
-- [ ] Adicionar borda/estilo nas checkboxes de Doenças/Alergias
+- [x] Adicionar borda/estilo nas checkboxes de Vacinas (usando Badge com bg-green-50)
+- [x] Adicionar borda/estilo nas checkboxes de Vermífugo (usando Badge com bg-green/yellow)
+- [x] Adicionar borda/estilo nas checkboxes de Doenças/Alergias (usando Badge com bg-red-50)
 
 ### Upload de Foto - Integração S3
 - [ ] Corrigir erro ao atualizar pet com upload de foto
