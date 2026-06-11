@@ -74,7 +74,13 @@ export default function Appointments() {
   const appointmentsByDate = useMemo(() => {
     const map = new Map<string, any[]>();
     appointments.forEach((apt: any) => {
+      // Validar se appointmentDate existe e é válido
+      if (!apt.appointmentDate) return;
+      
       const date = new Date(apt.appointmentDate);
+      // Verificar se a data é válida
+      if (isNaN(date.getTime())) return;
+      
       const key = format(date, "yyyy-MM-dd");
       if (!map.has(key)) {
         map.set(key, []);
@@ -174,7 +180,10 @@ export default function Appointments() {
               const dateKey = format(day, "yyyy-MM-dd");
               const dayAppointments = appointmentsByDate.get(dateKey) || [];
               const hourAppointments = dayAppointments.filter((apt: any) => {
-                const aptHour = new Date(apt.appointmentDate).getHours();
+                if (!apt.appointmentDate) return false;
+                const date = new Date(apt.appointmentDate);
+                if (isNaN(date.getTime())) return false;
+                const aptHour = date.getHours();
                 return aptHour === hour;
               });
 
@@ -214,7 +223,10 @@ export default function Appointments() {
         <div className="space-y-2">
           {hours.map((hour) => {
             const hourAppointments = dayAppointments.filter((apt: any) => {
-              const aptHour = new Date(apt.appointmentDate).getHours();
+              if (!apt.appointmentDate) return false;
+              const date = new Date(apt.appointmentDate);
+              if (isNaN(date.getTime())) return false;
+              const aptHour = date.getHours();
               return aptHour === hour;
             });
 
@@ -251,11 +263,17 @@ export default function Appointments() {
   // Render agenda view - Agenda Semanal
   const renderAgenda = () => {
     const dayAppointments = appointmentsByDate.get(format(currentDate, "yyyy-MM-dd")) || [];
-    const sortedAppointments = [...dayAppointments].sort((a: any, b: any) => {
-      const timeA = new Date(a.appointmentDate).getTime();
-      const timeB = new Date(b.appointmentDate).getTime();
-      return timeA - timeB;
-    });
+    const sortedAppointments = [...dayAppointments]
+      .filter((apt: any) => {
+        if (!apt.appointmentDate) return false;
+        const date = new Date(apt.appointmentDate);
+        return !isNaN(date.getTime());
+      })
+      .sort((a: any, b: any) => {
+        const timeA = new Date(a.appointmentDate).getTime();
+        const timeB = new Date(b.appointmentDate).getTime();
+        return timeA - timeB;
+      });
 
     return (
       <div className="space-y-6">
@@ -285,7 +303,10 @@ export default function Appointments() {
             </div>
           ) : (
             sortedAppointments.map((apt: any) => {
-              const aptTime = format(new Date(apt.appointmentDate), "HH:mm");
+              if (!apt.appointmentDate) return null;
+              const date = new Date(apt.appointmentDate);
+              if (isNaN(date.getTime())) return null;
+              const aptTime = format(date, "HH:mm");
               return (
                 <div key={apt.id} className="flex gap-4">
                   {/* Horário */}
