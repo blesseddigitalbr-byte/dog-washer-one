@@ -79,12 +79,12 @@ export default function SchedulePage() {
       
       const key = format(date, "yyyy-MM-dd");
       if (key === selectedDateKey) {
-        const pet = petMap.get(apt.petId);
+        const pet = petMap.get(apt.pet_id);
         appointments.push({
           ...apt,
-          petName: pet?.name || apt.petId,
+          petName: pet?.name || apt.pet_id,
           clientName: pet?.clientName || "Cliente",
-          serviceName: services.find((s: any) => s.id === apt.serviceId)?.name || "Serviço",
+          serviceName: services.find((s: any) => s.id === apt.service_id)?.name || "Serviço",
           time: format(date, "HH:mm"),
         });
       }

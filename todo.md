@@ -722,3 +722,24 @@
 - [x] Implementar formulário de novo pacote
 - [x] Testar criação de pacote
 
+
+
+## DELTA 20: Problemas Críticos em Produção
+
+### Agendamentos - Não aparecem na agenda
+- [ ] Agendamentos estão no banco mas não aparecem no Schedule.tsx (view Dia)
+- [ ] Bug de navegação: pula de quinta 11 para quinta 18 (deveria ser 12)
+- [ ] Mostrar nomes em vez de UUIDs (client_id, pet_id, service_id nos dados)
+
+### Alunos - Erro ao criar
+- [ ] Erro: "Invalid input: expected string, received undefined" para organizationId
+- [ ] Melhorar mensagem de erro para usuário final (indicar qual campo falta)
+
+### Pacotes - Implementar funcionalidade
+- [ ] Implementar formulário de novo pacote (não apenas placeholder "será implementado em breve")
+- [ ] Validar campos obrigatórios
+- [ ] Salvar novo pacote no banco de dados
+
+### Melhorias Gerais
+- [ ] Usar nomes em vez de UUIDs em todas as queries (mostrar "Bella" em vez de UUID)
+- [ ] Melhorar mensagens de erro para usuário final

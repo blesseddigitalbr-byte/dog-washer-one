@@ -289,6 +289,7 @@ export const appointments = pgTable("appointments", {
   organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
   unitId: uuid("unit_id").notNull().references(() => units.id, { onDelete: "cascade" }),
   clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  petId: uuid("pet_id").notNull().references(() => pets.id, { onDelete: "cascade" }),
   serviceId: uuid("service_id").notNull().references(() => services.id, { onDelete: "cascade" }),
   professionalId: uuid("professional_id").references(() => professionals.id, { onDelete: "set null" }),
   executedBy: varchar("executed_by", { length: 50 }).default("professional"), // "professional" ou "student"
