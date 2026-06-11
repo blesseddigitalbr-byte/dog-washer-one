@@ -41,6 +41,19 @@ export default function Appointments() {
 
   // Fetch appointments
   const { data: appointments = [] } = trpc.appointments.list.useQuery();
+  const { data: clients = [] } = trpc.clients.list.useQuery();
+  const { data: services = [] } = trpc.services.list.useQuery();
+
+  // Create pet map for quick lookup
+  const petMap = useMemo(() => {
+    const map = new Map<string, any>();
+    clients.forEach((client: any) => {
+      (client.pets || []).forEach((pet: any) => {
+        map.set(pet.id, { ...pet, clientName: client.name });
+      });
+    });
+    return map;
+  }, [clients]);
 
   // Get days for calendar view
   const monthStart = startOfMonth(currentDate);
@@ -66,10 +79,16 @@ export default function Appointments() {
       if (!map.has(key)) {
         map.set(key, []);
       }
-      map.get(key)!.push(apt);
+      const pet = petMap.get(apt.petId);
+      map.get(key)!.push({
+        ...apt,
+        petName: pet?.name || apt.petId,
+        clientName: pet?.clientName || "Cliente",
+        serviceName: services.find((s: any) => s.id === apt.serviceId)?.name || "Serviço",
+      });
     });
     return map;
-  }, [appointments]);
+  }, [appointments, petMap, services]);
 
   const handlePrevious = () => {
     if (viewType === "calendar") {
@@ -120,8 +139,9 @@ export default function Appointments() {
                     className={`text-xs p-1 rounded truncate ${
                       STATUS_COLORS[apt.status]?.bg
                     }`}
+                    title={`${apt.petName} (${apt.clientName})`}
                   >
-                    {apt.petId}
+                    {apt.petName}
                   </div>
                 ))}
                 {dayAppointments.length > 2 && (
@@ -167,8 +187,9 @@ export default function Appointments() {
                     <div
                       key={apt.id}
                       className={`text-xs p-1 rounded mb-1 ${STATUS_COLORS[apt.status]?.bg}`}
+                      title={`${apt.petName} (${apt.clientName})`}
                     >
-                      {apt.petId}
+                      {apt.petName}
                     </div>
                   ))}
                 </div>
@@ -208,9 +229,11 @@ export default function Appointments() {
                       <div
                         key={apt.id}
                         className={`p-3 rounded-lg border-l-4 ${STATUS_COLORS[apt.status]?.bg}`}
+                        style={{ borderLeftColor: "#8e6e3e" }}
                       >
-                        <div className="font-semibold">{apt.petId}</div>
-                        <div className="text-sm text-gray-600">{apt.notes}</div>
+                        <div className="font-semibold">{apt.petName}</div>
+                        <div className="text-sm text-gray-600">{apt.clientName} • {apt.serviceName}</div>
+                        <div className="text-xs text-gray-600 mt-1">{apt.notes}</div>
                       </div>
                     ))
                   ) : (

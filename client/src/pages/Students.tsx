@@ -271,6 +271,25 @@ export default function Students() {
       </div>
 
       {/* Students List */}
+      {filteredStudents.length > 0 && (
+        <div className="grid grid-cols-12 gap-8 px-6 py-3 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="col-span-2">
+            <p className="text-xs font-semibold text-gray-600 uppercase">Nome / Email</p>
+          </div>
+          <div className="col-span-3">
+            <p className="text-xs font-semibold text-gray-600 uppercase">Curso</p>
+          </div>
+          <div className="col-span-3">
+            <p className="text-xs font-semibold text-gray-600 uppercase">Turma</p>
+          </div>
+          <div className="col-span-2">
+            <p className="text-xs font-semibold text-gray-600 uppercase">Status</p>
+          </div>
+          <div className="col-span-2">
+            <p className="text-xs font-semibold text-gray-600 uppercase">Acoes</p>
+          </div>
+        </div>
+      )}
       <div className="space-y-3">
         {isLoading ? (
           <div className="flex items-center justify-center h-32">

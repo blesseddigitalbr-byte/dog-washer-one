@@ -26,16 +26,13 @@ export function StudentCard({ student, onEdit, onDelete }: StudentCardProps) {
 
       <div className="grid grid-cols-3 gap-8 flex-1 ml-8">
         <div>
-          <p className="text-xs text-gray-600 uppercase font-semibold">Curso</p>
-          <p className="text-sm font-medium text-gray-900 mt-1">{student.course || "-"}</p>
+          <p className="text-sm font-medium text-gray-900">{student.course || "-"}</p>
         </div>
         <div>
-          <p className="text-xs text-gray-600 uppercase font-semibold">Turma</p>
-          <p className="text-sm font-medium text-gray-900 mt-1">{student.class_group || "-"}</p>
+          <p className="text-sm font-medium text-gray-900">{student.class_group || "-"}</p>
         </div>
         <div>
-          <p className="text-xs text-gray-600 uppercase font-semibold">Status</p>
-          <p className="text-sm font-medium text-gray-900 mt-1">{student.academic_status || "-"}</p>
+          <p className="text-sm font-medium text-gray-900">{student.academic_status || "-"}</p>
         </div>
       </div>
 
