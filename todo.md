@@ -569,3 +569,49 @@
   - [ ] Implementar procedure para vincular aluno ao agendamento
   - [ ] Rastrear qual aluno executou o atendimento
   - [ ] Gerar relatório de atendimentos por aluno
+
+
+## DELTA 19: Expansão do Modal de Criar Aluno - CONCLUÍDO
+
+### Modal Expandido - Todos os Campos Visíveis
+- [x] Expandir modal para exibir TODOS os campos em seções organizadas
+- [x] Seção 1: Dados Pessoais (nome, email, telefone, CPF, foto)
+- [x] Seção 2: Dados Acadêmicos (academic_id, curso, turma, academic_status)
+- [x] Seção 3: Dados Operacionais (instrutor, autorização, nível prático, supervisão)
+- [x] Seção 4: Permissões (serviços permitidos, portes permitidos)
+- [x] Seção 5: Observações (notas, motivo do bloqueio)
+- [x] Implementar scroll suave entre seções (max-h-[90vh] overflow-y-auto)
+- [x] Adicionar validação visual para campos obrigatórios
+- [x] Testar modal expandido no navegador
+
+### Fluxo de Criação Manual (Atual)
+- [x] Usuário cria aluno manualmente no GroomerFlow
+- [x] Todos os dados são preenchidos manualmente
+- [x] Aluno fica disponível para agendamentos imediatamente
+- [x] Depois será vinculado com Portal Acadêmico via academic_id
+
+### Integração com Portal Acadêmico (FUTURO - Depois)
+- [ ] **Sincronização Automática de Alunos - Webhook**
+  - [ ] Acessar API do Portal Acadêmico
+  - [ ] Buscar lista de alunos do Portal
+  - [ ] Criar alunos automaticamente no GroomerFlow
+  - [ ] Sincronizar dados acadêmicos (nome, email, curso, turma, status)
+  - [ ] Atualizar dados quando mudam no Portal
+  
+- [ ] **Webhook para Eventos do Portal**
+  - [ ] Receber webhook quando aluno é criado no Portal
+  - [ ] Receber webhook quando aluno é atualizado no Portal
+  - [ ] Receber webhook quando aluno é deletado no Portal
+  - [ ] Processar webhooks e sincronizar dados automaticamente
+  
+- [ ] **Mapeamento de Dados**
+  - [ ] Campo `academic_id` vincula aluno do Portal com GroomerFlow
+  - [ ] Dados acadêmicos (nome, email, curso, turma, status) vêm do Portal
+  - [ ] Dados operacionais (autorização, instrutor, permissões) gerenciados no GroomerFlow
+  - [ ] Evitar duplicação de alunos
+  
+- [ ] **Testes de Sincronização**
+  - [ ] Testar sincronização de novo aluno do Portal
+  - [ ] Testar atualização de dados de aluno
+  - [ ] Testar webhook de criação
+  - [ ] Testar webhook de atualização

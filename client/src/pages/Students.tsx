@@ -25,15 +25,20 @@ export default function StudentsPage() {
     name: "",
     email: "",
     phone: "",
+    cpf: "",
+    photoUrl: "",
     course: "",
     classGroup: "",
     academicStatus: "active",
+    academicId: "",
     instructorId: "",
     isAuthorized: false,
     blockReason: "",
     practiceLevel: "beginner",
     needsSupervision: true,
     canWorkAlone: false,
+    allowedServices: [],
+    allowedDogSizes: [],
     notes: "",
   });
 
@@ -99,31 +104,27 @@ export default function StudentsPage() {
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const paginatedStudents = filteredStudents.slice(startIndex, endIndex);
 
-  const handlePreviousPage = () => {
-    setCurrentPage((prev) => Math.max(1, prev - 1));
-  };
-
-  const handleNextPage = () => {
-    setCurrentPage((prev) => Math.min(totalPages, prev + 1));
-  };
-
   const resetForm = () => {
     setFormData({
       name: "",
       email: "",
       phone: "",
+      cpf: "",
+      photoUrl: "",
       course: "",
       classGroup: "",
       academicStatus: "active",
+      academicId: "",
       instructorId: "",
       isAuthorized: false,
       blockReason: "",
       practiceLevel: "beginner",
       needsSupervision: true,
       canWorkAlone: false,
+      allowedServices: [],
+      allowedDogSizes: [],
       notes: "",
     });
-    setSelectedStudent(null);
   };
 
   const handleCreate = async () => {
@@ -146,18 +147,23 @@ export default function StudentsPage() {
   const handleEdit = (student: any) => {
     setSelectedStudent(student);
     setFormData({
-      name: student.name,
+      name: student.name || "",
       email: student.email || "",
       phone: student.phone || "",
+      cpf: student.cpf || "",
+      photoUrl: student.photo_url || "",
       course: student.course || "",
       classGroup: student.class_group || "",
       academicStatus: student.academic_status || "active",
+      academicId: student.academic_id || "",
       instructorId: student.instructor_id || "",
       isAuthorized: student.is_authorized || false,
       blockReason: student.block_reason || "",
       practiceLevel: student.practice_level || "beginner",
       needsSupervision: student.needs_supervision !== false,
       canWorkAlone: student.can_work_alone || false,
+      allowedServices: student.allowed_services ? JSON.parse(student.allowed_services) : [],
+      allowedDogSizes: student.allowed_dog_sizes ? JSON.parse(student.allowed_dog_sizes) : [],
       notes: student.notes || "",
     });
     setIsEditDialogOpen(true);
@@ -185,6 +191,14 @@ export default function StudentsPage() {
     } catch (error) {
       console.error("Error deleting student:", error);
     }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
 
   const getAuthorizationBadge = (isAuthorized: boolean) => {
@@ -290,7 +304,7 @@ export default function StudentsPage() {
                 Novo Aluno
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-96 overflow-y-auto">
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Criar Novo Aluno</DialogTitle>
               </DialogHeader>
@@ -351,17 +365,14 @@ export default function StudentsPage() {
                       }
                     }}>
                       <DialogTrigger asChild>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-xs rounded-lg"
+                        <button
                           onClick={() => handleEdit(student)}
+                          className="p-2 hover:bg-accent/10 rounded-lg text-accent transition-colors"
                         >
-                          <Edit className="w-4 h-4 mr-1" />
-                          Editar
-                        </Button>
+                          <Edit className="w-4 h-4" />
+                        </button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-2xl max-h-96 overflow-y-auto">
+                      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle>Editar Aluno</DialogTitle>
                         </DialogHeader>
@@ -374,29 +385,23 @@ export default function StudentsPage() {
                         />
                       </DialogContent>
                     </Dialog>
-                    <AlertDialog open={isDeleteDialogOpen && selectedStudent?.id === student.id} onOpenChange={(open) => {
-                      if (!open) {
-                        setIsDeleteDialogOpen(false);
-                        setSelectedStudent(null);
-                      }
-                    }}>
-                      <AlertDialog>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-xs rounded-lg text-red-600 hover:text-red-700"
-                          onClick={() => {
-                            setSelectedStudent(student);
-                            setIsDeleteDialogOpen(true);
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Deletar
-                        </Button>
-                      </AlertDialog>
-                    </AlertDialog>
+                    <button
+                      onClick={() => {
+                        setSelectedStudent(student);
+                        setIsDeleteDialogOpen(true);
+                      }}
+                      className="p-2 hover:bg-red-50 rounded-lg text-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
+
+                {student.block_reason && !student.is_authorized && (
+                  <div className="text-xs text-muted-foreground bg-red-50 p-3 rounded mb-3">
+                    <strong>Motivo do bloqueio:</strong> {student.block_reason}
+                  </div>
+                )}
 
                 {student.notes && (
                   <div className="text-xs text-muted-foreground bg-gray-50 p-3 rounded">
@@ -462,83 +467,171 @@ export default function StudentsPage() {
   );
 }
 
-// Student Form Component
+// Student Form Component - Expandido com todos os campos
 function StudentForm({ formData, setFormData, professionals, onSubmit, isLoading }: any) {
+  const serviceOptions = [
+    { value: "banho", label: "Banho" },
+    { value: "tosa", label: "Tosa" },
+    { value: "hidratacao", label: "Hidratação" },
+    { value: "escovacao", label: "Escovação" },
+    { value: "limpeza_ouvidos", label: "Limpeza de Ouvidos" },
+    { value: "corte_unhas", label: "Corte de Unhas" },
+  ];
+
+  const dogSizeOptions = [
+    { value: "pequeno", label: "Pequeno (até 5kg)" },
+    { value: "medio", label: "Médio (5-15kg)" },
+    { value: "grande", label: "Grande (15-30kg)" },
+    { value: "gigante", label: "Gigante (acima de 30kg)" },
+  ];
+
+  const toggleService = (service: string) => {
+    const services = formData.allowedServices || [];
+    if (services.includes(service)) {
+      setFormData({ ...formData, allowedServices: services.filter((s: string) => s !== service) });
+    } else {
+      setFormData({ ...formData, allowedServices: [...services, service] });
+    }
+  };
+
+  const toggleDogSize = (size: string) => {
+    const sizes = formData.allowedDogSizes || [];
+    if (sizes.includes(size)) {
+      setFormData({ ...formData, allowedDogSizes: sizes.filter((s: string) => s !== size) });
+    } else {
+      setFormData({ ...formData, allowedDogSizes: [...sizes, size] });
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      {/* Dados Pessoais */}
-      <div className="space-y-3">
-        <h3 className="font-semibold text-sm">Dados Pessoais</h3>
-        <div>
-          <Label>Nome *</Label>
-          <Input
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            placeholder="Nome do aluno"
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
+    <div className="space-y-6 pb-4">
+      {/* Seção 1: Dados Pessoais */}
+      <div className="border-b pb-6">
+        <h3 className="font-bold text-base mb-4 flex items-center gap-2">
+          <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">1</span>
+          Dados Pessoais
+        </h3>
+        <div className="space-y-3">
           <div>
-            <Label>Email</Label>
+            <Label className="font-semibold">Nome *</Label>
             <Input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="email@example.com"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              placeholder="Nome completo do aluno"
+              className="mt-1"
             />
           </div>
-          <div>
-            <Label>Telefone</Label>
-            <Input
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="(11) 9999-9999"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="font-semibold">Email</Label>
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="email@example.com"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label className="font-semibold">Telefone</Label>
+              <Input
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="(11) 9999-9999"
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="font-semibold">CPF</Label>
+              <Input
+                value={formData.cpf}
+                onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
+                placeholder="000.000.000-00"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label className="font-semibold">Foto (URL)</Label>
+              <Input
+                value={formData.photoUrl}
+                onChange={(e) => setFormData({ ...formData, photoUrl: e.target.value })}
+                placeholder="https://example.com/foto.jpg"
+                className="mt-1"
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Dados Acadêmicos */}
-      <div className="space-y-3">
-        <h3 className="font-semibold text-sm">Dados Acadêmicos</h3>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <Label>Curso</Label>
-            <Input
-              value={formData.course}
-              onChange={(e) => setFormData({ ...formData, course: e.target.value })}
-              placeholder="Ex: Grooming Básico"
-            />
+      {/* Seção 2: Dados Acadêmicos */}
+      <div className="border-b pb-6">
+        <h3 className="font-bold text-base mb-4 flex items-center gap-2">
+          <span className="w-8 h-8 rounded-full bg-green-100 text-green-700 flex items-center justify-center text-sm font-bold">2</span>
+          Dados Acadêmicos
+        </h3>
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="font-semibold">ID do Portal Acadêmico</Label>
+              <Input
+                value={formData.academicId}
+                onChange={(e) => setFormData({ ...formData, academicId: e.target.value })}
+                placeholder="ID do aluno no Portal"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label className="font-semibold">Curso</Label>
+              <Input
+                value={formData.course}
+                onChange={(e) => setFormData({ ...formData, course: e.target.value })}
+                placeholder="Ex: Grooming Básico"
+                className="mt-1"
+              />
+            </div>
           </div>
-          <div>
-            <Label>Turma</Label>
-            <Input
-              value={formData.classGroup}
-              onChange={(e) => setFormData({ ...formData, classGroup: e.target.value })}
-              placeholder="Ex: Turma A"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="font-semibold">Turma</Label>
+              <Input
+                value={formData.classGroup}
+                onChange={(e) => setFormData({ ...formData, classGroup: e.target.value })}
+                placeholder="Ex: Turma A"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label className="font-semibold">Status Acadêmico</Label>
+              <Select value={formData.academicStatus} onValueChange={(value) => setFormData({ ...formData, academicStatus: value })}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Ativo</SelectItem>
+                  <SelectItem value="inactive">Inativo</SelectItem>
+                  <SelectItem value="graduated">Formado</SelectItem>
+                  <SelectItem value="suspended">Suspenso</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
+      </div>
+
+      {/* Seção 3: Dados Operacionais */}
+      <div className="border-b pb-6">
+        <h3 className="font-bold text-base mb-4 flex items-center gap-2">
+          <span className="w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-sm font-bold">3</span>
+          Dados Operacionais
+        </h3>
+        <div className="space-y-3">
           <div>
-            <Label>Status Acadêmico</Label>
-            <Select value={formData.academicStatus} onValueChange={(value) => setFormData({ ...formData, academicStatus: value })}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Ativo</SelectItem>
-                <SelectItem value="inactive">Inativo</SelectItem>
-                <SelectItem value="graduated">Formado</SelectItem>
-                <SelectItem value="suspended">Suspenso</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Instrutor Responsável</Label>
+            <Label className="font-semibold">Instrutor Responsável</Label>
             <Select value={formData.instructorId} onValueChange={(value) => setFormData({ ...formData, instructorId: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Selecione um instrutor" />
               </SelectTrigger>
               <SelectContent>
                 {professionals.map((prof: any) => (
@@ -549,38 +642,33 @@ function StudentForm({ formData, setFormData, professionals, onSubmit, isLoading
               </SelectContent>
             </Select>
           </div>
-        </div>
-      </div>
 
-      {/* Dados Operacionais */}
-      <div className="space-y-3">
-        <h3 className="font-semibold text-sm">Dados Operacionais</h3>
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={formData.isAuthorized}
-              onCheckedChange={(checked) => setFormData({ ...formData, isAuthorized: checked })}
-            />
-            <Label className="font-normal cursor-pointer">Liberado para prática</Label>
-          </div>
-          {!formData.isAuthorized && (
-            <div>
-              <Label>Motivo do Bloqueio</Label>
-              <Textarea
-                value={formData.blockReason}
-                onChange={(e) => setFormData({ ...formData, blockReason: e.target.value })}
-                placeholder="Ex: Aguardando conclusão de módulo..."
-                rows={2}
+          <div className="space-y-2 bg-gray-50 p-4 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={formData.isAuthorized}
+                onCheckedChange={(checked) => setFormData({ ...formData, isAuthorized: checked })}
               />
+              <Label className="font-semibold cursor-pointer">Liberado para prática</Label>
             </div>
-          )}
-        </div>
+            {!formData.isAuthorized && (
+              <div className="ml-6">
+                <Label className="font-semibold text-sm">Motivo do Bloqueio</Label>
+                <Textarea
+                  value={formData.blockReason}
+                  onChange={(e) => setFormData({ ...formData, blockReason: e.target.value })}
+                  placeholder="Ex: Aguardando conclusão de módulo..."
+                  rows={2}
+                  className="mt-1"
+                />
+              </div>
+            )}
+          </div>
 
-        <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label>Nível Prático</Label>
+            <Label className="font-semibold">Nível Prático</Label>
             <Select value={formData.practiceLevel} onValueChange={(value) => setFormData({ ...formData, practiceLevel: value })}>
-              <SelectTrigger>
+              <SelectTrigger className="mt-1">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -590,33 +678,79 @@ function StudentForm({ formData, setFormData, professionals, onSubmit, isLoading
               </SelectContent>
             </Select>
           </div>
-          <div />
-        </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={formData.needsSupervision}
-              onCheckedChange={(checked) => setFormData({ ...formData, needsSupervision: checked })}
-            />
-            <Label className="font-normal cursor-pointer">Precisa de supervisão</Label>
-          </div>
-          <div className="flex items-center gap-2">
-            <Checkbox
-              checked={formData.canWorkAlone}
-              onCheckedChange={(checked) => setFormData({ ...formData, canWorkAlone: checked })}
-            />
-            <Label className="font-normal cursor-pointer">Pode atender sozinho</Label>
+          <div className="space-y-2 bg-gray-50 p-4 rounded-lg">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={formData.needsSupervision}
+                onCheckedChange={(checked) => setFormData({ ...formData, needsSupervision: checked })}
+              />
+              <Label className="font-semibold cursor-pointer">Precisa de supervisão</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={formData.canWorkAlone}
+                onCheckedChange={(checked) => setFormData({ ...formData, canWorkAlone: checked })}
+              />
+              <Label className="font-semibold cursor-pointer">Pode atender sozinho</Label>
+            </div>
           </div>
         </div>
+      </div>
 
+      {/* Seção 4: Permissões */}
+      <div className="border-b pb-6">
+        <h3 className="font-bold text-base mb-4 flex items-center gap-2">
+          <span className="w-8 h-8 rounded-full bg-orange-100 text-orange-700 flex items-center justify-center text-sm font-bold">4</span>
+          Permissões
+        </h3>
+        <div className="space-y-4">
+          <div>
+            <Label className="font-semibold mb-3 block">Serviços Permitidos</Label>
+            <div className="grid grid-cols-2 gap-3">
+              {serviceOptions.map((service) => (
+                <div key={service.value} className="flex items-center gap-2 bg-gray-50 p-3 rounded">
+                  <Checkbox
+                    checked={formData.allowedServices?.includes(service.value)}
+                    onCheckedChange={() => toggleService(service.value)}
+                  />
+                  <Label className="font-normal cursor-pointer">{service.label}</Label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Label className="font-semibold mb-3 block">Portes de Cães Permitidos</Label>
+            <div className="grid grid-cols-2 gap-3">
+              {dogSizeOptions.map((size) => (
+                <div key={size.value} className="flex items-center gap-2 bg-gray-50 p-3 rounded">
+                  <Checkbox
+                    checked={formData.allowedDogSizes?.includes(size.value)}
+                    onCheckedChange={() => toggleDogSize(size.value)}
+                  />
+                  <Label className="font-normal cursor-pointer">{size.label}</Label>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Seção 5: Observações */}
+      <div>
+        <h3 className="font-bold text-base mb-4 flex items-center gap-2">
+          <span className="w-8 h-8 rounded-full bg-red-100 text-red-700 flex items-center justify-center text-sm font-bold">5</span>
+          Observações
+        </h3>
         <div>
-          <Label>Observações Operacionais</Label>
+          <Label className="font-semibold">Observações Operacionais</Label>
           <Textarea
             value={formData.notes}
             onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-            placeholder="Observações sobre o aluno..."
-            rows={2}
+            placeholder="Observações sobre o aluno, restrições especiais, etc..."
+            rows={3}
+            className="mt-1"
           />
         </div>
       </div>
