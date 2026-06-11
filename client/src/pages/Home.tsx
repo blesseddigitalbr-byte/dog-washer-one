@@ -112,7 +112,7 @@ export default function Dashboard() {
         </div>
 
         {/* KPIs Row 2 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {kpisRow2.map((kpi) => {
             const Icon = kpi.icon;
             return (

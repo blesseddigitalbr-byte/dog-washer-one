@@ -422,7 +422,10 @@ export function PlansPage() {
               <div className="grid grid-cols-12 gap-4 items-center">
                 {/* Plan Name and Description */}
                 <div className="col-span-2">
-                  <h3 className="font-bold text-foreground">{pkg.name}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-bold text-foreground">{pkg.name}</h3>
+                    <span className="text-xs font-bold text-accent bg-accent/10 px-2 py-1 rounded whitespace-nowrap">PAC-{String(packages.findIndex((p: Package) => p.id === pkg.id) + 1).padStart(4, '0')}</span>
+                  </div>
                   {pkg.description && (
                     <p className="text-xs text-muted-foreground mt-1">{pkg.description}</p>
                   )}

@@ -264,7 +264,10 @@ export default function ClientsPage() {
                     {getInitial(client.name)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-foreground text-sm truncate">{client.name}</h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-bold text-foreground text-sm truncate">{client.name}</h3>
+                      <span className="text-xs font-bold text-accent bg-accent/10 px-2 py-1 rounded whitespace-nowrap">CLI-{String(clients.findIndex((c: any) => c.id === client.id) + 1).padStart(4, '0')}</span>
+                    </div>
                     <p className="text-xs text-muted-foreground truncate">{client.email}</p>
                     <p className="text-xs text-muted-foreground truncate mt-1 flex items-center gap-1">
                       📱 {client.phone || "Não informado"}
@@ -317,6 +320,7 @@ export default function ClientsPage() {
                             <div className="flex flex-col items-center text-center">
                               <span className="text-xs font-semibold text-accent truncate w-full">{pet.name}</span>
                               {tutorName && <span className="text-xs text-accent/70 truncate w-full">({tutorName})</span>}
+                              <span className="text-xs font-bold text-accent/60 mt-1">PET-{String((client.pets?.findIndex((p: any) => p.id === pet.id) || 0) + 1).padStart(4, '0')}</span>
                             </div>
                           </div>
                         );
