@@ -137,12 +137,12 @@ export function ClientDetailModal({
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="text-xl font-bold text-foreground">{clientName}</h3>
-                      {client.is_vip && (
+                      {client.pets?.some((pet: any) => pet.is_vip) && (
                         <span className="px-3 py-1 bg-accent/10 rounded-full text-xs font-bold text-accent">
                           ⭐ VIP
                         </span>
                       )}
-                      {client.is_model_client && (
+                      {client.pets?.some((pet: any) => pet.is_model_dog) && (
                         <span className="px-3 py-1 bg-purple-100 rounded-full text-xs font-bold text-purple-700">
                           🎯 Modelo
                         </span>

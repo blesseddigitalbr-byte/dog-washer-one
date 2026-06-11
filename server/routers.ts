@@ -96,10 +96,14 @@ export const appRouter = router({
 
         // Transformar resposta para formato esperado
         return (clientes || []).map((cliente: any) => ({
-          ...cliente,
+          id: cliente.id,
+          name: cliente.nome,
+          email: cliente.email,
+          phone: cliente.phone,
+          cpf: cliente.cpf,
           pets: (cliente.pets || []).map((pet: any) => ({
             ...pet,
-            displayName: `${pet.name} (Tutor: ${cliente.nome})`,
+            displayName: `Pet e tutor - ${pet.name} (tutor ${cliente.nome})`,
           })),
         }));
       } catch (error) {
@@ -130,10 +134,14 @@ export const appRouter = router({
 
           const cliente = clientes[0];
           return {
-            ...cliente,
+            id: cliente.id,
+            name: cliente.nome,
+            email: cliente.email,
+            phone: cliente.phone,
+            cpf: cliente.cpf,
             pets: (cliente.pets || []).map((pet: any) => ({
               ...pet,
-              displayName: `${pet.name} (Tutor: ${cliente.nome})`,
+              displayName: `Pet e tutor - ${pet.name} (tutor ${cliente.nome})`,
             })),
           };
         } catch (error) {

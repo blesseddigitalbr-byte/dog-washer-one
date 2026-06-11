@@ -261,10 +261,10 @@ export default function ClientsPage() {
                 {/* Client Header - Avatar + Name + Email + Phone */}
                 <div className="flex items-start gap-3 mb-4">
                   <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center text-lg font-bold text-accent flex-shrink-0">
-                    {getInitial(client.name || client.nome)}
+                    {getInitial(client.name)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-foreground text-sm truncate">{client.name || client.nome}</h3>
+                    <h3 className="font-bold text-foreground text-sm truncate">{client.name}</h3>
                     <p className="text-xs text-muted-foreground truncate">{client.email}</p>
                     <p className="text-xs text-muted-foreground truncate mt-1 flex items-center gap-1">
                       📱 {client.phone || "Não informado"}
@@ -274,12 +274,12 @@ export default function ClientsPage() {
 
                 {/* Badges - VIP / Modelo */}
                 <div className="flex gap-2 mb-4 flex-wrap">
-                  {(client.is_vip || client.pets?.some((pet: any) => pet.is_vip)) && (
+                  {client.pets?.some((pet: any) => pet.is_vip) && (
                     <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent/10 rounded-full text-xs font-semibold text-accent">
                       ⭐ VIP
                     </span>
                   )}
-                  {(client.is_model_dog || client.pets?.some((pet: any) => pet.is_model_dog)) && (
+                  {client.pets?.some((pet: any) => pet.is_model_dog) && (
                     <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 rounded-full text-xs font-semibold text-purple-700">
                       🎯 Modelo
                     </span>
@@ -327,7 +327,7 @@ export default function ClientsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Última Visita</p>
-                      <p className="text-sm font-semibold text-foreground mt-1">{formatDate(client.last_visit)}</p>
+                      <p className="text-sm font-semibold text-foreground mt-1">-</p>
                     </div>
                     <button
                       onClick={() => handleOpenModal(client.id)}
