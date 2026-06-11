@@ -185,7 +185,7 @@
 - [ ] Corrigir erro ao atualizar pet com upload de foto
 - [ ] Integrar com storage S3 (storagePut)
 - [ ] Atualizar foto_url no banco de dados
-- [ ] Exibir foto atualizada no card e modal
+- [x] Exibir foto atualizada no card e modal
 
 
 ## DELTA 9: Sincronização de Dados e Harmonia Visual
@@ -297,7 +297,7 @@
 - [ ] Debugar erro "Erro ao fazer upload da foto" no formulário de edição
 - [ ] Corrigir integração com S3 (storagePut)
 - [ ] Validar que foto é salva no banco de dados
-- [ ] Exibir foto atualizada no card e modal
+- [x] Exibir foto atualizada no card e modal
 
 ### Refinamento Visual Premium - Tipografia
 - [ ] Aumentar peso das fontes dos títulos (font-weight: 600-700)
@@ -689,3 +689,36 @@
 
 ### Checkpoint Final
 - [ ] Salvar checkpoint com todas as melhorias
+
+
+## DELTA 10: Correção de Erros Críticos (Sessão Atual)
+
+### Erro de Alunos - organizationId/unitId
+- [x] Obter organizationId do contexto do usuário logado
+- [x] Obter unitId padrão ou selecionado
+- [x] Melhorar mensagem de erro para indicar campos obrigatórios
+- [x] Testar criação de aluno com dados válidos
+
+### Parenteses no Nome do Pet
+- [x] Remover parenteses "()" do nome do pet na exibição
+- [x] Corrigir formatação "Bento (Tutor Helena)" para "Bento - Helena"
+- [x] Aplicar em todos os cards e modais de pet
+
+### Erro ao Atualizar Pet com Foto
+- [x] Debugar erro após salvar foto no S3
+- [x] Validar integração com storagePut
+- [x] Confirmar que foto_url é atualizada no banco
+- [x] Exibir foto atualizada em tempo real
+
+### Erro ao Criar Agendamento
+- [x] Validar dados de entrada (petId, serviceId, appointmentDate)
+- [x] Melhorar mensagem de erro
+- [x] Testar criação com dados válidos
+- [x] Adicionar loading state no formulário
+
+### Aba Pacotes
+- [x] Ativar botão "Novo Pacote" na página Packages
+- [x] Mover KPI cards para o topo da página
+- [x] Implementar formulário de novo pacote
+- [x] Testar criação de pacote
+

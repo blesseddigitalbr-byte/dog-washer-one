@@ -404,6 +404,27 @@ export const appRouter = router({
           throw new Error("Erro ao deletar pet");
         }
       }),
+    uploadPhoto: publicProcedure
+      .input(z.object({
+        petId: z.string().uuid(),
+        base64: z.string(),
+        fileName: z.string(),
+        mimeType: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { storagePut } = await import("./storage");
+          const base64Data = input.base64.split(",")[1] || input.base64;
+          const buffer = Buffer.from(base64Data, "base64");
+          const timestamp = Date.now();
+          const fileKey = `pets/${input.petId}/${timestamp}-${input.fileName}`;
+          const { url } = await storagePut(fileKey, buffer, input.mimeType);
+          return { url, success: true };
+        } catch (error) {
+          console.error("Error uploading pet photo:", error);
+          throw new Error("Erro ao fazer upload da foto");
+        }
+      }),
   }),
 
   professionals: router({

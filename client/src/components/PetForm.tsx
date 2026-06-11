@@ -98,6 +98,7 @@ export function PetForm({
 
   const createMutation = trpc.pets.create.useMutation();
   const updateMutation = trpc.pets.update.useMutation();
+  const uploadPhotoMutation = trpc.pets.uploadPhoto.useMutation();
   const utils = trpc.useUtils();
 
   const isEditing = !!petId;
@@ -172,26 +173,16 @@ export function PetForm({
       
       const base64 = await base64Promise;
       
-      // Upload para S3 via endpoint
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          file: base64,
-          fileName: file.name,
-          mimeType: file.type,
-          petId,
-        }),
+      // Upload via tRPC
+      const result = await uploadPhotoMutation.mutateAsync({
+        petId,
+        base64,
+        fileName: file.name,
+        mimeType: file.type,
       });
       
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Erro ao fazer upload");
-      }
-      
-      const data = await response.json();
       toast.success("Foto enviada com sucesso!");
-      return data.url || null;
+      return result.url || null;
     } catch (error) {
       console.error("Upload error:", error);
       toast.error(error instanceof Error ? error.message : "Erro ao fazer upload da foto");

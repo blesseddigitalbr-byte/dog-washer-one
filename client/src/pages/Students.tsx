@@ -154,8 +154,8 @@ export default function Students() {
 
     try {
       const payload = {
-        organizationId: "default-org",
-        unitId: "default-unit",
+        organizationId: undefined, // Servidor pega a primeira organization
+        unitId: undefined, // Servidor pega a primeira unit
         name: formData.name,
         email: formData.email || undefined,
         phone: formData.phone || undefined,
@@ -164,7 +164,7 @@ export default function Students() {
         academicStatus: formData.academicStatus,
         instructorId: formData.instructorId || undefined,
         isAuthorized: formData.isAuthorized,
-        enrollmentDate: new Date().toISOString().split("T")[0],
+        enrollmentDate: new Date().toISOString(),
       };
 
       if (isEditMode && selectedStudent) {
@@ -174,7 +174,11 @@ export default function Students() {
           ...updatePayload,
         });
       } else {
-        await createMutation.mutateAsync(payload);
+        // Remove undefined values before sending
+        const cleanPayload = Object.fromEntries(
+          Object.entries(payload).filter(([, v]) => v !== undefined)
+        );
+        await createMutation.mutateAsync(cleanPayload as any);
       }
     } catch (error) {
       console.error("Erro ao salvar aluno:", error);

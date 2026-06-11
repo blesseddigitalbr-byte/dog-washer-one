@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Edit2, Trash2, Eye } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function Packages() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
+  const [isNewPackageOpen, setIsNewPackageOpen] = useState(false);
 
   // Fetch all packages
   const { data: packages = [], isLoading } = trpc.packages.list.useQuery();
@@ -64,10 +66,62 @@ export default function Packages() {
           <h1 className="text-3xl font-bold text-foreground">Pacotes Contratados</h1>
           <p className="text-muted-foreground mt-2">Gerencie os pacotes e saldos dos clientes</p>
         </div>
-        <Button className="bg-secondary hover:bg-secondary/90">
+        <Button 
+          className="bg-secondary hover:bg-secondary/90"
+          onClick={() => setIsNewPackageOpen(true)}
+        >
           <Plus className="mr-2 h-4 w-4" />
           Novo Pacote
         </Button>
+      </div>
+
+      {/* KPI Cards - Moved to Top */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card className="border-l-4 border-l-chart-3">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total de Pacotes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{packages.length}</div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-chart-3">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Pacotes Ativos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {packages.filter((pkg: any) => pkg.status === "Ativo").length}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-chart-3">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Pacotes Vencidos</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {packages.filter((pkg: any) => {
+                const today = new Date();
+                const expiryDate = new Date(pkg.expiry_date);
+                return expiryDate < today;
+              }).length}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-l-4 border-l-chart-3">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Faturamento Total</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              R$ {packages.reduce((sum: number, pkg: any) => sum + (pkg.value || 0), 0).toFixed(2)}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Search */}
@@ -165,54 +219,26 @@ export default function Packages() {
         </CardContent>
       </Card>
 
-      {/* Summary Card */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="border-l-4 border-l-chart-3">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total de Pacotes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{packages.length}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-chart-3">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pacotes Ativos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {packages.filter((pkg: any) => pkg.status === "Ativo").length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-chart-3">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pacotes Vencidos</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {packages.filter((pkg: any) => {
-                const today = new Date();
-                const expiryDate = new Date(pkg.expiry_date);
-                return expiryDate < today;
-              }).length}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-chart-3">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Faturamento Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              R$ {packages.reduce((sum: number, pkg: any) => sum + (pkg.value || 0), 0).toFixed(2)}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* New Package Dialog */}
+      <Dialog open={isNewPackageOpen} onOpenChange={setIsNewPackageOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Novo Pacote</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-muted-foreground">
+              Funcionalidade de criar novo pacote será implementada em breve.
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={() => setIsNewPackageOpen(false)}
+              className="w-full"
+            >
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

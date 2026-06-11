@@ -236,7 +236,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
                     key={pet.id}
                     value={pet.id}
                   >
-                    {pet.name} ({pet.clientName})
+                    {pet.name} {pet.clientName ? `- ${pet.clientName}` : ""}
                   </SelectItem>
                 ))}
               </SelectContent>
