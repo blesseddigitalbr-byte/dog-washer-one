@@ -294,33 +294,33 @@ export default function ClientsPage() {
                   <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">
                     Pets Cadastrados
                   </p>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {client.pets && client.pets.length > 0 ? (
-                      client.pets.map((pet: any) => {
-                        // Extrair nome do tutor do displayName: "Pet e tutor - Jolie (tutor Vivian)"
-                        const tutorMatch = pet.displayName?.match(/tutor\s+([^)]+)\)/);
-                        const tutorName = tutorMatch ? tutorMatch[1] : '';
+                      client.pets.map((pet: any, petIndex: number) => {
+                        // Calcular índice global de PET (sequencial em todos os clientes)
+                        const globalPetIndex = clients.slice(0, clients.findIndex((c: any) => c.id === client.id))
+                          .reduce((sum: number, c: any) => sum + (c.pets?.length || 0), 0) + petIndex + 1;
+                        
                         return (
                           <div
                             key={pet.id}
-                            className="flex flex-col items-center gap-2 p-3 bg-accent/10 rounded-lg hover:bg-accent/20 transition-colors cursor-pointer"
+                            className="flex flex-col items-center gap-1 p-2 bg-accent/10 rounded-lg hover:bg-accent/20 transition-colors cursor-pointer"
                             title={`${pet.name} (${pet.breed})`}
                           >
                             {pet.foto_url ? (
                               <img
                                 src={pet.foto_url}
                                 alt={pet.name}
-                                className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                                className="w-8 h-8 rounded-full object-cover flex-shrink-0"
                               />
                             ) : (
-                              <span className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center text-xs font-bold text-accent flex-shrink-0">
+                              <span className="w-8 h-8 rounded-full bg-accent/30 flex items-center justify-center text-xs font-bold text-accent flex-shrink-0">
                                 {pet.name.charAt(0).toUpperCase()}
                               </span>
                             )}
                             <div className="flex flex-col items-center text-center">
-                              <span className="text-xs font-semibold text-accent truncate w-full">{pet.name}</span>
-                              {tutorName && <span className="text-xs text-accent/70 truncate w-full">({tutorName})</span>}
-                              <span className="text-xs font-bold text-accent/60 mt-1">PET-{String((client.pets?.findIndex((p: any) => p.id === pet.id) || 0) + 1).padStart(4, '0')}</span>
+                              <span className="text-xs font-semibold text-accent truncate w-full leading-tight">{pet.name}</span>
+                              <span className="text-xs font-bold text-accent/60 mt-0.5">PET-{String(globalPetIndex).padStart(4, '0')}</span>
                             </div>
                           </div>
                         );

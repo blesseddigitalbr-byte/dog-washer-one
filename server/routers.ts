@@ -603,11 +603,27 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         try {
+          // Buscar organization e unit reais do banco
+          const { data: orgData } = await supabase
+            .from("organizations")
+            .select("id")
+            .limit(1)
+            .single();
+          
+          const { data: unitData } = await supabase
+            .from("units")
+            .select("id")
+            .limit(1)
+            .single();
+          
+          const organizationId = orgData?.id || input.organizationId;
+          const unitId = unitData?.id || input.unitId;
+
           const { data, error } = await supabase
             .from("appointments")
             .insert([{
-              organization_id: input.organizationId,
-              unit_id: input.unitId,
+              organization_id: organizationId,
+              unit_id: unitId,
               client_id: input.clientId,
               pet_id: input.petId,
               service_id: input.serviceId,
