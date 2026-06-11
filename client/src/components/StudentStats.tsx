@@ -9,7 +9,7 @@ interface StudentStatsProps {
 export function StudentStats({ total, active, courses }: StudentStatsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <Card className="border-l-4 border-l-amber-600 rounded-[16px] shadow-sm">
+      <Card className="border-l-4 rounded-[16px] shadow-sm" style={{ borderLeftColor: "#8e6e3e" }}>
         <CardContent className="pt-6">
           <div>
             <p className="text-xs text-gray-600 uppercase font-semibold">Total de Alunos</p>
@@ -18,7 +18,7 @@ export function StudentStats({ total, active, courses }: StudentStatsProps) {
         </CardContent>
       </Card>
 
-      <Card className="border-l-4 border-l-amber-600 rounded-[16px] shadow-sm">
+      <Card className="border-l-4 rounded-[16px] shadow-sm" style={{ borderLeftColor: "#8e6e3e" }}>
         <CardContent className="pt-6">
           <div>
             <p className="text-xs text-gray-600 uppercase font-semibold">Alunos Ativos</p>
@@ -27,7 +27,7 @@ export function StudentStats({ total, active, courses }: StudentStatsProps) {
         </CardContent>
       </Card>
 
-      <Card className="border-l-4 border-l-amber-600 rounded-[16px] shadow-sm">
+      <Card className="border-l-4 rounded-[16px] shadow-sm" style={{ borderLeftColor: "#8e6e3e" }}>
         <CardContent className="pt-6">
           <div>
             <p className="text-xs text-gray-600 uppercase font-semibold">Cursos</p>

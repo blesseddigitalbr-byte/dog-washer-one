@@ -18,7 +18,7 @@ interface StudentCardProps {
 
 export function StudentCard({ student, onEdit, onDelete }: StudentCardProps) {
   return (
-    <div className="border-l-4 border-l-amber-600 bg-white rounded-[16px] shadow-sm p-6 flex items-center justify-between hover:shadow-md transition-shadow">
+    <div className="border-l-4 bg-white rounded-[16px] shadow-sm p-6 flex items-center justify-between hover:shadow-md transition-shadow" style={{ borderLeftColor: "#8e6e3e" }}>
       <div className="flex-1">
         <h3 className="font-bold text-gray-900">{student.name}</h3>
         <p className="text-sm text-gray-600 mt-1">{student.email || "-"}</p>

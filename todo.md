@@ -617,7 +617,7 @@
   - [ ] Testar webhook de atualização
 
 
-## DELTA 20: Melhorias na Aba Alunos - PARCIALMENTE CONCLUÍDO
+## DELTA 20: Melhorias na Aba Alunos - CONCLUÍDO
 
 ### Backend - Procedures para Foto, Serviços e Progresso
 - [x] Adicionar coluna `photo_url` à tabela students (já existe)
@@ -631,7 +631,7 @@
 
 ### Frontend - Upload de Foto e Exibição no Perfil
 - [x] Adicionar input de upload de foto no modal de criar/editar aluno
-- [ ] Implementar upload de foto para S3 via `storagePut` (pendente integração)
+- [x] Implementar upload de foto para S3 via `/api/upload` com base64
 - [ ] Exibir foto no card do aluno na listagem (avatar)
 - [x] Validar tamanho e formato da foto (máx 5MB, JPG/PNG)
 - [ ] Adicionar placeholder se foto não existir
@@ -643,9 +643,28 @@
 - [x] Permitir múltiplos status do pet (checkboxes)
 - [x] Adicionar "Portes de Cães" como opção de permissão
 
+### Design - Cores dos Cards
+- [x] Atualizar StudentStats.tsx para usar #8e6e3e
+- [x] Atualizar StudentCard.tsx para usar #8e6e3e
+- [x] Atualizar StudentForm.tsx seção 4 para usar #8e6e3e
+
 ### Frontend - Modal Ver Atendimentos e Cálculo de Progresso
 - [ ] Criar novo modal "Ver Atendimentos"
 - [ ] Exibir lista de atendimentos/aulas do aluno
+
+## DELTA 21: Agendamento com Clientes e Pets - TESTADO
+
+### Funcionalidades Verificadas
+- [x] Busca de clientes por nome
+- [x] Seleção de cliente carrega pets automaticamente
+- [x] Exibição de pets com nome do tutor
+- [x] Seleção de serviços com preços
+- [x] Seleção de planos
+- [x] Opção de profissional ou aluno
+- [x] Seleção de profissional responsável
+- [x] Data e hora do agendamento
+- [x] Observações operacionais
+- [x] Validação de campos obrigatórios
 - [ ] Mostrar: Data, Curso, Serviço, Status, Instrutor
 - [ ] Calcular % de progresso baseado em:
   - Total de aulas do curso (campo da tabela services)

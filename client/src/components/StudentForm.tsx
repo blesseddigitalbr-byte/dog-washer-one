@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader, Upload, X } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface StudentFormProps {
   isEditMode: boolean;
@@ -49,13 +50,20 @@ export function StudentForm({
 }: StudentFormProps) {
   const [photoPreview, setPhotoPreview] = useState<string | null>(formData.photoUrl || null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       // Validar tamanho (máx 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert("Foto muito grande. Máximo 5MB.");
+        toast.error("Foto muito grande. Máximo 5MB.");
+        return;
+      }
+
+      // Validar tipo
+      if (!file.type.startsWith("image/")) {
+        toast.error("Apenas imagens são permitidas.");
         return;
       }
 
@@ -68,10 +76,69 @@ export function StudentForm({
     }
   };
 
+  const uploadPhotoToS3 = async (): Promise<string | null> => {
+    if (!photoFile) return formData.photoUrl || null;
+
+    try {
+      setIsUploadingPhoto(true);
+      const buffer = await photoFile.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      let binaryString = "";
+      for (let i = 0; i < bytes.length; i++) {
+        binaryString += String.fromCharCode(bytes[i]);
+      }
+      const base64 = btoa(binaryString);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: `student_${Date.now()}_${photoFile.name}`,
+          mimeType: photoFile.type,
+          fileData: base64,
+          studentId: formData.name,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao fazer upload da foto");
+      }
+
+      const { url } = await response.json();
+      return url;
+    } catch (error) {
+      console.error("Erro ao fazer upload:", error);
+      toast.error("Erro ao fazer upload da foto");
+      return null;
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
   const removePhoto = () => {
     setPhotoPreview(null);
     setPhotoFile(null);
     onChange("photoUrl", "");
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      // Upload foto se houver arquivo novo
+      if (photoFile) {
+        const photoUrl = await uploadPhotoToS3();
+        if (photoUrl) {
+          onChange("photoUrl", photoUrl);
+        }
+      }
+
+      // Chamar submit original
+      onSubmit(e);
+    } catch (error) {
+      console.error("Erro no submit:", error);
+      toast.error("Erro ao salvar aluno");
+    }
   };
 
   const handleServiceToggle = (serviceId: string) => {
@@ -99,7 +166,7 @@ export function StudentForm({
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6 max-h-[85vh] overflow-y-auto pr-4">
+    <form onSubmit={handleFormSubmit} className="space-y-6 max-h-[90vh] overflow-y-auto pb-20">
       {/* SEÇÃO 1: DADOS PESSOAIS */}
       <div className="bg-blue-50 p-6 rounded-lg border-l-4 border-blue-500">
         <div className="flex items-center gap-3 mb-4">
@@ -335,9 +402,9 @@ export function StudentForm({
       </div>
 
       {/* SEÇÃO 4: PERMISSÕES */}
-      <div className="bg-amber-50 p-6 rounded-lg border-l-4 border-amber-500">
+      <div className="p-6 rounded-lg border-l-4" style={{ backgroundColor: "#f5f1eb", borderLeftColor: "#8e6e3e" }}>
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 bg-amber-500 text-white rounded-full flex items-center justify-center font-bold text-sm">
+          <div className="w-8 h-8 text-white rounded-full flex items-center justify-center font-bold text-sm" style={{ backgroundColor: "#8e6e3e" }}>
             4
           </div>
           <h3 className="text-lg font-semibold text-gray-900">Permissões</h3>
@@ -432,7 +499,7 @@ export function StudentForm({
                 <span className="text-sm text-indigo-600 font-semibold">Clique para enviar foto</span>
                 <span className="text-xs text-gray-500 mt-1">PNG, JPG até 5MB</span>
               </div>
-              <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+              <input type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" disabled={isUploadingPhoto} />
             </label>
           </div>
 
@@ -442,9 +509,10 @@ export function StudentForm({
               <button
                 type="button"
                 onClick={removePhoto}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                disabled={isUploadingPhoto}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 disabled:opacity-50"
               >
-                <X className="w-4 h-4" />
+                {isUploadingPhoto ? <Loader className="w-4 h-4 animate-spin" /> : <X className="w-4 h-4" />}
               </button>
             </div>
           )}
@@ -474,8 +542,8 @@ export function StudentForm({
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={isLoading} className="bg-amber-600 hover:bg-amber-700 text-white">
-          {isLoading ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
+        <Button type="submit" disabled={isLoading || isUploadingPhoto} className="bg-amber-600 hover:bg-amber-700 text-white">
+          {isLoading || isUploadingPhoto ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
           {isEditMode ? "Atualizar" : "Criar"} Aluno
         </Button>
       </div>
