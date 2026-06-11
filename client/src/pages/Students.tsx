@@ -278,10 +278,10 @@ export default function Students() {
         <div className="bg-white rounded-lg border-l-4 border-l-amber-600 p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-sm font-medium">ConUSs</p>
+              <p className="text-gray-600 text-sm font-medium">Práticas Realizadas</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">0</p>
             </div>
-            <div className="text-3xl text-gray-400">🎓</div>
+            <div className="text-3xl text-gray-400">📋</div>
           </div>
         </div>
 
