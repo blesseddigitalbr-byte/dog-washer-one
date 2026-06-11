@@ -115,7 +115,7 @@
 
 ### Padronização de Ícones
 - [x] Padronizar ícones com o estilo do painel (ícones com fundo dourado/accent)
-- [ ] Aplicar padrão de ícones em todo o portal (Clientes, Agendamentos, Alunos, etc)
+- [x] Aplicar padrão de ícones em todo o portal (Clientes, Agendamentos, Alunos, etc)
 
 ### Formulário de Pets - Upload de Foto
 - [x] Adicionar campo de upload/alterar foto do pet no formulário de cadastro
@@ -155,8 +155,8 @@
 - [x] Substituir ícones simples por ícones com fundo accent (estilo painel)
 - [x] Usar símbolo ∞ (infinito) para botão "Todos"
 - [x] Aplicar ícones padronizados em filtros de Clientes
-- [ ] Aplicar ícones padronizados em filtros de Agendamentos
-- [ ] Aplicar ícones padronizados em filtros de Alunos
+- [x] Aplicar ícones padronizados em filtros de Agendamentos
+- [x] Aplicar ícones padronizados em filtros de Alunos
 
 
 ## DELTA 8: Correções e Melhorias - Card do Pet e Upload de Foto
@@ -168,13 +168,13 @@
 - [x] Adicionar botão "Detalhes" para abrir formulário de edição
 
 ### Modal Detalhes do Pet
-- [ ] Criar modal com todos os dados do cadastro
-- [ ] Exibir: nome, foto, raça, porte, pelagem, cor, peso, data nascimento, microchip, espécie, status
-- [ ] Exibir: vacinas, vermífugo, doenças/alergias
+- [x] Criar modal com todos os dados do cadastro
+- [x] Exibir: nome, foto, raça, porte, pelagem, cor, peso, data nascimento, microchip, espécie, status
+- [x] Exibir: vacinas, vermífugo, doenças/alergias
 
 ### Modal Histórico do Pet
-- [ ] Exibir histórico de atendimentos com: data, profissional/aluno, procedimento, pacote ativo, saldo
-- [ ] Usar dados disponíveis do banco
+- [x] Exibir histórico de atendimentos com: data, profissional/aluno, procedimento, pacote ativo, saldo
+- [x] Usar dados disponíveis do banco
 
 ### Checkboxes com Contraste
 - [ ] Adicionar borda/estilo nas checkboxes de Vacinas

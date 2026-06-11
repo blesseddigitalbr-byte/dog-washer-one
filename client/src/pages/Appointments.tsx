@@ -38,6 +38,7 @@ export default function Appointments() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<ViewType>("calendar");
   const [showForm, setShowForm] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
 
   // Fetch appointments
   const { data: appointments = [] } = trpc.appointments.list.useQuery();
@@ -70,10 +71,15 @@ export default function Appointments() {
   // Get hours for timeline (07:00 às 22:00)
   const hours = Array.from({ length: 16 }, (_, i) => i + 7);
 
-  // Filter appointments by date
+  // Filter appointments by status and date
+  const filteredAppointments = appointments.filter((apt: any) => {
+    if (statusFilter === "all") return true;
+    return apt.status === statusFilter;
+  });
+
   const appointmentsByDate = useMemo(() => {
     const map = new Map<string, any[]>();
-    appointments.forEach((apt: any) => {
+    filteredAppointments.forEach((apt: any) => {
       // Validar se appointmentDate existe e é válido
       if (!apt.appointmentDate) return;
       
@@ -94,7 +100,7 @@ export default function Appointments() {
       });
     });
     return map;
-  }, [appointments, petMap, services]);
+  }, [filteredAppointments, petMap, services]);
 
   const handlePrevious = () => {
     if (viewType === "calendar") {
@@ -361,10 +367,41 @@ export default function Appointments() {
         </div>
         <Button
           onClick={() => setShowForm(true)}
-          className="bg-teal-600 hover:bg-teal-700 text-white font-bold"
+          className="bg-secondary hover:bg-secondary/90 text-foreground font-bold"
         >
           + Novo Agendamento
         </Button>
+      </div>
+
+      {/* Status Filters */}
+      <div className="flex gap-3 flex-wrap">
+        {[
+          { id: "all", label: "Todos", icon: "∞" },
+          { id: "pending", label: "Agendado", icon: "⏳" },
+          { id: "confirmed", label: "Confirmado", icon: "✓" },
+          { id: "in_progress", label: "Em Andamento", icon: "▶" },
+          { id: "completed", label: "Concluído", icon: "✔" },
+          { id: "cancelled", label: "Cancelado", icon: "✕" },
+        ].map((f) => (
+          <button
+            key={f.id}
+            onClick={() => setStatusFilter(f.id)}
+            className={`px-4 py-2 rounded-full font-medium text-sm transition-all flex items-center gap-2 border ${
+              statusFilter === f.id
+                ? "bg-secondary text-foreground border-secondary shadow-sm"
+                : "bg-white text-foreground border-border hover:border-secondary/30 hover:shadow-sm"
+            }`}
+          >
+            <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${
+              statusFilter === f.id
+                ? "bg-foreground/20 text-foreground"
+                : "bg-secondary/10 text-secondary"
+            }`}>
+              {f.icon}
+            </span>
+            {f.label}
+          </button>
+        ))}
       </div>
 
       {/* Legend */}
@@ -402,7 +439,6 @@ export default function Appointments() {
           >
             Dia
           </Button>
-
         </div>
 
         <div className="flex gap-2 ml-auto">

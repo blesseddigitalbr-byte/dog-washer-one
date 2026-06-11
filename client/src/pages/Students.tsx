@@ -251,23 +251,41 @@ export default function Students() {
       <StudentStats total={stats.total} active={stats.active} courses={stats.courses} />
 
       {/* Search and Filter */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 flex-col">
         <Input
           placeholder="Buscar por nome ou email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="flex-1"
         />
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-48">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos</SelectItem>
-            <SelectItem value="authorized">Autorizados</SelectItem>
-            <SelectItem value="blocked">Bloqueados</SelectItem>
-          </SelectContent>
-        </Select>
+        
+        {/* Status Filters */}
+        <div className="flex gap-3 flex-wrap">
+          {[
+            { id: "all", label: "Todos", icon: "∞" },
+            { id: "authorized", label: "Autorizados", icon: "✓" },
+            { id: "blocked", label: "Bloqueados", icon: "⚠" },
+          ].map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setFilterStatus(f.id)}
+              className={`px-4 py-2 rounded-full font-medium text-sm transition-all flex items-center gap-2 border ${
+                filterStatus === f.id
+                  ? "bg-secondary text-foreground border-secondary shadow-sm"
+                  : "bg-white text-foreground border-border hover:border-secondary/30 hover:shadow-sm"
+              }`}
+            >
+              <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${
+                filterStatus === f.id
+                  ? "bg-foreground/20 text-foreground"
+                  : "bg-secondary/10 text-secondary"
+              }`}>
+                {f.icon}
+              </span>
+              {f.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Students List */}
