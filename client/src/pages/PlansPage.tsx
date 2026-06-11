@@ -144,13 +144,13 @@ export function PlansPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
-        return "bg-blue-100 text-blue-800";
+        return "bg-amber-100 text-amber-800 border-amber-300";
       case "inactive":
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 border-gray-300";
       case "expired":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 text-red-800 border-red-300";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 border-gray-300";
     }
   };
 
@@ -172,8 +172,8 @@ export function PlansPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Planos</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Planos</h1>
+          <p className="text-muted-foreground mt-2">
             Gerencie os planos e pacotes de serviços
           </p>
         </div>
@@ -182,7 +182,7 @@ export function PlansPage() {
           <DialogTrigger asChild>
             <Button
               onClick={() => handleOpenDialog()}
-              className="bg-amber-600 hover:bg-amber-700 text-white"
+              className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
             >
               <Plus className="mr-2 h-4 w-4" />
               + Novo Plano
@@ -335,7 +335,7 @@ export function PlansPage() {
               <Button
                 onClick={handleSave}
                 disabled={createMutation.isPending || updateMutation.isPending}
-                className="bg-amber-600 hover:bg-amber-700 text-white"
+                className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
               >
                 {editingId ? "Atualizar" : "Criar"} Plano
               </Button>
@@ -346,23 +346,23 @@ export function PlansPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-l-4 border-l-amber-600 rounded-[16px] shadow-sm">
+        <Card className="border-l-4 border-l-chart-3 rounded-lg shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-600 uppercase font-semibold">Total de Planos</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{packages.length}</p>
+                <p className="text-xs text-muted-foreground uppercase font-semibold">Total de Planos</p>
+                <p className="text-2xl font-bold text-foreground mt-1">{packages.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-amber-600 rounded-[16px] shadow-sm">
+        <Card className="border-l-4 border-l-chart-3 rounded-lg shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-600 uppercase font-semibold">Planos Ativos</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-xs text-muted-foreground uppercase font-semibold">Planos Ativos</p>
+                <p className="text-2xl font-bold text-foreground mt-1">
                   {packages.filter((p: Package) => p.status === "active").length}
                 </p>
               </div>
@@ -370,12 +370,12 @@ export function PlansPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-amber-600 rounded-[16px] shadow-sm">
+        <Card className="border-l-4 border-l-chart-3 rounded-lg shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-600 uppercase font-semibold">Planos Inativos</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-xs text-muted-foreground uppercase font-semibold">Planos Inativos</p>
+                <p className="text-2xl font-bold text-foreground mt-1">
                   {packages.filter((p: Package) => p.status !== "active").length}
                 </p>
               </div>
@@ -386,14 +386,14 @@ export function PlansPage() {
 
       {/* Plans List */}
       {isLoading ? (
-        <div className="text-center py-12 text-gray-600">Carregando planos...</div>
+        <div className="text-center py-12 text-muted-foreground">Carregando planos...</div>
       ) : packages.length === 0 ? (
-        <Card className="rounded-[16px]">
+        <Card className="rounded-lg">
           <CardContent className="pt-12 pb-12 text-center">
-            <p className="text-gray-600 mb-6">Nenhum plano cadastrado</p>
+            <p className="text-muted-foreground mb-6">Nenhum plano cadastrado</p>
             <Button
               onClick={() => handleOpenDialog()}
-              className="bg-amber-600 hover:bg-amber-700 text-white"
+              className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
             >
               <Plus className="mr-2 h-4 w-4" />
               Criar Primeiro Plano
@@ -401,75 +401,81 @@ export function PlansPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
+          {/* Column Headers - FORA DOS CARDS */}
+          <div className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-semibold text-muted-foreground uppercase">
+            <div className="col-span-2">IDENTIFICAÇÃO DO PLANO</div>
+            <div className="col-span-1 text-center">BANHOS</div>
+            <div className="col-span-1 text-center">TOSAS</div>
+            <div className="col-span-2 text-center">INVESTIMENTO</div>
+            <div className="col-span-2 text-center">FATURAMENTO</div>
+            <div className="col-span-2 text-center">AÇÕES</div>
+            <div className="col-span-2"></div>
+          </div>
+
+          {/* Plan Rows */}
           {packages.map((pkg: Package) => (
             <div
               key={pkg.id}
-              className="border-l-4 border-l-amber-600 bg-white rounded-[16px] shadow-sm p-6 flex items-center justify-between hover:shadow-md transition-shadow"
+              className="border-l-4 border-l-chart-3 bg-card rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
             >
-              <div className="flex-1">
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <h3 className="font-bold text-gray-900">{pkg.name}</h3>
-                    {pkg.description && (
-                      <p className="text-sm text-gray-600 mt-1">{pkg.description}</p>
-                    )}
-                  </div>
+              <div className="grid grid-cols-12 gap-4 items-center">
+                {/* Plan Name and Description */}
+                <div className="col-span-2">
+                  <h3 className="font-bold text-foreground">{pkg.name}</h3>
+                  {pkg.description && (
+                    <p className="text-xs text-muted-foreground mt-1">{pkg.description}</p>
+                  )}
+                </div>
 
-                  {/* Plan Details Grid */}
-                  <div className="grid grid-cols-5 gap-6 flex-1">
-                    <div>
-                      <p className="text-xs text-gray-600 uppercase font-semibold">Banhos</p>
-                      <p className="text-sm font-medium text-gray-900 mt-1">{pkg.total_baths}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600 uppercase font-semibold">Tosas</p>
-                      <p className="text-sm font-medium text-gray-900 mt-1">{pkg.total_groomings}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600 uppercase font-semibold">Valor</p>
-                      <p className="text-sm font-medium text-gray-900 mt-1">
-                        {formatCurrency(pkg.total_price)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600 uppercase font-semibold">Mensalidade</p>
-                      <p className="text-sm font-medium text-gray-900 mt-1">
-                        {formatCurrency(pkg.monthly_price)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600 uppercase font-semibold">Recorrência</p>
-                      <p className="text-sm font-medium text-gray-900 mt-1">
-                        {pkg.recurrence_type || "-"}
-                      </p>
-                    </div>
-                  </div>
+                {/* Banhos */}
+                <div className="col-span-1 text-center">
+                  <p className="font-medium text-foreground">{pkg.total_baths}</p>
+                </div>
 
-                  {/* Status Badge */}
-                  <Badge className={`${getStatusColor(pkg.status)} text-xs font-medium`}>
+                {/* Tosas */}
+                <div className="col-span-1 text-center">
+                  <p className="font-medium text-foreground">{pkg.total_groomings}</p>
+                </div>
+
+                {/* Investimento (Valor Total) */}
+                <div className="col-span-2 text-center">
+                  <p className="font-medium text-foreground">
+                    {formatCurrency(pkg.total_price)}
+                  </p>
+                </div>
+
+                {/* Faturamento (Mensalidade) */}
+                <div className="col-span-2 text-center">
+                  <p className="text-sm text-muted-foreground">Mensalidade: {formatCurrency(pkg.monthly_price)}</p>
+                  <p className="text-xs text-muted-foreground">{pkg.recurrence_type || "-"}</p>
+                </div>
+
+                {/* Status Badge */}
+                <div className="col-span-2 flex justify-center">
+                  <Badge className={`${getStatusColor(pkg.status)} text-xs font-medium border`}>
                     {getStatusLabel(pkg.status)}
                   </Badge>
+                </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-2 ml-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleOpenDialog(pkg)}
-                      className="border-gray-300 text-gray-700 hover:bg-gray-50"
-                    >
-                      <Edit2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setDeleteId(pkg.id)}
-                      className="border-gray-300 text-gray-700 hover:bg-red-50 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                {/* Actions */}
+                <div className="col-span-2 flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleOpenDialog(pkg)}
+                    className="border-border text-foreground hover:bg-muted"
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setDeleteId(pkg.id)}
+                    className="border-border text-foreground hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </div>
@@ -491,7 +497,7 @@ export function PlansPage() {
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
-              className="bg-red-600 text-white hover:bg-red-700"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Deletar
             </AlertDialogAction>

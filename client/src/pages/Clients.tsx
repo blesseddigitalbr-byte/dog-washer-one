@@ -228,7 +228,7 @@ export default function ClientsPage() {
             {paginatedClients.map((client) => (
               <div
                 key={client.id}
-                className="bg-white rounded-[16px] p-5 shadow-sm border border-border hover:shadow-md transition-all duration-200 relative group border-l-4 border-l-accent flex flex-col"
+                className="bg-white rounded-lg p-5 shadow-sm border border-border hover:shadow-md transition-all duration-200 relative group border-l-4 border-l-chart-3 flex flex-col"
               >
                 {/* Menu Button */}
                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">

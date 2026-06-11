@@ -135,8 +135,8 @@ export default function Services() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">Serviços & Cursos</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Serviços & Cursos</h1>
+          <p className="text-muted-foreground mt-2">
             Gerencie os serviços e cursos oferecidos
           </p>
         </div>
@@ -145,7 +145,7 @@ export default function Services() {
           <DialogTrigger asChild>
             <Button
               onClick={() => handleOpenDialog()}
-              className="bg-amber-600 hover:bg-amber-700 text-white"
+              className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
             >
               <Plus className="mr-2 h-4 w-4" />
               + Novo Serviço
@@ -233,7 +233,7 @@ export default function Services() {
                   disabled={
                     createMutation.isPending || updateMutation.isPending
                   }
-                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                  className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
                 >
                   {createMutation.isPending || updateMutation.isPending ? (
                     <Loader className="w-4 h-4 animate-spin mr-2" />
@@ -248,26 +248,26 @@ export default function Services() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-l-4 border-l-amber-600 rounded-[16px] shadow-sm">
+        <Card className="border-l-4 border-l-chart-3 rounded-lg shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-600 uppercase font-semibold">Serviços Ativos</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{services.length}</p>
+                <p className="text-xs text-muted-foreground uppercase font-semibold">Serviços Ativos</p>
+                <p className="text-2xl font-bold text-foreground mt-1">{services.length}</p>
               </div>
-              <div className="text-amber-600 opacity-20">
+              <div className="text-secondary opacity-20">
                 <DollarSign size={32} />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-amber-600 rounded-[16px] shadow-sm">
+        <Card className="border-l-4 border-l-chart-3 rounded-lg shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-600 uppercase font-semibold">Preço Médio</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-xs text-muted-foreground uppercase font-semibold">Preço Médio</p>
+                <p className="text-2xl font-bold text-foreground mt-1">
                   {services.length > 0
                     ? formatCurrency(
                         services.reduce((sum: number, s: any) => sum + (s.price || 0), 0) /
@@ -276,19 +276,19 @@ export default function Services() {
                     : "R$ 0,00"}
                 </p>
               </div>
-              <div className="text-amber-600 opacity-20">
+              <div className="text-secondary opacity-20">
                 <DollarSign size={32} />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-amber-600 rounded-[16px] shadow-sm">
+        <Card className="border-l-4 border-l-chart-3 rounded-lg shadow-sm">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-600 uppercase font-semibold">Duração Média</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">
+                <p className="text-xs text-muted-foreground uppercase font-semibold">Duração Média</p>
+                <p className="text-2xl font-bold text-foreground mt-1">
                   {services.length > 0
                     ? Math.round(
                         services.reduce((sum: number, s: any) => sum + (s.durationMinutes || 0), 0) /
@@ -298,7 +298,7 @@ export default function Services() {
                   min
                 </p>
               </div>
-              <div className="text-amber-600 opacity-20">
+              <div className="text-secondary opacity-20">
                 <Clock size={32} />
               </div>
             </div>
@@ -319,19 +319,19 @@ export default function Services() {
       {/* Services List */}
       {isLoading ? (
         <div className="flex items-center justify-center h-64">
-          <Loader className="w-8 h-8 animate-spin text-gray-400" />
+          <Loader className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       ) : filteredServices.length === 0 ? (
-        <Card className="rounded-[16px]">
+        <Card className="rounded-lg">
           <CardContent className="pt-12 pb-12 text-center">
-            <p className="text-gray-600 mb-6">
+            <p className="text-muted-foreground mb-6">
               {services.length === 0 ? "Nenhum serviço cadastrado" : "Nenhum serviço encontrado"}
             </p>
             <Dialog open={isOpen} onOpenChange={setIsOpen}>
               <DialogTrigger asChild>
                 <Button
                   onClick={() => handleOpenDialog()}
-                  className="bg-amber-600 hover:bg-amber-700 text-white"
+                  className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Criar Primeiro Serviço
@@ -345,7 +345,7 @@ export default function Services() {
           {filteredServices.map((service: any) => (
             <div
               key={service.id}
-              className="border-l-4 border-l-amber-600 bg-white rounded-[16px] shadow-sm p-6 flex items-center justify-between hover:shadow-md transition-shadow"
+              className="border-l-4 border-l-chart-3 bg-card rounded-lg shadow-sm p-6 flex items-center justify-between hover:shadow-md transition-shadow"
             >
               <div className="flex-1">
                 <h3 className="font-bold text-gray-900">{service.name}</h3>
