@@ -537,8 +537,8 @@ export const appRouter = router({
           .from("appointments")
           .select(`
             *,
-            client:client_id(name, email, phone),
-            pet:pet_id(name, breed, species),
+            client:client_id(nome, email, phone),
+            pet:pet_id(name, breed, sexo),
             service:service_id(name, price, duration_minutes),
             professional:professional_id(name, specialization)
           `)
@@ -561,8 +561,8 @@ export const appRouter = router({
             .from("appointments")
             .select(`
               *,
-              client:client_id(name, email, phone),
-              pet:pet_id(name, breed, species),
+              client:client_id(nome, email, phone),
+              pet:pet_id(name, breed, sexo),
               service:service_id(name, price, duration_minutes),
               professional:professional_id(name, specialization)
             `)
@@ -823,6 +823,263 @@ export const appRouter = router({
         } catch (error) {
           console.error("Error deleting service:", error);
           throw new Error("Erro ao deletar serviço");
+        }
+      }),
+  }),
+
+  students: router({
+    // List all students with filters
+    list: publicProcedure
+      .input(z.object({
+        filter: z.enum(["all", "authorized", "blocked", "by_instructor"]).default("all"),
+        instructorId: z.string().uuid().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        try {
+          let query = supabase
+            .from("students")
+            .select(`
+              *,
+              instructor:instructor_id(id, name, specialization)
+            `)
+            .order("created_at", { ascending: false });
+
+          // Apply filters
+          if (input?.filter === "authorized") {
+            query = query.eq("is_authorized", true);
+          } else if (input?.filter === "blocked") {
+            query = query.eq("is_authorized", false);
+          } else if (input?.filter === "by_instructor" && input?.instructorId) {
+            query = query.eq("instructor_id", input.instructorId);
+          }
+
+          const { data: students, error } = await query;
+
+          if (error) throw error;
+          return students || [];
+        } catch (error) {
+          console.error("Error fetching students:", error);
+          return [];
+        }
+      }),
+
+    // Get a single student by ID
+    getById: publicProcedure
+      .input(z.object({ id: z.string().uuid() }))
+      .query(async ({ input }) => {
+        try {
+          const { data: student, error } = await supabase
+            .from("students")
+            .select(`
+              *,
+              instructor:instructor_id(id, name, specialization)
+            `)
+            .eq("id", input.id)
+            .single();
+
+          if (error) throw error;
+          return student;
+        } catch (error) {
+          console.error("Error fetching student:", error);
+          return null;
+        }
+      }),
+
+    // Create a new student
+    create: publicProcedure
+      .input(z.object({
+        organizationId: z.string().uuid(),
+        unitId: z.string().uuid().optional(),
+        academicId: z.string().optional(),
+        name: z.string().min(1, "Nome é obrigatório"),
+        email: z.string().email().optional(),
+        phone: z.string().optional(),
+        cpf: z.string().optional(),
+        photoUrl: z.string().optional(),
+        course: z.string().optional(),
+        classGroup: z.string().optional(),
+        academicStatus: z.string().default("active"),
+        enrollmentDate: z.string().datetime().optional(),
+        instructorId: z.string().uuid().optional(),
+        isAuthorized: z.boolean().default(false),
+        blockReason: z.string().optional(),
+        practiceLevel: z.string().default("beginner"),
+        allowedServices: z.string().optional(),
+        allowedDogSizes: z.string().optional(),
+        needsSupervision: z.boolean().default(true),
+        canWorkAlone: z.boolean().default(false),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { data, error } = await supabase
+            .from("students")
+            .insert([{
+              organization_id: input.organizationId,
+              unit_id: input.unitId || null,
+              academic_id: input.academicId || null,
+              name: input.name,
+              email: input.email || null,
+              phone: input.phone || null,
+              cpf: input.cpf || null,
+              photo_url: input.photoUrl || null,
+              course: input.course || null,
+              class_group: input.classGroup || null,
+              academic_status: input.academicStatus,
+              enrollment_date: input.enrollmentDate || new Date().toISOString(),
+              instructor_id: input.instructorId || null,
+              is_authorized: input.isAuthorized,
+              block_reason: input.blockReason || null,
+              practice_level: input.practiceLevel,
+              allowed_services: input.allowedServices || null,
+              allowed_dog_sizes: input.allowedDogSizes || null,
+              needs_supervision: input.needsSupervision,
+              can_work_alone: input.canWorkAlone,
+              notes: input.notes || null,
+              data_origin: "manual",
+              sync_status: "pending",
+            }])
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          console.error("Error creating student:", error);
+          throw new Error("Erro ao criar aluno");
+        }
+      }),
+
+    // Update a student
+    update: publicProcedure
+      .input(z.object({
+        id: z.string().uuid(),
+        name: z.string().optional(),
+        email: z.string().email().optional(),
+        phone: z.string().optional(),
+        photoUrl: z.string().optional(),
+        course: z.string().optional(),
+        classGroup: z.string().optional(),
+        academicStatus: z.string().optional(),
+        instructorId: z.string().uuid().optional(),
+        isAuthorized: z.boolean().optional(),
+        blockReason: z.string().optional(),
+        practiceLevel: z.string().optional(),
+        allowedServices: z.string().optional(),
+        allowedDogSizes: z.string().optional(),
+        needsSupervision: z.boolean().optional(),
+        canWorkAlone: z.boolean().optional(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const { id, ...updateData } = input;
+          const updatePayload: Record<string, any> = {};
+
+          if (updateData.name) updatePayload.name = updateData.name;
+          if (updateData.email !== undefined) updatePayload.email = updateData.email || null;
+          if (updateData.phone !== undefined) updatePayload.phone = updateData.phone || null;
+          if (updateData.photoUrl !== undefined) updatePayload.photo_url = updateData.photoUrl || null;
+          if (updateData.course !== undefined) updatePayload.course = updateData.course || null;
+          if (updateData.classGroup !== undefined) updatePayload.class_group = updateData.classGroup || null;
+          if (updateData.academicStatus) updatePayload.academic_status = updateData.academicStatus;
+          if (updateData.instructorId !== undefined) updatePayload.instructor_id = updateData.instructorId || null;
+          if (updateData.isAuthorized !== undefined) updatePayload.is_authorized = updateData.isAuthorized;
+          if (updateData.blockReason !== undefined) updatePayload.block_reason = updateData.blockReason || null;
+          if (updateData.practiceLevel) updatePayload.practice_level = updateData.practiceLevel;
+          if (updateData.allowedServices !== undefined) updatePayload.allowed_services = updateData.allowedServices || null;
+          if (updateData.allowedDogSizes !== undefined) updatePayload.allowed_dog_sizes = updateData.allowedDogSizes || null;
+          if (updateData.needsSupervision !== undefined) updatePayload.needs_supervision = updateData.needsSupervision;
+          if (updateData.canWorkAlone !== undefined) updatePayload.can_work_alone = updateData.canWorkAlone;
+          if (updateData.notes !== undefined) updatePayload.notes = updateData.notes || null;
+          updatePayload.updated_at = new Date().toISOString();
+
+          const { data, error } = await supabase
+            .from("students")
+            .update(updatePayload)
+            .eq("id", id)
+            .select()
+            .single();
+
+          if (error) throw error;
+          return data;
+        } catch (error) {
+          console.error("Error updating student:", error);
+          throw new Error("Erro ao atualizar aluno");
+        }
+      }),
+
+    // Delete a student
+    delete: publicProcedure
+      .input(z.object({ id: z.string().uuid() }))
+      .mutation(async ({ input }) => {
+        try {
+          const { error } = await supabase
+            .from("students")
+            .delete()
+            .eq("id", input.id);
+
+          if (error) throw error;
+          return { success: true };
+        } catch (error) {
+          console.error("Error deleting student:", error);
+          throw new Error("Erro ao deletar aluno");
+        }
+      }),
+
+    // Validate student permissions for appointment
+    validatePermissions: publicProcedure
+      .input(z.object({
+        studentId: z.string().uuid(),
+        serviceId: z.string().uuid().optional(),
+        dogSize: z.string().optional(),
+      }))
+      .query(async ({ input }) => {
+        try {
+          const { data: student, error } = await supabase
+            .from("students")
+            .select("*")
+            .eq("id", input.studentId)
+            .single();
+
+          if (error) throw error;
+          if (!student) return { valid: false, reason: "Aluno não encontrado" };
+
+          // Check authorization
+          if (!student.is_authorized) {
+            return { valid: false, reason: student.block_reason || "Aluno não autorizado para prática" };
+          }
+
+          // Check academic status
+          if (student.academic_status !== "active") {
+            return { valid: false, reason: "Aluno não está ativo no portal acadêmico" };
+          }
+
+          // Check allowed services
+          if (input.serviceId && student.allowed_services) {
+            const allowedServices = JSON.parse(student.allowed_services || "[]");
+            if (allowedServices.length > 0 && !allowedServices.includes(input.serviceId)) {
+              return { valid: false, reason: "Aluno não está autorizado para este serviço" };
+            }
+          }
+
+          // Check allowed dog sizes
+          if (input.dogSize && student.allowed_dog_sizes) {
+            const allowedSizes = JSON.parse(student.allowed_dog_sizes || "[]");
+            if (allowedSizes.length > 0 && !allowedSizes.includes(input.dogSize)) {
+              return { valid: false, reason: "Aluno não está autorizado para este porte de cão" };
+            }
+          }
+
+          return {
+            valid: true,
+            student,
+            needsSupervision: student.needs_supervision,
+            canWorkAlone: student.can_work_alone,
+          };
+        } catch (error) {
+          console.error("Error validating student permissions:", error);
+          return { valid: false, reason: "Erro ao validar permissões" };
         }
       }),
   }),

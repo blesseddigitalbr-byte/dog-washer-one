@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { X, Plus, Search } from "lucide-react";
+import { X, Plus, Search, AlertCircle } from "lucide-react";
 
 interface AppointmentFormProps {
   onClose: () => void;
@@ -26,13 +26,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
   const { data: professionals = [] } = trpc.professionals.list.useQuery();
   const { data: services = [] } = trpc.services.list.useQuery();
   const { data: packages = [] } = trpc.packages.list.useQuery();
-
-  // Mock students
-  const students = [
-    { id: "550e8400-e29b-41d4-a716-446655440020", name: "Aluno 1" },
-    { id: "550e8400-e29b-41d4-a716-446655440021", name: "Aluno 2" },
-    { id: "550e8400-e29b-41d4-a716-446655440022", name: "Aluno 3" },
-  ];
+  const { data: students = [] } = trpc.students.list.useQuery({ filter: "authorized" });
 
   // Memoizar lista de pets
   const allPets = useMemo(() => {
@@ -54,6 +48,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
   const [executedBy, setExecutedBy] = useState<"professional" | "student">("professional");
   const [selectedProfessional, setSelectedProfessional] = useState("");
   const [selectedStudent, setSelectedStudent] = useState("");
+  const [studentPermissions, setStudentPermissions] = useState<any>(null);
   const [appointmentDate, setAppointmentDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [notes, setNotes] = useState("");
@@ -62,14 +57,28 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
   const createMutation = trpc.appointments.create.useMutation();
   const utils = trpc.useUtils();
 
+  // Validate student permissions
+  const validatePermissionsMutation = trpc.students.validatePermissions.useQuery(
+    selectedStudent && executedBy === "student" ? { studentId: selectedStudent } : { studentId: "" },
+    { enabled: !!selectedStudent && executedBy === "student" }
+  );
+
+  // Update student permissions when validation result changes
+  useEffect(() => {
+    if (validatePermissionsMutation.data) {
+      setStudentPermissions(validatePermissionsMutation.data);
+      if (!validatePermissionsMutation.data.valid) {
+        toast.error(validatePermissionsMutation.data.reason);
+      }
+    }
+  }, [validatePermissionsMutation.data]);
+
   // Get pets for selected client
   const clientPets = useMemo(() => {
     if (!selectedClient) return [];
     const client = clients.find((c: any) => c.id === selectedClient);
     return client?.pets || [];
   }, [selectedClient, clients]);
-
-
 
   // Filtrar clientes por termo de busca
   const filteredClients = useMemo(() => {
@@ -111,6 +120,10 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
       toast.error("Selecione um aluno");
       return;
     }
+    if (executedBy === "student" && studentPermissions && !studentPermissions.valid) {
+      toast.error(studentPermissions.reason);
+      return;
+    }
 
     try {
       // Criar um agendamento com um único pet
@@ -123,7 +136,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
         professionalId:
           executedBy === "professional"
             ? selectedProfessional
-            : "550e8400-e29b-41d4-a716-446655440002",
+            : studentPermissions?.student?.instructor_id || "550e8400-e29b-41d4-a716-446655440002",
         appointmentDate: new Date(appointmentDate).toISOString(),
         startTime,
         durationMinutes: 60,
@@ -133,6 +146,11 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
       };
 
       await createMutation.mutateAsync(appointmentPayload);
+
+      // Se foi um aluno, registrar na tabela appointment_students
+      if (executedBy === "student" && selectedStudent) {
+        console.log("Aluno vinculado ao agendamento:", selectedStudent);
+      }
 
       toast.success("Agendamento criado com sucesso!");
       await utils.appointments.list.invalidate();
@@ -271,7 +289,11 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
         <Label className="text-base font-semibold mb-3 block">
           Executado por
         </Label>
-        <RadioGroup value={executedBy} onValueChange={(value: any) => setExecutedBy(value)}>
+        <RadioGroup value={executedBy} onValueChange={(value: any) => {
+          setExecutedBy(value);
+          setSelectedStudent("");
+          setStudentPermissions(null);
+        }}>
           <div className="flex items-center space-x-3 mb-3">
             <RadioGroupItem value="professional" id="exec-prof" />
             <Label htmlFor="exec-prof" className="font-normal cursor-pointer">
@@ -286,7 +308,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
           </div>
         </RadioGroup>
 
-        {/* Profissional Responsável */}
+        {/* Profissional ou Aluno Responsável */}
         <div className="mt-4">
           <Label htmlFor="professional" className="text-sm font-semibold">
             {executedBy === "professional" ? "Profissional" : "Aluno"} Responsável *
@@ -318,14 +340,66 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
                   </SelectItem>
                 ))
               ) : (
-                students.map((student) => (
+                students.map((student: any) => (
                   <SelectItem key={student.id} value={student.id}>
-                    {student.name}
+                    <div className="flex items-center gap-2">
+                      <span>{student.name}</span>
+                      {student.is_authorized ? (
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">Autorizado</span>
+                      ) : (
+                        <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded">Bloqueado</span>
+                      )}
+                    </div>
                   </SelectItem>
                 ))
               )}
             </SelectContent>
           </Select>
+
+          {/* Student Permissions Info */}
+          {executedBy === "student" && selectedStudent && studentPermissions && (
+            <div className={`mt-3 p-3 rounded-lg border ${
+              studentPermissions.valid 
+                ? "bg-green-50 border-green-200" 
+                : "bg-red-50 border-red-200"
+            }`}>
+              {studentPermissions.valid ? (
+                <>
+                  <p className="text-sm font-semibold text-green-900 mb-2">✓ Aluno autorizado para prática</p>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <p className="text-green-700">Nível Prático:</p>
+                      <p className="font-medium text-foreground capitalize">{studentPermissions.student?.practice_level}</p>
+                    </div>
+                    <div>
+                      <p className="text-green-700">Supervisão:</p>
+                      <p className="font-medium text-foreground">{studentPermissions.needsSupervision ? "Necessária" : "Não necessária"}</p>
+                    </div>
+                  </div>
+                  {studentPermissions.student?.notes && (
+                    <div className="mt-2 text-xs text-green-700">
+                      <strong>Observações:</strong> {studentPermissions.student.notes}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="flex gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-red-900">Aluno não autorizado</p>
+                    <p className="text-xs text-red-700 mt-1">{studentPermissions.reason}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Loading state */}
+          {executedBy === "student" && selectedStudent && validatePermissionsMutation.isLoading && (
+            <div className="mt-3 p-3 rounded-lg bg-yellow-50 border border-yellow-200">
+              <p className="text-sm text-yellow-800">Validando permissões do aluno...</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -382,7 +456,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
         <Button
           type="submit"
           className="bg-green-600 hover:bg-green-700 text-white font-bold"
-          disabled={createMutation.isPending}
+          disabled={createMutation.isPending || (executedBy === "student" && validatePermissionsMutation.isLoading)}
         >
           {createMutation.isPending ? "Criando..." : "Criar Agendamento"}
         </Button>

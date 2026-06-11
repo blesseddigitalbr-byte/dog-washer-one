@@ -363,19 +363,44 @@ export type InsertAppointmentStatusHistory = typeof appointmentStatusHistory.$in
 
 /**
  * Students - Alunos/Aprendizes
+ * Dados operacionais do salão-escola com integração do Portal Acadêmico
  */
 export const students = pgTable("students", {
   id: uuid("id").primaryKey().defaultRandom(),
   organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
   unitId: uuid("unit_id").references(() => units.id, { onDelete: "cascade" }),
+  
+  // Dados do Portal Acadêmico
+  academicId: varchar("academic_id", { length: 100 }).unique(), // ID no Portal Acadêmico
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }),
   phone: varchar("phone", { length: 50 }),
   cpf: varchar("cpf", { length: 14 }).unique(),
-  course: varchar("course", { length: 255 }),
+  photoUrl: varchar("photo_url", { length: 500 }), // Avatar/foto do aluno
+  course: varchar("course", { length: 255 }), // Nome do curso
+  classGroup: varchar("class_group", { length: 100 }), // Turma (ex: "Turma A", "2024.1")
+  academicStatus: varchar("academic_status", { length: 50 }).default("active"), // "active", "inactive", "graduated", "suspended"
   enrollmentDate: timestamp("enrollment_date", { withTimezone: true }).notNull(),
-  status: varchar("status", { length: 50 }).default("active"),
-  progress: serial("progress").default(0),
+  
+  // Dados Operacionais do GroomerFlow
+  instructorId: uuid("instructor_id").references(() => professionals.id, { onDelete: "set null" }), // Instrutor responsável
+  isAuthorized: boolean("is_authorized").default(false), // Liberado para prática
+  blockReason: text("block_reason"), // Motivo do bloqueio (se não autorizado)
+  practiceLevel: varchar("practice_level", { length: 50 }).default("beginner"), // "beginner", "intermediate", "advanced"
+  allowedServices: text("allowed_services"), // JSON array de serviços permitidos
+  allowedDogSizes: text("allowed_dog_sizes"), // JSON array de portes permitidos: ["P", "M", "G", "GG"]
+  needsSupervision: boolean("needs_supervision").default(true), // Precisa de supervisão
+  canWorkAlone: boolean("can_work_alone").default(false), // Pode atender sozinho
+  notes: text("notes"), // Observações operacionais
+  
+  // Integração com Portal Acadêmico
+  dataOrigin: varchar("data_origin", { length: 50 }).default("academic_portal"), // "academic_portal", "manual"
+  lastSync: timestamp("last_sync", { withTimezone: true }), // Última sincronização com Portal
+  syncStatus: varchar("sync_status", { length: 50 }).default("pending"), // "pending", "synced", "error"
+  
+  // Status e Auditoria
+  status: varchar("status", { length: 50 }).default("active"), // "active", "inactive"
+  progress: serial("progress").default(0), // Progresso em horas/sessões
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }),
 });

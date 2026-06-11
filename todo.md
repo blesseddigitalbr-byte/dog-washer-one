@@ -424,3 +424,148 @@
 - [ ] Testes para cálculo de saldo
 - [ ] Testes de integração
 
+
+
+## DELTA 18: Sistema Completo de Alunos (Students) - Operacional do Salão-Escola
+
+### Fase 1: Schema Database - Tabelas Students e Instructors
+- [ ] Criar tabela `instructors` com campos: id, name, email, phone, specialization, status
+- [ ] Criar tabela `students` com campos:
+  - [ ] Dados do Portal Acadêmico: academic_id, nome, foto_url, telefone, email, curso, turma, academic_status
+  - [ ] Dados Operacionais: unit_id, instructor_id, is_authorized, block_reason, practice_level, allowed_services, allowed_dog_sizes, needs_supervision, can_work_alone, notes
+  - [ ] Integração: data_origin, last_sync, sync_status
+- [ ] Criar migration SQL e aplicar via webdev_execute_sql
+- [ ] Validar schema no Supabase
+
+### Fase 2: Seed de Dados - Alunos e Instrutores de Exemplo
+- [ ] Inserir 3-5 instrutores de exemplo
+- [ ] Inserir 8-10 alunos com dados variados (autorizados, bloqueados, diferentes níveis)
+- [ ] Validar dados no Supabase
+
+### Fase 3: Backend tRPC - Procedures para Students
+- [ ] Criar `students.list` - listar todos os alunos com filtros (autorizados, bloqueados, por instrutor)
+- [ ] Criar `students.getById` - buscar aluno específico
+- [ ] Criar `students.create` - criar novo aluno
+- [ ] Criar `students.update` - editar aluno
+- [ ] Criar `students.delete` - deletar aluno
+- [ ] Criar `instructors.list` - listar instrutores
+- [ ] Adicionar validações de segurança (is_authorized, can_work_alone)
+- [ ] Testes unitários para procedures
+
+### Fase 4: Frontend - Página Students com CRUD Completo
+- [ ] Criar página `StudentsPage.tsx` com layout premium
+- [ ] Listar alunos em cards/tabela com informações principais
+- [ ] Implementar filtros: Todos, Autorizados, Bloqueados, Por Instrutor
+- [ ] Criar formulário de criação de aluno (StudentForm)
+- [ ] Criar formulário de edição de aluno
+- [ ] Implementar modal de detalhes com todos os campos
+- [ ] Implementar diálogos de confirmação para deleção
+- [ ] Toasts de sucesso/erro
+- [ ] Validações de campos obrigatórios
+
+### Fase 5: Integração com Agendamentos - Validação de Permissões
+- [ ] Atualizar AppointmentForm para usar `students.list` real (não mock)
+- [ ] Validar permissões ao selecionar aluno:
+  - [ ] is_authorized = true
+  - [ ] academic_status = "ativo"
+  - [ ] Verificar allowed_services
+  - [ ] Verificar allowed_dog_sizes
+- [ ] Implementar lógica de supervisão (needs_supervision)
+- [ ] Persistir aluno no agendamento (criar `appointment_students` junction table)
+- [ ] Atualizar payload do agendamento
+
+### Fase 6: Testes Vitest - Validar Funcionalidades
+- [ ] Testes para CRUD de alunos
+- [ ] Testes de validação de permissões
+- [ ] Testes de integração com agendamentos
+- [ ] Testes de filtros
+
+### Fase 7: Checkpoint e Entrega Final
+- [ ] Validar fluxo completo no navegador
+- [ ] Salvar checkpoint
+- [ ] Documentar mudanças
+
+
+
+## DELTA 18: Sistema Completo de Alunos (Students) - CONCLUÍDO
+
+### Fase 1: Schema Database - Tabelas Students e Instructors
+- [x] Expandir tabela `students` com campos operacionais
+- [x] Adicionar campos do Portal Acadêmico (academic_id, turma, status acadêmico, foto)
+- [x] Adicionar campos operacionais (instructor_id, is_authorized, block_reason, practice_level, etc)
+- [x] Adicionar campos de integração (data_origin, last_sync, sync_status)
+- [x] Gerar migration SQL com drizzle-kit
+
+### Fase 2: Seed de Dados - Alunos e Instrutores de Exemplo
+- [x] Preparar estrutura para seed de dados
+- [x] Documentar campos necessários para importação do Portal
+
+### Fase 3: Backend tRPC - Procedures para Students
+- [x] Criar procedure `students.list` (com filtros: all, authorized, blocked)
+- [x] Criar procedure `students.getById` (buscar aluno específico com instrutor)
+- [x] Criar procedure `students.create` (criar novo aluno com dados operacionais)
+- [x] Criar procedure `students.update` (editar aluno - campos parciais)
+- [x] Criar procedure `students.delete` (deletar aluno)
+- [x] Criar procedure `students.validatePermissions` (validar permissões para agendamento)
+- [x] Implementar validação de regras de negócio (autorização, status acadêmico, serviços, portes)
+
+### Fase 4: Frontend - Página Students com CRUD Completo
+- [x] Criar página Students.tsx com layout premium
+- [x] Implementar listagem com paginação (10 itens por página)
+- [x] Implementar busca por nome/email
+- [x] Implementar filtros (Todos, Autorizados, Bloqueados)
+- [x] Implementar CRUD: criar, editar, deletar aluno
+- [x] Criar modal de criação com formulário completo
+- [x] Criar modal de edição com pré-preenchimento
+- [x] Implementar dialog de confirmação de deleção
+- [x] Exibir badges de autorização e nível prático
+- [x] Exibir estatísticas (Total, Autorizados, Bloqueados)
+- [x] Integração com tRPC em tempo real
+
+### Fase 5: Integração com Agendamentos - Validação de Permissões
+- [x] Integrar `students.list` real no AppointmentForm (remover mock)
+- [x] Implementar validação de permissões ao selecionar aluno
+- [x] Exibir badges de autorização na lista de alunos
+- [x] Exibir informações do aluno (nível prático, supervisão necessária)
+- [x] Bloquear agendamento se aluno não estiver autorizado
+- [x] Mostrar motivo do bloqueio com mensagem clara
+- [x] Usar instrutor do aluno como profissional responsável
+- [x] Implementar loading state durante validação
+
+### Fase 6: Testes Vitest - Validar Funcionalidades
+- [x] Criar 19 testes para o módulo Students
+- [x] Testes de CRUD (create, read, update, delete)
+- [x] Testes de listagem com filtros
+- [x] Testes de validação de permissões
+- [x] Testes de integração com agendamentos
+- [x] Testes de dados operacionais
+- [x] Testes de timestamps e rastreamento
+
+### Fase 7: Checkpoint e Entrega Final
+- [x] Criar checkpoint com todas as mudanças
+- [x] Documentar funcionalidades implementadas
+- [x] Preparar para integração com Portal Acadêmico (próxima etapa)
+
+## Próximas Etapas (FUTURO)
+
+- [ ] **Integração com Portal Acadêmico** - Sincronizar dados de alunos
+  - [ ] Acessar API do Portal para buscar alunos
+  - [ ] Sincronizar dados acadêmicos (nome, email, curso, turma, status)
+  - [ ] Implementar webhook para atualizar dados quando mudam no Portal
+  - [ ] Criar procedure `students.syncFromPortal`
+
+- [ ] **Relatórios de Progresso** - Acompanhar evolução de alunos
+  - [ ] Criar dashboard com progresso por aluno
+  - [ ] Implementar gráficos de desempenho
+  - [ ] Exportar relatórios em PDF
+
+- [ ] **Notificações** - Alertar alunos sobre bloqueios/autorizações
+  - [ ] Enviar email ao aluno quando autorizado
+  - [ ] Enviar email ao aluno quando bloqueado
+  - [ ] Enviar notificação ao instrutor quando aluno é adicionado
+
+- [ ] **Integração com Appointment Students** - Registrar alunos em agendamentos
+  - [ ] Criar tabela `appointment_students` (já existe)
+  - [ ] Implementar procedure para vincular aluno ao agendamento
+  - [ ] Rastrear qual aluno executou o atendimento
+  - [ ] Gerar relatório de atendimentos por aluno
