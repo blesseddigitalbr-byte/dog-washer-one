@@ -14,13 +14,17 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Toaster } from "sonner";
 import { PlansPage } from "./pages/PlansPage";
 import Packages from "./pages/Packages";
+import Login from "./pages/Login";
+import Profile from "./pages/Profile";
 
 function Router() {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div>Carregando...</div>;
+    return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;
   }
+
+  if (!user) return <Login />;
 
   return (
     <Switch>
@@ -35,6 +39,7 @@ function Router() {
             <Route path="/services" component={Services} />
             <Route path="/plans" component={PlansPage} />
             <Route path="/packages" component={Packages} />
+            <Route path="/profile" component={Profile} />
             <Route path="/404" component={NotFound} />
             <Route component={NotFound} />
           </Switch>

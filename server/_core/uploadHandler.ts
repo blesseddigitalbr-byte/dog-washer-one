@@ -1,53 +1,74 @@
-import { Router } from "express";
-import type { Response } from "express";
-import { storagePut } from "../storage";
+import { Router, type Request, type Response } from "express";
+import { authenticateRequest } from "./context";
+import { supabase, supabaseAdmin, withTenantSupabase } from "./supabase";
 
 const router = Router();
+const BUCKET = "pet-photos";
 
-router.post("/upload", async (req: any, res: Response) => {
+router.post("/upload", async (req: Request, res: Response) => {
   try {
+    const authentication = await authenticateRequest(req);
+    if (!authentication) {
+      res.status(401).json({ error: "Sessão inválida ou expirada" });
+      return;
+    }
+    const { user } = authentication;
+
     const { file, fileName, mimeType, petId } = req.body;
-
-    if (!file) {
-      res.status(400).json({ error: "Nenhum arquivo foi enviado" });
+    if (!file || !petId) {
+      res.status(400).json({ error: "Arquivo e petId são obrigatórios" });
+      return;
+    }
+    if (!mimeType || !["image/jpeg", "image/png", "image/webp"].includes(mimeType)) {
+      res.status(400).json({ error: "Use uma imagem JPG, PNG ou WebP" });
       return;
     }
 
-    if (!petId) {
-      res.status(400).json({ error: "petId é obrigatório" });
+    const petExists = await withTenantSupabase(authentication.accessToken, async () => {
+      const { data, error } = await supabase
+        .from("pets")
+        .select("id")
+        .eq("id", petId)
+        .maybeSingle();
+      if (error) throw error;
+      return Boolean(data);
+    });
+    if (!petExists) {
+      res.status(404).json({ error: "Pet não encontrado nesta organização" });
       return;
     }
 
-    // Validate file type
-    if (!mimeType || !mimeType.startsWith("image/")) {
-      res.status(400).json({ error: "Apenas arquivos de imagem são permitidos" });
-      return;
-    }
-
-    // Convert Base64 to Buffer
-    const base64Data = file.replace(/^data:image\/\w+;base64,/, "");
+    const base64Data = String(file).replace(/^data:image\/[^;]+;base64,/, "");
     const buffer = Buffer.from(base64Data, "base64");
-
-    // Validate file size (5MB max)
-    if (buffer.length > 5 * 1024 * 1024) {
-      res.status(400).json({ error: "Arquivo muito grande (máximo 5MB)" });
+    if (!buffer.length || buffer.length > 5 * 1024 * 1024) {
+      res.status(400).json({ error: "A imagem deve ter no máximo 5 MB" });
       return;
     }
 
-    // Upload to S3
-    const storageFileName = `pets/${petId}/${Date.now()}-${fileName}`;
-    const { url, key } = await storagePut(storageFileName, buffer, mimeType);
+    const safeName = String(fileName || "photo")
+      .normalize("NFKD")
+      .replace(/[^a-zA-Z0-9._-]/g, "-")
+      .slice(-100);
+    const tenant = user.organizationId ?? `user-${user.id}`;
+    const key = `${tenant}/pets/${petId}/${Date.now()}-${safeName}`;
 
-    console.log(`✅ Foto enviada com sucesso: ${url}`);
-    res.json({ url, key, success: true });
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(BUCKET)
+      .upload(key, buffer, { contentType: mimeType, upsert: false });
+    if (uploadError) throw uploadError;
+
+    const { data: signed, error: signedError } = await supabaseAdmin.storage
+      .from(BUCKET)
+      .createSignedUrl(key, 60 * 10);
+    if (signedError) throw signedError;
+
+    res.json({ url: signed.signedUrl, key, success: true });
   } catch (error) {
     console.error("Upload error:", error);
-    res.status(500).json({
-      error: error instanceof Error ? error.message : "Erro ao fazer upload da foto",
-    });
+    res.status(500).json({ error: "Erro ao armazenar a foto" });
   }
 });
 
-export function registerUploadRoutes(app: any) {
+export function registerUploadRoutes(app: { use: Function }) {
   app.use("/api", router);
 }
