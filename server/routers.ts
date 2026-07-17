@@ -1,20 +1,70 @@
 import { z } from "zod";
-import { getSessionCookieOptions } from "./_core/cookies";
-import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
-import { sdk } from "./_core/sdk";
-import * as db from "./db";
-import { supabase } from "./_core/supabase";
-import { generateClientCode, generatePetCode } from "./codeGenerator";
-import { sendAppointmentConfirmationEmail } from "./_core/emailService";
+import { systemRouter } from "./_core/systemRouter.js";
+import { protectedProcedure, publicProcedure as anonymousProcedure, router } from "./_core/trpc.js";
+import * as db from "./db.js";
+import { supabase, supabaseAdmin } from "./_core/supabase.js";
+import { generateClientCode, generatePetCode } from "./codeGenerator.js";
+import { sendAppointmentConfirmationEmail } from "./_core/emailService.js";
 
-const COOKIE_NAME = "manus_session";
+// Business routes are authenticated by default. Database RLS applies the
+// organization and unit boundaries to each request.
+const publicProcedure = protectedProcedure;
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
+    me: anonymousProcedure.query(opts => opts.ctx.user),
+
+    updateProfile: protectedProcedure
+      .input(z.object({
+        fullName: z.string().trim().min(2, "Informe o nome completo").max(120),
+        displayName: z.string().trim().min(2, "Informe o nome de exibição").max(80),
+        phone: z.string().trim().max(30).optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user) throw new Error("Sessão inválida");
+
+        const { data: profile, error: profileError } = await supabase
+          .from("profiles")
+          .update({
+            full_name: input.fullName,
+            display_name: input.displayName,
+            phone: input.phone || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", ctx.user.id)
+          .select("full_name, display_name, phone")
+          .single();
+
+        if (profileError) {
+          console.error("Error updating own profile:", profileError);
+          throw new Error("Não foi possível atualizar o perfil");
+        }
+
+        const { error: metadataError } = await supabaseAdmin.auth.admin.updateUserById(
+          ctx.user.id,
+          {
+            user_metadata: {
+              full_name: profile.full_name,
+              display_name: profile.display_name,
+              name: profile.display_name,
+            },
+          },
+        );
+
+        if (metadataError) {
+          console.error("Error syncing auth display name:", metadataError);
+          throw new Error("Perfil salvo, mas o nome de exibição não foi sincronizado");
+        }
+
+        return {
+          ...ctx.user,
+          name: profile.full_name,
+          displayName: profile.display_name,
+          phone: profile.phone,
+        };
+      }),
 
     register: publicProcedure
       .input(z.object({
@@ -23,6 +73,8 @@ export const appRouter = router({
         password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
       }))
       .mutation(async ({ input, ctx }) => {
+        throw new Error("Cadastro legado desativado; use o Supabase Auth");
+        /* Legacy implementation retained temporarily for migration history.
         // Check if user already exists
         const existingUser = await db.getUserByEmail(input.email);
         if (existingUser) {
@@ -44,7 +96,7 @@ export const appRouter = router({
         const cookieOptions = getSessionCookieOptions(ctx.req);
         ctx.res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
 
-        return { success: true };
+        return { success: true }; */
       }),
 
     login: publicProcedure
@@ -53,6 +105,8 @@ export const appRouter = router({
         password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
       }))
       .mutation(async ({ input, ctx }) => {
+        throw new Error("Login legado desativado; use o Supabase Auth");
+        /* Legacy implementation retained temporarily for migration history.
         // Find user by email
         const user = await db.getUserByEmail(input.email);
         if (!user) {
@@ -64,12 +118,10 @@ export const appRouter = router({
         const cookieOptions = getSessionCookieOptions(ctx.req);
         ctx.res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
 
-        return { success: true };
+        return { success: true }; */
       }),
 
-    logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+    logout: publicProcedure.mutation(() => {
       return {
         success: true,
       } as const;
@@ -411,15 +463,47 @@ export const appRouter = router({
         fileName: z.string(),
         mimeType: z.string(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
-          const { storagePut } = await import("./storage");
+          if (!ctx.user) throw new Error("Sessão inválida");
+          const { data: pet, error: petError } = await supabase
+            .from("pets")
+            .select("id")
+            .eq("id", input.petId)
+            .maybeSingle();
+          if (petError) throw petError;
+          if (!pet) throw new Error("Pet não encontrado nesta organização");
+
           const base64Data = input.base64.split(",")[1] || input.base64;
           const buffer = Buffer.from(base64Data, "base64");
+          if (!["image/jpeg", "image/png", "image/webp"].includes(input.mimeType)) {
+            throw new Error("Formato de imagem não permitido");
+          }
+          if (!buffer.length || buffer.length > 5 * 1024 * 1024) {
+            throw new Error("A imagem deve ter no máximo 5 MB");
+          }
+
           const timestamp = Date.now();
-          const fileKey = `pets/${input.petId}/${timestamp}-${input.fileName}`;
-          const { url } = await storagePut(fileKey, buffer, input.mimeType);
-          return { url, success: true };
+          const safeName = input.fileName
+            .normalize("NFKD")
+            .replace(/[^a-zA-Z0-9._-]/g, "-")
+            .slice(-100);
+          const tenant = ctx.user.organizationId ?? `user-${ctx.user.id}`;
+          const fileKey = `${tenant}/pets/${input.petId}/${timestamp}-${safeName}`;
+          const { error: uploadError } = await supabaseAdmin.storage
+            .from("pet-photos")
+            .upload(fileKey, buffer, {
+              contentType: input.mimeType,
+              upsert: false,
+            });
+          if (uploadError) throw uploadError;
+
+          const { data: signed, error: signedError } = await supabaseAdmin.storage
+            .from("pet-photos")
+            .createSignedUrl(fileKey, 60 * 10);
+          if (signedError) throw signedError;
+
+          return { url: signed.signedUrl, key: fileKey, success: true };
         } catch (error) {
           console.error("Error uploading pet photo:", error);
           throw new Error("Erro ao fazer upload da foto");

@@ -13,6 +13,7 @@ import {
   BarChart3,
   Zap,
   Settings,
+  UserCircle,
   LogOut,
   ChevronDown,
   Menu,
@@ -39,7 +40,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [location, setLocation] = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedSections, setExpandedSections] = useState<string[]>([
     "OPERACIONAL",
@@ -76,6 +77,7 @@ export default function DashboardLayout({
     {
       title: "SISTEMA",
       items: [
+        { icon: <UserCircle className="w-5 h-5" />, label: "Meu Perfil", path: "/profile" },
         { icon: <Zap className="w-5 h-5" />, label: "Integrações", path: "/integrations", comingSoon: true },
         { icon: <Settings className="w-5 h-5" />, label: "Configurações", path: "/settings", comingSoon: true },
       ],
@@ -98,9 +100,12 @@ export default function DashboardLayout({
     setLocation(path);
   };
 
-  const handleLogout = () => {
-    // TODO: Implementar logout
-    toast.info("Logout em desenvolvimento");
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch {
+      toast.error("Não foi possível encerrar a sessão");
+    }
   };
 
   return (
@@ -115,14 +120,12 @@ export default function DashboardLayout({
         <div className="p-6 border-b border-sidebar-border flex flex-col items-center justify-center text-center">
           {sidebarOpen && (
             <div className="flex flex-col items-center gap-3 w-full">
-              <img 
-                src="/manus-storage/ChatGPTImage6dejun.de2026,02_50_36_e9df4a2e.png" 
-                alt="GroomerFlow" 
-                className="h-32 w-32 object-contain"
-              />
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-900 text-xl font-bold text-amber-400">
+                DWO
+              </div>
               <div className="flex items-center gap-2 justify-center">
-                <p className="text-sm font-bold tracking-wider" style={{ color: '#C5A059' }}>GROOMER</p>
-                <p className="text-sm font-bold tracking-wider" style={{ color: '#C5A059' }}>FLOW</p>
+                <p className="text-sm font-bold tracking-wider" style={{ color: '#C5A059' }}>DOG WASHER</p>
+                <p className="text-sm font-bold tracking-wider" style={{ color: '#C5A059' }}>ONE</p>
               </div>
             </div>
           )}
@@ -214,17 +217,24 @@ export default function DashboardLayout({
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex-1" />
-          <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => setLocation("/profile")}
+            className="flex items-center gap-4 rounded-lg px-2 py-1.5 text-left transition hover:bg-accent/20"
+            title="Abrir meu perfil"
+          >
             <div className="text-right">
-              <p className="text-sm font-medium text-foreground">{user?.name}</p>
+              <p className="text-sm font-medium text-foreground">
+                {user?.displayName ?? user?.name}
+              </p>
               <p className="text-xs text-muted-foreground">{user?.email}</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center shadow-md">
               <span className="text-sm font-bold text-primary">
-                {user?.name?.charAt(0).toUpperCase()}
+                {(user?.displayName ?? user?.name)?.charAt(0).toUpperCase()}
               </span>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Navigation Buttons */}

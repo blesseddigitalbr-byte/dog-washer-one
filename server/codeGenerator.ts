@@ -4,7 +4,7 @@
  * PET-0001, PET-0002, ... para pets
  */
 
-import { supabase } from "./_core/supabase";
+import { supabase } from "./_core/supabase.js";
 
 /**
  * Gera próximo código de cliente (CLI-XXXX)
