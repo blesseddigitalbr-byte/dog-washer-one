@@ -43,40 +43,40 @@
 }
 
 :root {
-  /* Premium Palette - Unidogwasher Official */
+  /* DWO — Dog Washer One official brand palette */
   --primary: #07111E;
-  --primary-foreground: #ffffff;
-  --sidebar-primary: #C3A059;
+  --primary-foreground: #F8F6F1;
+  --sidebar-primary: #C9A24E;
   --sidebar-primary-foreground: #07111E;
-  --chart-1: #C3A059;
-  --chart-2: #D4B896;
-  --chart-3: #8E6E3E;
-  --chart-4: #C3A059;
-  --chart-5: #F9F7F2;
+  --chart-1: #113A7A;
+  --chart-2: #C9A24E;
+  --chart-3: #D8B768;
+  --chart-4: #07111E;
+  --chart-5: #F8F6F1;
   --radius: 0.65rem;
-  --background: #F9F7F2;
+  --background: #F8F6F1;
   --foreground: #07111E;
   --card: #ffffff;
   --card-foreground: #07111E;
   --popover: #ffffff;
   --popover-foreground: #07111E;
-  --secondary: #C3A059;
-  --secondary-foreground: #07111E;
-  --muted: #e8e8e0;
-  --muted-foreground: #666660;
-  --accent: #C3A059;
+  --secondary: #113A7A;
+  --secondary-foreground: #F8F6F1;
+  --muted: #ECE9E2;
+  --muted-foreground: #5B6472;
+  --accent: #C9A24E;
   --accent-foreground: #07111E;
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
   --border: #e5e5dd;
   --input: #ffffff;
-  --ring: #C3A059;
+  --ring: #C9A24E;
   --sidebar: #07111E;
-  --sidebar-foreground: #f9f7f2;
-  --sidebar-accent: #C3A059;
+  --sidebar-foreground: #F8F6F1;
+  --sidebar-accent: #C9A24E;
   --sidebar-accent-foreground: #07111E;
-  --sidebar-border: #1a2a3a;
-  --sidebar-ring: #C3A059;
+  --sidebar-border: #113A7A;
+  --sidebar-ring: #D8B768;
 }
 
 .dark {
@@ -121,6 +121,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: "Outfit", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),
