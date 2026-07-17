@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
-import { authenticateRequest } from "./context";
-import { supabase, supabaseAdmin, withTenantSupabase } from "./supabase";
+import { authenticateRequest } from "./context.js";
+import { supabase, supabaseAdmin, withTenantSupabase } from "./supabase.js";
 
 const router = Router();
 const BUCKET = "pet-photos";

@@ -1,10 +1,10 @@
 import { z } from "zod";
-import { systemRouter } from "./_core/systemRouter";
-import { protectedProcedure, publicProcedure as anonymousProcedure, router } from "./_core/trpc";
-import * as db from "./db";
-import { supabase, supabaseAdmin } from "./_core/supabase";
-import { generateClientCode, generatePetCode } from "./codeGenerator";
-import { sendAppointmentConfirmationEmail } from "./_core/emailService";
+import { systemRouter } from "./_core/systemRouter.js";
+import { protectedProcedure, publicProcedure as anonymousProcedure, router } from "./_core/trpc.js";
+import * as db from "./db.js";
+import { supabase, supabaseAdmin } from "./_core/supabase.js";
+import { generateClientCode, generatePetCode } from "./codeGenerator.js";
+import { sendAppointmentConfirmationEmail } from "./_core/emailService.js";
 
 // Business routes are authenticated by default. Database RLS applies the
 // organization and unit boundaries to each request.

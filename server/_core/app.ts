@@ -1,9 +1,9 @@
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { appRouter } from "../routers";
-import { createContext } from "./context";
-import healthRouter from "./healthRouter";
-import { registerUploadRoutes } from "./uploadHandler";
+import { appRouter } from "../routers.js";
+import { createContext } from "./context.js";
+import healthRouter from "./healthRouter.js";
+import { registerUploadRoutes } from "./uploadHandler.js";
 
 export function createApiApp() {
   const app = express();
