@@ -120,12 +120,12 @@ export default function DashboardLayout({
         <div className="p-6 border-b border-sidebar-border flex flex-col items-center justify-center text-center">
           {sidebarOpen && (
             <div className="flex flex-col items-center gap-3 w-full">
-              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-900 text-xl font-bold text-amber-400">
+              <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-[#113A7A] text-xl font-bold text-[#D8B768]">
                 DWO
               </div>
               <div className="flex items-center gap-2 justify-center">
-                <p className="text-sm font-bold tracking-wider" style={{ color: '#C5A059' }}>DOG WASHER</p>
-                <p className="text-sm font-bold tracking-wider" style={{ color: '#C5A059' }}>ONE</p>
+                <p className="text-sm font-bold tracking-wider" style={{ color: '#D8B768' }}>DOG WASHER</p>
+                <p className="text-sm font-bold tracking-wider" style={{ color: '#D8B768' }}>ONE</p>
               </div>
             </div>
           )}
