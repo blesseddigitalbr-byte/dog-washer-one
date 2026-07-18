@@ -21,10 +21,11 @@ export default function Login() {
     <main className="min-h-screen bg-[#07111E] px-6 flex items-center justify-center">
       <section className="w-full max-w-md rounded-2xl bg-[#F8F6F1] p-8 shadow-2xl">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#113A7A] text-xl font-bold text-[#D8B768]">
-            DWO
-          </div>
-          <h1 className="text-2xl font-semibold text-[#07111E]">Dog Washer One</h1>
+          <img
+            src="/brand/dwo-horizontal.png"
+            alt="DWO — Dog Washer One"
+            className="mx-auto mb-5 h-auto w-full max-w-[330px]"
+          />
           <p className="mt-2 text-sm text-slate-600">
             Gestão, ensino e operação em uma única plataforma.
           </p>
