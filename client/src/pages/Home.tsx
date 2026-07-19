@@ -1,302 +1,418 @@
 import { useMemo } from "react";
-import { BarChart3, Users, Calendar, TrendingUp, Package } from "lucide-react";
+import { useLocation } from "wouter";
+import {
+  AlertCircle,
+  CalendarDays,
+  Cake,
+  CircleDollarSign,
+  Clock3,
+  Package,
+  PawPrint,
+  Users,
+} from "lucide-react";
 import { trpc } from "@/lib/trpc";
 
-export default function Dashboard() {
-  // Fetch data
-  const { data: packages = [] } = trpc.packages.list.useQuery();
-  const { data: clients = [] } = trpc.clients.list.useQuery();
+const STATUS_LABELS: Record<string, string> = {
+  pending: "Agendado",
+  confirmed: "Confirmado",
+  in_progress: "Em atendimento",
+  completed: "Concluído",
+  cancelled: "Cancelado",
+};
 
-  // Mock data for tables
-  const petBirthdays = [
-    { pet: "Lili", tutor: "Jeane", data: "15/06", status: "Hoje" },
-    { pet: "Mika", tutor: "David", data: "18/06", status: "Em 3 dias" },
-    { pet: "Mia", tutor: "Lizia", data: "22/06", status: "Em 7 dias" },
-  ];
+const STATUS_STYLES: Record<string, string> = {
+  pending: "bg-slate-100 text-slate-700",
+  confirmed: "bg-blue-100 text-blue-700",
+  in_progress: "bg-amber-100 text-amber-800",
+  completed: "bg-green-100 text-green-700",
+  cancelled: "bg-red-100 text-red-700",
+};
 
-  const registrationAlerts = [
-    { client: "João Silva", type: "Pet", action: "Mensagem", status: "Novo" },
-    { client: "Maria Santos", type: "CPF", action: "Mensagem", status: "Incompleto" },
-    { client: "Pedro Costa", type: "Email", action: "Mensagem", status: "Inválido" },
-  ];
+function dateKey(value: string | Date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Sao_Paulo",
+  }).format(new Date(value));
+}
 
-  const renewalRadar = [
-    { pet: "Lili (Tutor: Jeane)", status: "Plano vencido com saldo", action: "Renovar" },
-    { pet: "Mika (Tutor: David)", status: "Vence em até 7 dias", action: "Avisar" },
-    { pet: "T'chala (Tutor: Felipe)", status: "Último banho do ciclo", action: "Agendar" },
-  ];
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+}
 
-  const todaySchedule = [
-    { time: "14:00", pet: "Lili (Tutor: Jeane)", service: "Banho + Tosa", professional: "Ana", status: "Agendado" },
-    { time: "14:30", pet: "Mika (Tutor: David)", service: "Banho", professional: "Carlos", status: "Agendado" },
-    { time: "15:00", pet: "Duda (Tutor: Carla)", service: "Tosa", professional: "Beatriz", status: "Agendado" },
-  ];
+function formatTime(appointment: any) {
+  if (appointment.start_time) return appointment.start_time.slice(0, 5);
+  return new Intl.DateTimeFormat("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "America/Sao_Paulo",
+  }).format(new Date(appointment.appointment_date));
+}
 
-  const modelDogs = [
-    { pet: "Lili", tutor: "Jeane", status: "Ativo", sessions: 12 },
-    { pet: "T'chala", tutor: "Felipe", status: "Ativo", sessions: 8 },
-    { pet: "Mika", tutor: "David", status: "Inativo", sessions: 5 },
-  ];
+function daysUntilBirthday(birthDate: string) {
+  const today = new Date();
+  const source = new Date(`${birthDate}T12:00:00`);
+  let next = new Date(
+    today.getFullYear(),
+    source.getMonth(),
+    source.getDate(),
+    12,
+  );
+  const todayStart = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    today.getDate(),
+    12,
+  );
 
-  // Calculate statistics
-  const stats = useMemo(() => {
-    const activePackages = packages.filter((p: any) => p.status === "active");
-    const totalBaths = activePackages.reduce((sum: number, p: any) => sum + (p.total_baths || 0), 0);
-    const totalGroomings = activePackages.reduce((sum: number, p: any) => sum + (p.total_groomings || 0), 0);
-    const lowBalance = activePackages.filter((p: any) => 
-      (p.total_baths - (p.baths_used || 0)) <= 1 || 
-      (p.total_groomings - (p.groomings_used || 0)) <= 1
+  if (next < todayStart) {
+    next = new Date(
+      today.getFullYear() + 1,
+      source.getMonth(),
+      source.getDate(),
+      12,
     );
-    const totalModelDogs = modelDogs.filter((d) => d.status === "Ativo").length;
+  }
+
+  return Math.round((next.getTime() - todayStart.getTime()) / 86_400_000);
+}
+
+function EmptyState({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex min-h-32 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-5 text-center text-sm text-slate-500">
+      {children}
+    </div>
+  );
+}
+
+export default function Dashboard() {
+  const [, setLocation] = useLocation();
+  const clientsQuery = trpc.clients.list.useQuery();
+  const appointmentsQuery = trpc.appointments.list.useQuery();
+  const packagesQuery = trpc.packages.list.useQuery();
+
+  const clients = clientsQuery.data ?? [];
+  const appointments = appointmentsQuery.data ?? [];
+  const packages = packagesQuery.data ?? [];
+  const loading =
+    clientsQuery.isLoading ||
+    appointmentsQuery.isLoading ||
+    packagesQuery.isLoading;
+
+  const dashboard = useMemo(() => {
+    const today = dateKey(new Date());
+    const pets = clients.flatMap((client: any) =>
+      (client.pets ?? []).map((pet: any) => ({
+        ...pet,
+        tutorName: client.name,
+      })),
+    );
+    const todayAppointments = appointments
+      .filter(
+        (appointment: any) =>
+          dateKey(appointment.appointment_date) === today,
+      )
+      .sort((a: any, b: any) =>
+        formatTime(a).localeCompare(formatTime(b)),
+      );
+    const activeTodayAppointments = todayAppointments.filter(
+      (appointment: any) => appointment.status !== "cancelled",
+    );
+    const expectedValue = activeTodayAppointments.reduce(
+      (total: number, appointment: any) =>
+        total + Number(appointment.service?.price ?? 0),
+      0,
+    );
+    const birthdays = pets
+      .filter((pet: any) => pet.birth_date)
+      .map((pet: any) => ({
+        ...pet,
+        daysUntil: daysUntilBirthday(pet.birth_date),
+      }))
+      .filter((pet: any) => pet.daysUntil <= 30)
+      .sort((a: any, b: any) => a.daysUntil - b.daysUntil)
+      .slice(0, 6);
+    const incompleteClients = clients
+      .map((client: any) => {
+        const missing = [
+          !client.phone && "telefone",
+          !client.email && "e-mail",
+          !client.cpf && "CPF",
+          (client.pets?.length ?? 0) === 0 && "pet",
+        ].filter(Boolean) as string[];
+        return { ...client, missing };
+      })
+      .filter((client: any) => client.missing.length > 0)
+      .slice(0, 6);
 
     return {
-      totalClients: clients.length || 5,
-      totalPets: clients.reduce((sum: number, c: any) => sum + (c.pets?.length || 0), 0) || 6,
-      totalModelDogs: totalModelDogs || 2,
-      activePackages: activePackages.length || 8,
-      appointments: 24,
-      occupancyRate: 87,
-      totalBaths,
-      totalGroomings,
-      lowBalance: lowBalance.length,
-      packages: activePackages,
+      pets,
+      todayAppointments,
+      expectedValue,
+      birthdays,
+      incompleteClients,
+      activePackages: packages.filter(
+        (item: any) => item.status === "active",
+      ).length,
+      confirmedToday: todayAppointments.filter(
+        (item: any) =>
+          item.status === "confirmed" || item.status === "completed",
+      ).length,
     };
-  }, [packages, clients, modelDogs]);
+  }, [appointments, clients, packages]);
 
-  const kpisRow1 = [
-    { title: "Clientes Totais", value: stats.totalClients, icon: Users, color: "text-blue-600" },
-    { title: "Pets Cadastrados", value: stats.totalPets, icon: Package, color: "text-green-600" },
-    { title: "Total de Cães Modelo", value: stats.totalModelDogs, icon: Package, color: "text-amber-600" },
-  ];
+  const queryError =
+    clientsQuery.error || appointmentsQuery.error || packagesQuery.error;
 
-  const kpisRow2 = [
-    { title: "Agendamentos Hoje", value: stats.appointments, icon: Calendar, color: "text-orange-600" },
-    { title: "Planos Ativos", value: stats.activePackages, icon: Package, color: "text-purple-600" },
-    { title: "Taxa de Ocupação", value: `${stats.occupancyRate}%`, icon: BarChart3, color: "text-red-600" },
+  const cards = [
+    {
+      title: "Clientes",
+      value: clients.length,
+      detail: "cadastros ativos na unidade",
+      icon: Users,
+    },
+    {
+      title: "Pets",
+      value: dashboard.pets.length,
+      detail: "pets vinculados aos clientes",
+      icon: PawPrint,
+    },
+    {
+      title: "Agenda de hoje",
+      value: dashboard.todayAppointments.length,
+      detail: `${dashboard.confirmedToday} confirmados ou concluídos`,
+      icon: CalendarDays,
+    },
+    {
+      title: "Valor previsto hoje",
+      value: formatCurrency(dashboard.expectedValue),
+      detail: "serviços agendados, exceto cancelados",
+      icon: CircleDollarSign,
+    },
+    {
+      title: "Planos ativos",
+      value: dashboard.activePackages,
+      detail: "opções disponíveis no catálogo",
+      icon: Package,
+    },
   ];
 
   return (
-    <div className="flex-1 overflow-auto p-6 bg-background">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">Painel de Controle</h1>
-          <p className="text-muted-foreground text-sm">Acompanhe o desempenho do seu negócio em tempo real</p>
+    <div className="flex-1 overflow-auto bg-background p-4 sm:p-6">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#C9A24E]">
+              Visão operacional
+            </p>
+            <h1 className="text-3xl font-bold text-foreground sm:text-4xl">
+              Painel de controle
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Dados reais dos cadastros e atendimentos da unidade atual.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setLocation("/clients")}
+              className="rounded-lg border border-[#113A7A] px-4 py-2 text-sm font-semibold text-[#113A7A] transition hover:bg-[#113A7A]/5"
+            >
+              Cadastrar cliente
+            </button>
+            <button
+              type="button"
+              onClick={() => setLocation("/appointments")}
+              className="rounded-lg bg-[#113A7A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#07111E]"
+            >
+              Novo agendamento
+            </button>
+          </div>
         </div>
 
-        {/* KPIs Row 1 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-          {kpisRow1.map((kpi) => {
-            const Icon = kpi.icon;
+        {queryError && (
+          <div className="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            <AlertCircle className="h-5 w-5 shrink-0" />
+            Não foi possível carregar todos os dados do painel. Atualize a
+            página ou tente novamente.
+          </div>
+        )}
+
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          {cards.map((card) => {
+            const Icon = card.icon;
             return (
               <div
-                key={kpi.title}
-                className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-l-accent"
+                key={card.title}
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-2 font-bold uppercase tracking-wider">
-                      {kpi.title}
-                    </p>
-                    <p className="text-3xl font-bold text-foreground">
-                      {kpi.value}
-                    </p>
-                  </div>
-                  <div className="bg-accent/10 p-3 rounded-lg">
-                    <Icon className={`w-6 h-6 ${kpi.color}`} />
+                <div className="mb-4 flex items-center justify-between">
+                  <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                    {card.title}
+                  </p>
+                  <div className="rounded-lg bg-[#D8B768]/20 p-2 text-[#113A7A]">
+                    <Icon className="h-5 w-5" />
                   </div>
                 </div>
+                <p className="text-2xl font-bold text-[#07111E]">
+                  {loading ? "—" : card.value}
+                </p>
+                <p className="mt-1 text-xs text-slate-500">{card.detail}</p>
               </div>
             );
           })}
         </div>
 
-        {/* KPIs Row 2 */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {kpisRow2.map((kpi) => {
-            const Icon = kpi.icon;
-            return (
-              <div
-                key={kpi.title}
-                className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 border-l-4 border-l-accent"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-2 font-bold uppercase tracking-wider">
-                      {kpi.title}
-                    </p>
-                    <p className="text-3xl font-bold text-foreground">
-                      {kpi.value}
-                    </p>
-                  </div>
-                  <div className="bg-accent/10 p-3 rounded-lg">
-                    <Icon className={`w-6 h-6 ${kpi.color}`} />
-                  </div>
-                </div>
+        <div className="mb-6 grid grid-cols-1 gap-6 xl:grid-cols-3">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:col-span-2">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-[#07111E]">
+                  Agenda de hoje
+                </h2>
+                <p className="text-sm text-slate-500">
+                  Ordem cronológica dos atendimentos
+                </p>
               </div>
-            );
-          })}
-        </div>
-
-        {/* Tables Row 1 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Aniversariantes */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-l-accent">
-            <h2 className="text-lg font-bold text-foreground mb-4">Aniversariantes Pets</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-2 px-2 font-semibold text-foreground">Pet e Tutor</th>
-                    <th className="text-left py-2 px-2 font-semibold text-foreground">Data</th>
-                    <th className="text-left py-2 px-2 font-semibold text-foreground">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {petBirthdays.map((pet, i) => (
-                    <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-2 px-2">{pet.pet} ({pet.tutor})</td>
-                      <td className="py-2 px-2">{pet.data}</td>
-                      <td className="py-2 px-2">
-                        <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-semibold">
-                          {pet.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <Clock3 className="h-5 w-5 text-[#C9A24E]" />
             </div>
-          </div>
 
-          {/* Alertas de Cadastro */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-l-accent">
-            <h2 className="text-lg font-bold text-foreground mb-4">Alertas de Cadastro</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-2 px-2 font-semibold text-foreground">Cliente</th>
-                    <th className="text-left py-2 px-2 font-semibold text-foreground">Tipo</th>
-                    <th className="text-left py-2 px-2 font-semibold text-foreground">Ação</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {registrationAlerts.map((alert, i) => (
-                    <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-2 px-2">{alert.client}</td>
-                      <td className="py-2 px-2">{alert.type}</td>
-                      <td className="py-2 px-2">
-                        <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold cursor-pointer">
-                          {alert.action}
-                        </span>
-                      </td>
+            {dashboard.todayAppointments.length === 0 ? (
+              <EmptyState>
+                Nenhum atendimento agendado para hoje.
+              </EmptyState>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[680px] text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
+                      <th className="px-2 py-3">Horário</th>
+                      <th className="px-2 py-3">Pet e tutor</th>
+                      <th className="px-2 py-3">Serviço</th>
+                      <th className="px-2 py-3">Profissional</th>
+                      <th className="px-2 py-3">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {dashboard.todayAppointments.map((appointment: any) => (
+                      <tr
+                        key={appointment.id}
+                        className="border-b border-slate-100 last:border-0"
+                      >
+                        <td className="px-2 py-3 font-bold text-[#113A7A]">
+                          {formatTime(appointment)}
+                        </td>
+                        <td className="px-2 py-3">
+                          <p className="font-semibold text-[#07111E]">
+                            {appointment.pet?.name ?? "Pet não informado"}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {appointment.client?.nome ?? "Tutor não informado"}
+                          </p>
+                        </td>
+                        <td className="px-2 py-3">
+                          {appointment.service?.name ?? "—"}
+                        </td>
+                        <td className="px-2 py-3">
+                          {appointment.professional?.name ?? "A definir"}
+                        </td>
+                        <td className="px-2 py-3">
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                              STATUS_STYLES[appointment.status] ??
+                              "bg-slate-100 text-slate-700"
+                            }`}
+                          >
+                            {STATUS_LABELS[appointment.status] ??
+                              appointment.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-[#07111E]">
+                  Próximos aniversários
+                </h2>
+                <p className="text-sm text-slate-500">Pets nos próximos 30 dias</p>
+              </div>
+              <Cake className="h-5 w-5 text-[#C9A24E]" />
             </div>
-          </div>
-        </div>
 
-        {/* Tables Row 2 */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* Radar de Renovação */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-l-accent">
-            <h2 className="text-lg font-bold text-foreground mb-4">Radar de Renovação</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-2 px-2 font-semibold text-foreground">Pet e Tutor</th>
-                    <th className="text-left py-2 px-2 font-semibold text-foreground">Status</th>
-                    <th className="text-left py-2 px-2 font-semibold text-foreground">Ação</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {renewalRadar.map((item, i) => (
-                    <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-2 px-2 text-xs">{item.pet}</td>
-                      <td className="py-2 px-2 text-xs">{item.status}</td>
-                      <td className="py-2 px-2">
-                        <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-semibold cursor-pointer">
-                          {item.action}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Agenda do Dia */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-l-accent">
-            <h2 className="text-lg font-bold text-foreground mb-4">Agenda do Dia</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-2 px-2 font-semibold text-foreground">Horário</th>
-                    <th className="text-left py-2 px-2 font-semibold text-foreground">Pet e Tutor</th>
-                    <th className="text-left py-2 px-2 font-semibold text-foreground">Profissional</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {todaySchedule.map((appt, i) => (
-                    <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-2 px-2 font-semibold">{appt.time}</td>
-                      <td className="py-2 px-2 text-xs">{appt.pet}</td>
-                      <td className="py-2 px-2 text-xs">{appt.professional}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* Cães Modelo Widget */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border-l-4 border-l-accent">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-              <Package className="w-6 h-6 text-accent" />
-              Cães Modelo
-            </h2>
-            <span className="text-sm font-semibold text-accent bg-accent/10 px-3 py-1 rounded-full">
-              {modelDogs.filter((d) => d.status === "Ativo").length} ativo{modelDogs.filter((d) => d.status === "Ativo").length !== 1 ? 's' : ''}
-            </span>
-          </div>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-2 px-2 font-semibold text-foreground">Pet e Tutor</th>
-                  <th className="text-left py-2 px-2 font-semibold text-foreground">Status</th>
-                  <th className="text-left py-2 px-2 font-semibold text-foreground">Sessões</th>
-                </tr>
-              </thead>
-              <tbody>
-                {modelDogs.map((dog, i) => (
-                  <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="py-2 px-2">{dog.pet} ({dog.tutor})</td>
-                    <td className="py-2 px-2">
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                        dog.status === "Ativo"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100 text-gray-700"
-                      }`}>
-                        {dog.status}
-                      </span>
-                    </td>
-                    <td className="py-2 px-2 font-semibold">{dog.sessions}</td>
-                  </tr>
+            {dashboard.birthdays.length === 0 ? (
+              <EmptyState>
+                Nenhum aniversário de pet nos próximos 30 dias.
+              </EmptyState>
+            ) : (
+              <div className="space-y-3">
+                {dashboard.birthdays.map((pet: any) => (
+                  <div
+                    key={pet.id}
+                    className="flex items-center justify-between rounded-xl bg-slate-50 p-3"
+                  >
+                    <div>
+                      <p className="font-semibold text-[#07111E]">{pet.name}</p>
+                      <p className="text-xs text-slate-500">
+                        Tutor: {pet.tutorName}
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-[#D8B768]/20 px-2.5 py-1 text-xs font-semibold text-[#113A7A]">
+                      {pet.daysUntil === 0
+                        ? "Hoje"
+                        : pet.daysUntil === 1
+                          ? "Amanhã"
+                          : `Em ${pet.daysUntil} dias`}
+                    </span>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+            )}
+          </section>
         </div>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-[#07111E]">
+                Cadastros que precisam de atenção
+              </h2>
+              <p className="text-sm text-slate-500">
+                Clientes sem dados essenciais ou sem pet vinculado
+              </p>
+            </div>
+            <AlertCircle className="h-5 w-5 text-[#C9A24E]" />
+          </div>
+
+          {dashboard.incompleteClients.length === 0 ? (
+            <EmptyState>
+              Todos os clientes possuem os dados essenciais preenchidos.
+            </EmptyState>
+          ) : (
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {dashboard.incompleteClients.map((client: any) => (
+                <button
+                  key={client.id}
+                  type="button"
+                  onClick={() => setLocation("/clients")}
+                  className="rounded-xl border border-slate-200 p-4 text-left transition hover:border-[#C9A24E] hover:bg-[#F8F6F1]"
+                >
+                  <p className="font-semibold text-[#07111E]">{client.name}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Falta: {client.missing.join(", ")}
+                  </p>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
