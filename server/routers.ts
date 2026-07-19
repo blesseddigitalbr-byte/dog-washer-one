@@ -153,6 +153,9 @@ export const appRouter = router({
           email: cliente.email,
           phone: cliente.phone,
           cpf: cliente.cpf,
+          isVip: cliente.is_vip,
+          isModelDog: cliente.is_model_dog,
+          status: cliente.status,
           pets: (cliente.pets || []).map((pet: any) => ({
             ...pet,
             displayName: `${pet.name} (${cliente.nome})`,
@@ -191,6 +194,9 @@ export const appRouter = router({
             email: cliente.email,
             phone: cliente.phone,
             cpf: cliente.cpf,
+            isVip: cliente.is_vip,
+            isModelDog: cliente.is_model_dog,
+            status: cliente.status,
             pets: (cliente.pets || []).map((pet: any) => ({
               ...pet,
               displayName: `${pet.name} (${cliente.nome})`,
