@@ -51,6 +51,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
   const [studentPermissions, setStudentPermissions] = useState<any>(null);
   const [appointmentDate, setAppointmentDate] = useState("");
   const [startTime, setStartTime] = useState("");
+  const [recurrenceRule, setRecurrenceRule] = useState<"none" | "weekly" | "biweekly" | "monthly">("none");
   const [notes, setNotes] = useState("");
 
   // Mutations
@@ -126,21 +127,27 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
     }
 
     try {
-      // Criar um agendamento com um único pet
+      const startsAt = new Date(`${appointmentDate}T${startTime}:00`);
+      if (Number.isNaN(startsAt.getTime())) {
+        toast.error("Data ou horário inválido");
+        return;
+      }
+      const professionalId =
+        executedBy === "professional"
+          ? selectedProfessional
+          : studentPermissions?.student?.instructor_id;
+      if (!professionalId) {
+        toast.error("O aluno precisa ter um supervisor vinculado");
+        return;
+      }
+
       const appointmentPayload = {
-        organizationId: "550e8400-e29b-41d4-a716-446655440000",
-        unitId: "550e8400-e29b-41d4-a716-446655440001",
         clientId: selectedClient,
         petId: selectedPet,
         serviceId: selectedService,
-        professionalId:
-          executedBy === "professional"
-            ? selectedProfessional
-            : studentPermissions?.student?.instructor_id || "550e8400-e29b-41d4-a716-446655440002",
-        appointmentDate: new Date(appointmentDate).toISOString(),
-        startTime,
-        durationMinutes: 60,
-        status: "pending",
+        professionalId,
+        appointmentDate: startsAt.toISOString(),
+        recurrenceRule,
         notes,
         sendEmail: true,
       };
@@ -158,7 +165,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
       onClose();
     } catch (error) {
       console.error("Erro ao criar agendamento:", error);
-      toast.error("Erro ao criar agendamento");
+      toast.error(error instanceof Error ? error.message : "Erro ao criar agendamento");
     }
   };
 
@@ -431,6 +438,23 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
             required
           />
         </div>
+      </div>
+
+      <div>
+        <Label htmlFor="recurrence" className="text-base font-semibold">
+          Recorrência
+        </Label>
+        <Select value={recurrenceRule} onValueChange={(value: typeof recurrenceRule) => setRecurrenceRule(value)}>
+          <SelectTrigger id="recurrence" className="mt-2">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Não se repete</SelectItem>
+            <SelectItem value="weekly">Toda semana</SelectItem>
+            <SelectItem value="biweekly">A cada 15 dias</SelectItem>
+            <SelectItem value="monthly">Todo mês</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Observações */}
