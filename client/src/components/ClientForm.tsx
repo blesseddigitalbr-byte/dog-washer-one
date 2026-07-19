@@ -32,10 +32,15 @@ export function ClientForm({
     address: clientData?.logradouro || "",
     number: clientData?.numero || "",
     complement: clientData?.complemento || "",
+    neighborhood: clientData?.bairro || "",
     city: clientData?.cidade || "",
     state: clientData?.uf || "",
     isVip: clientData?.is_vip || false,
     isModelDog: clientData?.is_model_dog || false,
+    petName: "",
+    petBreed: "",
+    petWeight: "",
+    petSize: "",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -61,10 +66,15 @@ export function ClientForm({
         address: clientData.logradouro || "",
         number: clientData.numero || "",
         complement: clientData.complemento || "",
+        neighborhood: clientData.bairro || "",
         city: clientData.cidade || "",
         state: clientData.uf || "",
         isVip: clientData.is_vip || false,
         isModelDog: clientData.is_model_dog || false,
+        petName: "",
+        petBreed: "",
+        petWeight: "",
+        petSize: "",
       });
     }
   }, [clientData, isOpen]);
@@ -90,6 +100,17 @@ export function ClientForm({
       newErrors.cpf = "CPF deve estar no formato: 000.000.000-00";
     }
 
+    const hasPetData = Boolean(
+      formData.petName || formData.petBreed || formData.petWeight || formData.petSize,
+    );
+    if (!isEditing && hasPetData) {
+      if (!formData.petName.trim()) newErrors.petName = "Nome do pet é obrigatório";
+      if (!formData.petBreed.trim()) newErrors.petBreed = "Raça é obrigatória";
+      if (!formData.petWeight.trim() || Number(formData.petWeight) <= 0) {
+        newErrors.petWeight = "Informe um peso válido";
+      }
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -109,6 +130,7 @@ export function ClientForm({
           setFormData((prev) => ({
             ...prev,
             address: data.logradouro || "",
+            neighborhood: data.bairro || "",
             city: data.localidade || "",
             state: data.uf || "",
             complement: data.complemento || "",
@@ -143,10 +165,22 @@ export function ClientForm({
         logradouro: formData.address,
         numero: formData.number,
         complemento: formData.complement,
+        bairro: formData.neighborhood,
         cidade: formData.city,
         uf: formData.state,
         isVip: formData.isVip,
         isModelDog: formData.isModelDog,
+        ...(!isEditing && formData.petName
+          ? {
+              pet: {
+                name: formData.petName,
+                breed: formData.petBreed,
+                weight: formData.petWeight,
+                size: formData.petSize || undefined,
+                species: "Cão",
+              },
+            }
+          : {}),
       };
 
       if (isEditing && clientId) {
@@ -177,10 +211,15 @@ export function ClientForm({
         address: "",
         number: "",
         complement: "",
+        neighborhood: "",
         city: "",
         state: "",
         isVip: false,
         isModelDog: false,
+        petName: "",
+        petBreed: "",
+        petWeight: "",
+        petSize: "",
       });
       setErrors({});
       onClose();
@@ -206,10 +245,15 @@ export function ClientForm({
       address: "",
       number: "",
       complement: "",
+      neighborhood: "",
       city: "",
       state: "",
       isVip: false,
       isModelDog: false,
+      petName: "",
+      petBreed: "",
+      petWeight: "",
+      petSize: "",
     });
     setErrors({});
     onClose();
@@ -399,6 +443,21 @@ export function ClientForm({
             {/* Bairro, Cidade e UF */}
             <div className="grid grid-cols-3 gap-4">
               <div>
+                <Label htmlFor="neighborhood" className="text-sm font-semibold text-foreground">
+                  Bairro
+                </Label>
+                <Input
+                  id="neighborhood"
+                  type="text"
+                  placeholder="Bairro"
+                  value={formData.neighborhood}
+                  onChange={(e) => setFormData({ ...formData, neighborhood: e.target.value })}
+                  className="mt-1"
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div>
                 <Label htmlFor="city" className="text-sm font-semibold text-foreground">
                   Cidade
                 </Label>
@@ -428,10 +487,71 @@ export function ClientForm({
                   disabled={isLoading}
                 />
               </div>
-
-              <div />
             </div>
           </div>
+
+          {!isEditing && (
+            <div className="rounded-lg border border-accent/20 bg-accent/5 p-4">
+              <div className="mb-3">
+                <h3 className="font-semibold text-sm text-foreground">Primeiro pet</h3>
+                <p className="text-xs text-muted-foreground">
+                  Opcional. Preencha para salvar tutor, endereço e pet juntos.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="petName">Nome do pet</Label>
+                  <Input
+                    id="petName"
+                    value={formData.petName}
+                    onChange={(e) => setFormData({ ...formData, petName: e.target.value })}
+                    className={errors.petName ? "border-red-500 mt-1" : "mt-1"}
+                    placeholder="Ex.: Thor"
+                    disabled={isLoading}
+                  />
+                  {errors.petName && <p className="text-xs text-red-600 mt-1">{errors.petName}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="petBreed">Raça</Label>
+                  <Input
+                    id="petBreed"
+                    value={formData.petBreed}
+                    onChange={(e) => setFormData({ ...formData, petBreed: e.target.value })}
+                    className={errors.petBreed ? "border-red-500 mt-1" : "mt-1"}
+                    placeholder="Ex.: Shih Tzu"
+                    disabled={isLoading}
+                  />
+                  {errors.petBreed && <p className="text-xs text-red-600 mt-1">{errors.petBreed}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="petWeight">Peso (kg)</Label>
+                  <Input
+                    id="petWeight"
+                    type="number"
+                    min="0.1"
+                    step="0.1"
+                    value={formData.petWeight}
+                    onChange={(e) => setFormData({ ...formData, petWeight: e.target.value })}
+                    className={errors.petWeight ? "border-red-500 mt-1" : "mt-1"}
+                    placeholder="Ex.: 7,5"
+                    disabled={isLoading}
+                  />
+                  {errors.petWeight && <p className="text-xs text-red-600 mt-1">{errors.petWeight}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="petSize">Porte</Label>
+                  <Input
+                    id="petSize"
+                    value={formData.petSize}
+                    onChange={(e) => setFormData({ ...formData, petSize: e.target.value })}
+                    className="mt-1"
+                    placeholder="Pequeno, médio ou grande"
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Checkboxes VIP e Modelo lado a lado */}
           <div className="grid grid-cols-2 gap-6 pt-4 bg-accent/5 p-4 rounded-lg">

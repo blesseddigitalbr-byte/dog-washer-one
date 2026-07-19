@@ -228,6 +228,7 @@ export function PetForm({
 
       const submitData = {
         ...formData,
+        photo: photoUrl,
         vaccines: JSON.stringify(formData.vaccines),
         clientId,
       };

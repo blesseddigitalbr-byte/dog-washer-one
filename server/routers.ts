@@ -282,6 +282,13 @@ export const appRouter = router({
           email: cliente.email,
           phone: cliente.phone,
           cpf: cliente.cpf,
+          cep: cliente.cep,
+          logradouro: cliente.logradouro,
+          numero: cliente.numero,
+          complemento: cliente.complemento,
+          bairro: cliente.bairro,
+          cidade: cliente.cidade,
+          uf: cliente.uf,
           isVip: cliente.is_vip,
           isModelDog: cliente.is_model_dog,
           status: cliente.status,
@@ -323,6 +330,13 @@ export const appRouter = router({
             email: cliente.email,
             phone: cliente.phone,
             cpf: cliente.cpf,
+            cep: cliente.cep,
+            logradouro: cliente.logradouro,
+            numero: cliente.numero,
+            complemento: cliente.complemento,
+            bairro: cliente.bairro,
+            cidade: cliente.cidade,
+            uf: cliente.uf,
             isVip: cliente.is_vip,
             isModelDog: cliente.is_model_dog,
             status: cliente.status,
@@ -348,13 +362,24 @@ export const appRouter = router({
         logradouro: z.string().optional(),
         numero: z.string().optional(),
         complemento: z.string().optional(),
+        bairro: z.string().optional(),
         cidade: z.string().optional(),
         uf: z.string().optional(),
         isVip: z.boolean().default(false),
         isModelDog: z.boolean().default(false),
+        pet: z.object({
+          name: z.string().trim().min(1, "Nome do pet é obrigatório"),
+          breed: z.string().trim().min(1, "Raça é obrigatória"),
+          weight: z.string().trim().min(1, "Peso é obrigatório"),
+          size: z.string().trim().optional(),
+          species: z.string().trim().optional(),
+        }).optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
+          if (!ctx.user?.organizationId || !ctx.user.unitId) {
+            throw new Error("Selecione uma unidade ativa");
+          }
           // Gerar código de cliente automaticamente
           const clientCode = await generateClientCode();
           
@@ -370,6 +395,7 @@ export const appRouter = router({
               logradouro: input.logradouro || null,
               numero: input.numero || null,
               complemento: input.complemento || null,
+              bairro: input.bairro || null,
               cidade: input.cidade || null,
               uf: input.uf || null,
               is_vip: input.isVip,
@@ -379,10 +405,60 @@ export const appRouter = router({
             .single();
 
           if (error) throw error;
-          return data;
+
+          const addressProvided = Boolean(
+            input.cep || input.logradouro || input.numero || input.complemento ||
+            input.bairro || input.cidade || input.uf,
+          );
+          if (addressProvided) {
+            const { error: addressError } = await supabase
+              .from("client_addresses")
+              .insert({
+                organization_id: ctx.user.organizationId,
+                unit_id: ctx.user.unitId,
+                client_id: data.id,
+                cep: input.cep || null,
+                logradouro: input.logradouro || null,
+                numero: input.numero || null,
+                complemento: input.complemento || null,
+                bairro: input.bairro || null,
+                cidade: input.cidade || null,
+                uf: input.uf || null,
+              });
+            if (addressError) {
+              await supabase.from("clientes").delete().eq("id", data.id);
+              throw addressError;
+            }
+          }
+
+          let pet = null;
+          if (input.pet) {
+            const petCode = await generatePetCode();
+            const { data: createdPet, error: petError } = await supabase
+              .from("pets")
+              .insert({
+                id_pet: petCode,
+                client_id: data.id,
+                name: input.pet.name,
+                breed: input.pet.breed,
+                weight: input.pet.weight,
+                size: input.pet.size || null,
+                species: input.pet.species || "Cão",
+                status: "active",
+              })
+              .select()
+              .single();
+            if (petError) {
+              await supabase.from("clientes").delete().eq("id", data.id);
+              throw petError;
+            }
+            pet = createdPet;
+          }
+
+          return { ...data, pet };
         } catch (error) {
           console.error("Error creating client:", error);
-          throw new Error("Erro ao criar cliente");
+          throw new Error(error instanceof Error ? error.message : "Erro ao criar cliente");
         }
       }),
 
@@ -397,6 +473,7 @@ export const appRouter = router({
         logradouro: z.string().optional(),
         numero: z.string().optional(),
         complemento: z.string().optional(),
+        bairro: z.string().optional(),
         cidade: z.string().optional(),
         uf: z.string().optional(),
         cep: z.string().optional(),
@@ -416,6 +493,7 @@ export const appRouter = router({
               logradouro: updateData.logradouro || null,
               numero: updateData.numero || null,
               complemento: updateData.complemento || null,
+              bairro: updateData.bairro || null,
               cidade: updateData.cidade || null,
               uf: updateData.uf || null,
               cep: updateData.cep || null,
@@ -427,6 +505,24 @@ export const appRouter = router({
             .single();
 
           if (error) throw error;
+
+          const { error: addressError } = await supabase
+            .from("client_addresses")
+            .upsert({
+              organization_id: data.organization_id,
+              unit_id: data.unit_id,
+              client_id: data.id,
+              label: "Principal",
+              cep: updateData.cep || null,
+              logradouro: updateData.logradouro || null,
+              numero: updateData.numero || null,
+              complemento: updateData.complemento || null,
+              bairro: updateData.bairro || null,
+              cidade: updateData.cidade || null,
+              uf: updateData.uf || null,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: "client_id,label" });
+          if (addressError) throw addressError;
           return data;
         } catch (error) {
           console.error("Error updating client:", error);
