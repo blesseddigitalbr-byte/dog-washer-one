@@ -119,11 +119,11 @@ export default function DashboardLayout({
         {/* Header */}
         <div className="p-6 border-b border-sidebar-border flex flex-col items-center justify-center text-center">
           {sidebarOpen && (
-            <div className="w-full rounded-xl bg-[#F8F6F1] px-3 py-4">
+            <div className="flex w-full items-center justify-center py-2">
               <img
-                src="/brand/dwo-horizontal.png"
-                alt="DWO — Dog Washer One"
-                className="mx-auto h-auto w-full"
+                src="/brand/dwo-icon.png"
+                alt="DWO"
+                className="h-24 w-24 object-contain"
               />
             </div>
           )}
