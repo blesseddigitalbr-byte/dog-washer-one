@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
+import UnitSwitcher from "@/components/UnitSwitcher";
 import {
   LayoutDashboard,
   Calendar,
@@ -70,7 +71,7 @@ export default function DashboardLayout({
       items: [
         { icon: <TrendingUp className="w-5 h-5" />, label: "Financeiro", path: "/financial", comingSoon: true },
         { icon: <Users2 className="w-5 h-5" />, label: "Equipe", path: "/team", comingSoon: true },
-        { icon: <LayoutDashboard className="w-5 h-5" />, label: "Unidades", path: "/units", comingSoon: true },
+        { icon: <LayoutDashboard className="w-5 h-5" />, label: "Unidades", path: "/units" },
         { icon: <BarChart3 className="w-5 h-5" />, label: "Relatórios", path: "/reports", comingSoon: true },
       ],
     },
@@ -214,7 +215,9 @@ export default function DashboardLayout({
           >
             <Menu className="w-6 h-6" />
           </button>
-          <div className="flex-1" />
+          <div className="min-w-0 flex-1">
+            <UnitSwitcher />
+          </div>
           <button
             type="button"
             onClick={() => setLocation("/profile")}
