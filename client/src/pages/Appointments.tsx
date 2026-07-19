@@ -13,6 +13,7 @@ import { trpc } from "@/lib/trpc";
 import { ChevronLeft, ChevronRight, Calendar, List } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, addDays, isSameDay, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 type ViewType = "calendar" | "week" | "day" | "agenda";
 
@@ -44,6 +45,24 @@ export default function Appointments() {
   const { data: appointments = [] } = trpc.appointments.list.useQuery();
   const { data: clients = [] } = trpc.clients.list.useQuery();
   const { data: services = [] } = trpc.services.list.useQuery();
+  const utils = trpc.useUtils();
+  const statusMutation = trpc.appointments.setStatus.useMutation({
+    onSuccess: async () => {
+      await utils.appointments.list.invalidate();
+      toast.success("Status atualizado");
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
+  const advanceStatus = (appointment: any) => {
+    const nextStatus: Record<string, "confirmed" | "in_progress" | "completed"> = {
+      pending: "confirmed",
+      confirmed: "in_progress",
+      in_progress: "completed",
+    };
+    const status = nextStatus[appointment.status];
+    if (status) statusMutation.mutate({ id: appointment.id, status });
+  };
 
   // Create pet map for quick lookup
   const petMap = useMemo(() => {
@@ -338,12 +357,18 @@ export default function Appointments() {
                       <div className="text-sm text-gray-600 mt-2">{apt.notes}</div>
                     )}
                     <div className="flex gap-2 mt-3">
-                      <Button size="sm" variant="outline">
-                        ✎ Editar
-                      </Button>
-                      {apt.status === "pending" && (
-                        <Button size="sm" className="bg-teal-600 hover:bg-teal-700 text-white">
-                          Confirmar Agora
+                      {["pending", "confirmed", "in_progress"].includes(apt.status) && (
+                        <Button
+                          size="sm"
+                          className="bg-[#113A7A] hover:bg-[#07111E] text-white"
+                          disabled={statusMutation.isPending}
+                          onClick={() => advanceStatus(apt)}
+                        >
+                          {apt.status === "pending"
+                            ? "Confirmar"
+                            : apt.status === "confirmed"
+                              ? "Iniciar atendimento"
+                              : "Concluir atendimento"}
                         </Button>
                       )}
                     </div>
@@ -439,6 +464,14 @@ export default function Appointments() {
           >
             Dia
           </Button>
+          <Button
+            variant={viewType === "agenda" ? "default" : "outline"}
+            onClick={() => setViewType("agenda")}
+            size="sm"
+          >
+            <List size={16} className="mr-2" />
+            Agenda
+          </Button>
         </div>
 
         <div className="flex gap-2 ml-auto">
@@ -468,6 +501,7 @@ export default function Appointments() {
         {viewType === "calendar" && renderCalendar()}
         {viewType === "week" && renderWeek()}
         {viewType === "day" && renderDay()}
+        {viewType === "agenda" && renderAgenda()}
       </div>
 
       {/* Form Dialog */}
