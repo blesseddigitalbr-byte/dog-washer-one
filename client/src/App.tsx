@@ -16,6 +16,7 @@ import { PlansPage } from "./pages/PlansPage";
 import Packages from "./pages/Packages";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
+import Units from "./pages/Units";
 
 function Router() {
   const { user, loading } = useAuth();
@@ -40,6 +41,7 @@ function Router() {
             <Route path="/plans" component={PlansPage} />
             <Route path="/packages" component={Packages} />
             <Route path="/profile" component={Profile} />
+            <Route path="/units" component={Units} />
             <Route path="/404" component={NotFound} />
             <Route component={NotFound} />
           </Switch>

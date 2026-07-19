@@ -128,6 +128,135 @@ export const appRouter = router({
     }),
   }),
 
+  workspace: router({
+    context: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user) throw new Error("Sessão inválida");
+
+      const { organizationId, unitId } = ctx.user;
+
+      if (!organizationId) {
+        return {
+          organization: null,
+          currentUnit: null,
+          units: [],
+          legalEntities: [],
+        };
+      }
+
+      const [
+        organizationResult,
+        accessResult,
+        legalEntitiesResult,
+        businessAreasResult,
+      ] = await Promise.all([
+        supabase
+          .from("organizations")
+          .select("id, name, trading_name")
+          .eq("id", organizationId)
+          .maybeSingle(),
+        supabase
+          .from("user_unit_access")
+          .select(`
+            unit_id,
+            access_role,
+            is_default,
+            unit:units(
+              id,
+              legal_entity_id,
+              name,
+              code,
+              cnpj,
+              razao_social,
+              city,
+              state,
+              operation_mode,
+              ownership_model,
+              status,
+              is_active
+            )
+          `)
+          .eq("active", true),
+        supabase
+          .from("legal_entities")
+          .select(`
+            id,
+            company_name,
+            trading_name,
+            tax_id,
+            entity_kind,
+            city,
+            state,
+            status,
+            is_active
+          `)
+          .eq("organization_id", organizationId)
+          .order("trading_name", { ascending: true }),
+        supabase
+          .from("unit_business_areas")
+          .select("unit_id, business_area, cost_center_code, active")
+          .eq("organization_id", organizationId)
+          .eq("active", true),
+      ]);
+
+      const firstError =
+        organizationResult.error ||
+        accessResult.error ||
+        legalEntitiesResult.error ||
+        businessAreasResult.error;
+      if (firstError) {
+        console.error("Error loading workspace context:", firstError);
+        throw new Error("Não foi possível carregar as empresas e unidades");
+      }
+
+      const businessAreasByUnit = new Map<string, typeof businessAreasResult.data>();
+      for (const area of businessAreasResult.data ?? []) {
+        const current = businessAreasByUnit.get(area.unit_id) ?? [];
+        current.push(area);
+        businessAreasByUnit.set(area.unit_id, current);
+      }
+
+      const units = (accessResult.data ?? [])
+        .map((access: any) => {
+          const unit = Array.isArray(access.unit) ? access.unit[0] : access.unit;
+          if (!unit) return null;
+          return {
+            ...unit,
+            accessRole: access.access_role,
+            isDefault: access.is_default,
+            businessAreas: businessAreasByUnit.get(unit.id) ?? [],
+          };
+        })
+        .filter(Boolean)
+        .sort((a: any, b: any) => a.name.localeCompare(b.name, "pt-BR"));
+
+      return {
+        organization: organizationResult.data,
+        currentUnit:
+          units.find((unit: any) => unit.id === unitId) ??
+          units.find((unit: any) => unit.isDefault) ??
+          units[0] ??
+          null,
+        units,
+        legalEntities: legalEntitiesResult.data ?? [],
+      };
+    }),
+
+    switchUnit: protectedProcedure
+      .input(z.object({ unitId: z.string().uuid() }))
+      .mutation(async ({ input }) => {
+        const { data, error } = await supabase.rpc("switch_active_unit", {
+          target_unit_id: input.unitId,
+        });
+
+        if (error) {
+          console.error("Error switching active unit:", error);
+          throw new Error("Você não tem acesso a esta unidade");
+        }
+
+        return { unitId: data as string };
+      }),
+  }),
+
   // Clients & Pets routers
   clients: router({
     // List all clients with their associated pets
