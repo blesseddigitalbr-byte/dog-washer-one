@@ -9,8 +9,12 @@ import {
   Package,
   PawPrint,
   Users,
+  MessageCircle,
+  ShieldAlert,
+  ArrowRight,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "Agendado",
@@ -48,6 +52,13 @@ function formatTime(appointment: any) {
     minute: "2-digit",
     timeZone: "America/Sao_Paulo",
   }).format(new Date(appointment.appointment_date));
+}
+
+function whatsappLink(phone: string | null | undefined, message: string) {
+  const digits = (phone ?? "").replace(/\D/g, "");
+  if (!digits) return null;
+  const number = digits.startsWith("55") ? digits : `55${digits}`;
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }
 
 function daysUntilBirthday(birthDate: string) {
@@ -91,14 +102,25 @@ export default function Dashboard() {
   const clientsQuery = trpc.clients.list.useQuery();
   const appointmentsQuery = trpc.appointments.list.useQuery();
   const packagesQuery = trpc.packages.list.useQuery();
+  const clientPackagesQuery = trpc.clientPackages.list.useQuery();
+  const utils = trpc.useUtils();
+  const statusMutation = trpc.appointments.setStatus.useMutation({
+    onSuccess: async () => {
+      await utils.appointments.list.invalidate();
+      toast.success("Agenda oficial atualizada");
+    },
+    onError: (error) => toast.error(error.message),
+  });
 
   const clients = clientsQuery.data ?? [];
   const appointments = appointmentsQuery.data ?? [];
   const packages = packagesQuery.data ?? [];
+  const clientPackages = clientPackagesQuery.data ?? [];
   const loading =
     clientsQuery.isLoading ||
     appointmentsQuery.isLoading ||
-    packagesQuery.isLoading;
+    packagesQuery.isLoading ||
+    clientPackagesQuery.isLoading;
 
   const dashboard = useMemo(() => {
     const today = dateKey(new Date());
@@ -106,6 +128,7 @@ export default function Dashboard() {
       (client.pets ?? []).map((pet: any) => ({
         ...pet,
         tutorName: client.name,
+        tutorPhone: client.phone,
       })),
     );
     const todayAppointments = appointments
@@ -130,7 +153,7 @@ export default function Dashboard() {
         ...pet,
         daysUntil: daysUntilBirthday(pet.birth_date),
       }))
-      .filter((pet: any) => pet.daysUntil <= 30)
+      .filter((pet: any) => pet.daysUntil <= 7)
       .sort((a: any, b: any) => a.daysUntil - b.daysUntil)
       .slice(0, 6);
     const incompleteClients = clients
@@ -145,6 +168,39 @@ export default function Dashboard() {
       })
       .filter((client: any) => client.missing.length > 0)
       .slice(0, 6);
+    const incompletePets = pets
+      .map((pet: any) => ({
+        ...pet,
+        missing: [
+          !pet.birth_date && "data de nascimento",
+          !pet.sexo && "sexo",
+          !pet.breed && "raça",
+        ].filter(Boolean) as string[],
+      }))
+      .filter((pet: any) => pet.missing.length > 0)
+      .slice(0, 6);
+    const packageRadar = clientPackages
+      .map((item: any) => {
+        const daysToExpiry = item.expiry_date
+          ? Math.ceil((new Date(`${item.expiry_date}T12:00:00`).getTime() - Date.now()) / 86_400_000)
+          : null;
+        const noBalance =
+          Number(item.balance_baths ?? 0) <= 0 &&
+          Number(item.balance_groomings ?? 0) <= 0;
+        const alert =
+          item.status !== "active"
+            ? "Ciclo encerrado"
+            : noBalance
+              ? "Sem saldo"
+              : daysToExpiry !== null && daysToExpiry < 0
+                ? "Plano vencido"
+                : daysToExpiry !== null && daysToExpiry <= 7
+                  ? `Vence em ${Math.max(daysToExpiry, 0)} dia(s)`
+                  : "Tudo em dia";
+        return { ...item, alert };
+      })
+      .filter((item: any) => item.alert !== "Tudo em dia")
+      .slice(0, 6);
 
     return {
       pets,
@@ -152,7 +208,9 @@ export default function Dashboard() {
       expectedValue,
       birthdays,
       incompleteClients,
-      activePackages: packages.filter(
+      incompletePets,
+      packageRadar,
+      activePackages: clientPackages.filter(
         (item: any) => item.status === "active",
       ).length,
       confirmedToday: todayAppointments.filter(
@@ -160,10 +218,13 @@ export default function Dashboard() {
           item.status === "confirmed" || item.status === "completed",
       ).length,
     };
-  }, [appointments, clients, packages]);
+  }, [appointments, clients, clientPackages]);
 
   const queryError =
-    clientsQuery.error || appointmentsQuery.error || packagesQuery.error;
+    clientsQuery.error ||
+    appointmentsQuery.error ||
+    packagesQuery.error ||
+    clientPackagesQuery.error;
 
   const cards = [
     {
@@ -193,7 +254,7 @@ export default function Dashboard() {
     {
       title: "Planos ativos",
       value: dashboard.activePackages,
-      detail: "opções disponíveis no catálogo",
+      detail: "ciclos contratados e vigentes",
       icon: Package,
     },
   ];
@@ -292,6 +353,7 @@ export default function Dashboard() {
                       <th className="px-2 py-3">Serviço</th>
                       <th className="px-2 py-3">Profissional</th>
                       <th className="px-2 py-3">Status</th>
+                      <th className="px-2 py-3">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -328,6 +390,45 @@ export default function Dashboard() {
                               appointment.status}
                           </span>
                         </td>
+                        <td className="px-2 py-3">
+                          <div className="flex items-center gap-2">
+                            {(["pending", "confirmed", "in_progress"] as const).includes(appointment.status) && (
+                              <button
+                                type="button"
+                                disabled={statusMutation.isPending}
+                                onClick={() => {
+                                  const next = appointment.status === "pending"
+                                    ? "confirmed"
+                                    : appointment.status === "confirmed"
+                                      ? "in_progress"
+                                      : "completed";
+                                  statusMutation.mutate({ id: appointment.id, status: next });
+                                }}
+                                className="inline-flex items-center gap-1 rounded-lg bg-[#D8B768] px-3 py-1.5 text-xs font-bold text-[#07111E] hover:bg-[#C9A24E]"
+                              >
+                                {appointment.status === "pending" ? "Confirmar" : appointment.status === "confirmed" ? "Iniciar" : "Concluir"}
+                                <ArrowRight className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                            {whatsappLink(
+                              appointment.client?.phone,
+                              `Olá, ${appointment.client?.nome ?? ""}! Sobre o atendimento de ${appointment.pet?.name ?? "seu pet"} às ${formatTime(appointment)}: ${STATUS_LABELS[appointment.status] ?? appointment.status}.`,
+                            ) && (
+                              <a
+                                href={whatsappLink(
+                                  appointment.client?.phone,
+                                  `Olá, ${appointment.client?.nome ?? ""}! Sobre o atendimento de ${appointment.pet?.name ?? "seu pet"} às ${formatTime(appointment)}: ${STATUS_LABELS[appointment.status] ?? appointment.status}.`,
+                                )!}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="rounded-lg border border-emerald-200 p-1.5 text-emerald-700 hover:bg-emerald-50"
+                                title="Abrir WhatsApp"
+                              >
+                                <MessageCircle className="h-4 w-4" />
+                              </a>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -342,14 +443,14 @@ export default function Dashboard() {
                 <h2 className="text-lg font-bold text-[#07111E]">
                   Próximos aniversários
                 </h2>
-                <p className="text-sm text-slate-500">Pets nos próximos 30 dias</p>
+                <p className="text-sm text-slate-500">Hoje e próximos 7 dias</p>
               </div>
               <Cake className="h-5 w-5 text-[#C9A24E]" />
             </div>
 
             {dashboard.birthdays.length === 0 ? (
               <EmptyState>
-                Nenhum aniversário de pet nos próximos 30 dias.
+                Nenhum aniversário de pet nos próximos 7 dias.
               </EmptyState>
             ) : (
               <div className="space-y-3">
@@ -378,7 +479,38 @@ export default function Dashboard() {
           </section>
         </div>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="mb-5 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-[#07111E]">Radar de pacotes</h2>
+                <p className="text-sm text-slate-500">Vencimento, ciclo e saldo por ID do pacote</p>
+              </div>
+              <ShieldAlert className="h-5 w-5 text-[#C9A24E]" />
+            </div>
+            {dashboard.packageRadar.length === 0 ? (
+              <EmptyState>Todos os pacotes monitorados estão em dia.</EmptyState>
+            ) : (
+              <div className="space-y-3">
+                {dashboard.packageRadar.map((item: any) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setLocation("/packages")}
+                    className="flex w-full items-center justify-between rounded-xl border border-slate-200 p-3 text-left transition hover:border-[#C9A24E] hover:bg-[#F8F6F1]"
+                  >
+                    <div>
+                      <p className="font-semibold text-[#07111E]">{item.pet_name ?? item.code}</p>
+                      <p className="text-xs text-slate-500">{item.code} · {item.plan_name}</p>
+                    </div>
+                    <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800">{item.alert}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:col-span-2">
           <div className="mb-5 flex items-center justify-between">
             <div>
               <h2 className="text-lg font-bold text-[#07111E]">
@@ -391,7 +523,7 @@ export default function Dashboard() {
             <AlertCircle className="h-5 w-5 text-[#C9A24E]" />
           </div>
 
-          {dashboard.incompleteClients.length === 0 ? (
+          {dashboard.incompleteClients.length === 0 && dashboard.incompletePets.length === 0 ? (
             <EmptyState>
               Todos os clientes possuem os dados essenciais preenchidos.
             </EmptyState>
@@ -410,9 +542,21 @@ export default function Dashboard() {
                   </p>
                 </button>
               ))}
+              {dashboard.incompletePets.map((pet: any) => (
+                <button
+                  key={`pet-${pet.id}`}
+                  type="button"
+                  onClick={() => setLocation("/clients")}
+                  className="rounded-xl border border-slate-200 p-4 text-left transition hover:border-[#C9A24E] hover:bg-[#F8F6F1]"
+                >
+                  <p className="font-semibold text-[#07111E]">{pet.name} <span className="text-xs font-normal text-slate-500">· pet</span></p>
+                  <p className="mt-1 text-xs text-slate-500">Tutor: {pet.tutorName} · Falta: {pet.missing.join(", ")}</p>
+                </button>
+              ))}
             </div>
           )}
-        </section>
+          </section>
+        </div>
       </div>
     </div>
   );
