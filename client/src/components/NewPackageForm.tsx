@@ -11,6 +11,7 @@ interface NewPackageFormProps {
 }
 
 export function NewPackageForm({ onClose }: NewPackageFormProps) {
+  const utils = trpc.useUtils();
   const [formData, setFormData] = useState({
     clientId: "",
     petId: "",
@@ -27,6 +28,7 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
   const createMutation = trpc.clientPackages.create.useMutation({
     onSuccess: () => {
       toast.success("Pacote criado com sucesso!");
+      utils.clientPackages.list.invalidate();
       onClose();
     },
     onError: (error: any) => {
@@ -85,7 +87,7 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
           <SelectTrigger id="plan"><SelectValue placeholder="Selecione um plano" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="none">Pacote personalizado</SelectItem>
-            {plans.map((plan: any) => <SelectItem key={plan.id} value={plan.id}>{plan.name}</SelectItem>)}
+            {plans.map((plan: any) => <SelectItem key={plan.id} value={plan.id}>{plan.code} — {plan.name}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>

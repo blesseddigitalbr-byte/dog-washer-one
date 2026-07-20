@@ -2181,6 +2181,20 @@ export const appRouter = router({
         total_baths: item.contracted_baths,
         total_groomings: item.contracted_groomings,
         value: Number(item.price || 0),
+        consumed_baths: Math.max(0, Number(item.contracted_baths) - Number(item.balance_baths)),
+        consumed_groomings: Math.max(0, Number(item.contracted_groomings) - Number(item.balance_groomings)),
+        days_to_expiry: item.expiry_date
+          ? Math.ceil((new Date(`${item.expiry_date}T23:59:59`).getTime() - Date.now()) / 86400000)
+          : null,
+        operational_status: item.status === "cancelled"
+          ? "cancelled"
+          : Number(item.balance_baths) + Number(item.balance_groomings) <= 0
+            ? "consumed"
+            : item.expiry_date && new Date(`${item.expiry_date}T23:59:59`).getTime() < Date.now()
+              ? "expired"
+              : item.expiry_date && new Date(`${item.expiry_date}T23:59:59`).getTime() - Date.now() <= 7 * 86400000
+                ? "expiring"
+                : item.status,
       }));
     }),
     byClient: protectedProcedure
@@ -2248,6 +2262,78 @@ export const appRouter = router({
         }).select().single();
         if (error) throw new Error(error.message);
         return data;
+      }),
+    update: protectedProcedure
+      .input(z.object({
+        id: z.string().uuid(),
+        price: z.number().min(0).optional(),
+        contractDate: z.string().date().optional(),
+        expiryDate: z.string().date().nullable().optional(),
+        notes: z.string().max(1000).nullable().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
+        const { id, contractDate, expiryDate, ...rest } = input;
+        const changes: Record<string, unknown> = { ...rest, updated_at: new Date().toISOString() };
+        if (contractDate !== undefined) changes.contract_date = contractDate;
+        if (expiryDate !== undefined) changes.expiry_date = expiryDate;
+        const { data, error } = await supabase.from("client_packages").update(changes)
+          .eq("id", id).eq("unit_id", ctx.user.unitId).select().single();
+        if (error) throw new Error(error.message);
+        return data;
+      }),
+    cancel: protectedProcedure
+      .input(z.object({ id: z.string().uuid() }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
+        const { data, error } = await supabase.from("client_packages")
+          .update({ status: "cancelled", updated_at: new Date().toISOString() })
+          .eq("id", input.id).eq("unit_id", ctx.user.unitId).select().single();
+        if (error) throw new Error(error.message);
+        return data;
+      }),
+    renew: protectedProcedure
+      .input(z.object({ id: z.string().uuid(), contractDate: z.string().date().optional() }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.organizationId || !ctx.user.unitId) throw new Error("Unidade ativa não encontrada");
+        const { data: current, error: currentError } = await supabase.from("client_packages")
+          .select("*, plan:package_id(duration_months)")
+          .eq("id", input.id).eq("unit_id", ctx.user.unitId).single();
+        if (currentError || !current) throw new Error("Pacote não encontrado");
+        const contractDate = input.contractDate || new Date().toISOString().slice(0, 10);
+        let expiryDate: string | null = null;
+        if (current.plan?.duration_months) {
+          const expiry = new Date(`${contractDate}T12:00:00-03:00`);
+          expiry.setMonth(expiry.getMonth() + Number(current.plan.duration_months));
+          expiryDate = expiry.toISOString().slice(0, 10);
+        }
+        const { data: code, error: codeError } = await supabase.rpc("next_client_package_code", {
+          p_organization_id: ctx.user.organizationId,
+        });
+        if (codeError || !code) throw new Error("Não foi possível gerar o código da renovação");
+        const { data: renewed, error: renewError } = await supabase.from("client_packages").insert({
+          organization_id: ctx.user.organizationId,
+          unit_id: ctx.user.unitId,
+          client_id: current.client_id,
+          pet_id: current.pet_id,
+          package_id: current.package_id,
+          code,
+          contracted_baths: current.contracted_baths,
+          contracted_groomings: current.contracted_groomings,
+          balance_baths: current.contracted_baths,
+          balance_groomings: current.contracted_groomings,
+          price: current.price,
+          contract_date: contractDate,
+          expiry_date: expiryDate,
+          status: "active",
+          notes: current.notes,
+        }).select().single();
+        if (renewError) throw new Error(renewError.message);
+        const { error: closeError } = await supabase.from("client_packages")
+          .update({ status: "inactive", updated_at: new Date().toISOString() })
+          .eq("id", current.id).eq("unit_id", ctx.user.unitId);
+        if (closeError) throw new Error(closeError.message);
+        return renewed;
       }),
   }),
 

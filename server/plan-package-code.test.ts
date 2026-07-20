@@ -43,4 +43,17 @@ describe("separação entre plano e pacote contratado", () => {
     expect(router).toContain('update({ status: "inactive"');
     expect(plans).toContain("Inativar plano?");
   });
+
+  it("renova em um novo ciclo PAC e preserva o registro anterior", () => {
+    expect(router).toContain("renew: protectedProcedure");
+    expect(router).toContain("balance_baths: current.contracted_baths");
+    expect(router).toContain("balance_groomings: current.contracted_groomings");
+  });
+
+  it("expõe radar operacional e cancelamento sem exclusão física", () => {
+    expect(router).toContain("operational_status");
+    expect(router).toContain('"expiring"');
+    expect(router).toContain('"consumed"');
+    expect(router).toContain("cancel: protectedProcedure");
+  });
 });

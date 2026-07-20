@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Edit2, Trash2, Eye } from "lucide-react";
+import { Plus, Ban, Eye, RefreshCw, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { NewPackageForm } from "@/components/NewPackageForm";
+import { toast } from "sonner";
 
 export default function Packages() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,7 +16,24 @@ export default function Packages() {
   const [isNewPackageOpen, setIsNewPackageOpen] = useState(false);
 
   // Fetch all packages
+  const utils = trpc.useUtils();
   const { data: packages = [], isLoading } = trpc.clientPackages.list.useQuery();
+  const renewMutation = trpc.clientPackages.renew.useMutation({
+    onSuccess: (renewed: any) => {
+      toast.success(`Renovação criada: ${renewed.code}`);
+      setSelectedPackage(null);
+      utils.clientPackages.list.invalidate();
+    },
+    onError: (error) => toast.error(error.message),
+  });
+  const cancelMutation = trpc.clientPackages.cancel.useMutation({
+    onSuccess: () => {
+      toast.success("Pacote cancelado. O histórico foi preservado.");
+      setSelectedPackage(null);
+      utils.clientPackages.list.invalidate();
+    },
+    onError: (error) => toast.error(error.message),
+  });
 
   // Calculate consumed services for each package
   const getConsumedServices = (packageId: string) => {
@@ -37,12 +55,11 @@ export default function Packages() {
 
   // Determine status badge color
   const getStatusBadge = (pkg: any) => {
-    const today = new Date();
-    const expiryDate = new Date(pkg.expiry_date);
-
-    if (pkg.status === "cancelled") return <Badge variant="destructive">Cancelado</Badge>;
-    if (expiryDate < today) return <Badge variant="outline">Vencido</Badge>;
-    if (pkg.balance_baths <= 0 && pkg.balance_groomings <= 0) return <Badge variant="outline">Sem Saldo</Badge>;
+    if (pkg.operational_status === "cancelled") return <Badge variant="destructive">Cancelado</Badge>;
+    if (pkg.operational_status === "inactive") return <Badge variant="outline">Ciclo encerrado</Badge>;
+    if (pkg.operational_status === "expired") return <Badge variant="outline">Vencido</Badge>;
+    if (pkg.operational_status === "consumed") return <Badge variant="outline">Sem saldo</Badge>;
+    if (pkg.operational_status === "expiring") return <Badge className="bg-amber-500 text-[#07111E]">Vence em breve</Badge>;
     return <Badge className="bg-[#D8B768] text-[#07111E]">Ativo</Badge>;
   };
 
@@ -59,7 +76,7 @@ export default function Packages() {
           <p className="text-muted-foreground mt-2">Gerencie os pacotes e saldos dos clientes</p>
         </div>
         <Button 
-          className="bg-secondary hover:bg-secondary/90"
+          className="bg-[#113A7A] text-white hover:bg-[#0d2f64]"
           onClick={() => setIsNewPackageOpen(true)}
         >
           <Plus className="mr-2 h-4 w-4" />
@@ -84,7 +101,7 @@ export default function Packages() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {packages.filter((pkg: any) => pkg.status === "active").length}
+              {packages.filter((pkg: any) => ["active", "expiring"].includes(pkg.operational_status)).length}
             </div>
           </CardContent>
         </Card>
@@ -96,9 +113,7 @@ export default function Packages() {
           <CardContent>
             <div className="text-2xl font-bold">
               {packages.filter((pkg: any) => {
-                const today = new Date();
-                const expiryDate = new Date(pkg.expiry_date);
-                return expiryDate < today;
+                return pkg.operational_status === "expired";
               }).length}
             </div>
           </CardContent>
@@ -115,6 +130,20 @@ export default function Packages() {
           </CardContent>
         </Card>
       </div>
+
+      {packages.some((pkg: any) => ["expiring", "expired", "consumed"].includes(pkg.operational_status)) && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-[#07111E]">
+          <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-700" />
+          <div>
+            <p className="font-semibold">Radar de pacotes exige atenção</p>
+            <p className="text-sm">
+              {packages.filter((pkg: any) => pkg.operational_status === "expiring").length} vencendo em até 7 dias,
+              {" "}{packages.filter((pkg: any) => pkg.operational_status === "expired").length} vencidos e
+              {" "}{packages.filter((pkg: any) => pkg.operational_status === "consumed").length} sem saldo.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Search */}
       <div className="flex gap-4">
@@ -193,12 +222,6 @@ export default function Packages() {
                             <Button variant="ghost" size="sm" onClick={() => setSelectedPackage(pkg)}>
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
-                              <Edit2 className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="sm">
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -225,6 +248,49 @@ export default function Packages() {
             >
               Fechar
             </Button>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={Boolean(selectedPackage)} onOpenChange={(open) => !open && setSelectedPackage(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes do pacote {selectedPackage?.id_package}</DialogTitle>
+          </DialogHeader>
+          {selectedPackage && (
+            <div className="space-y-5">
+              <div className="grid grid-cols-2 gap-4 rounded-xl bg-muted/40 p-4 md:grid-cols-4">
+                <div><p className="text-xs text-muted-foreground">Plano</p><p className="font-semibold">{selectedPackage.plan_name}</p></div>
+                <div><p className="text-xs text-muted-foreground">Pet</p><p className="font-semibold">{selectedPackage.pet_name}</p></div>
+                <div><p className="text-xs text-muted-foreground">Tutor</p><p className="font-semibold">{selectedPackage.client_name}</p></div>
+                <div><p className="text-xs text-muted-foreground">Situação</p>{getStatusBadge(selectedPackage)}</div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                <Card><CardContent className="pt-5"><p className="text-xs text-muted-foreground">Banhos utilizados</p><p className="text-2xl font-bold">{selectedPackage.consumed_baths}/{selectedPackage.total_baths}</p></CardContent></Card>
+                <Card><CardContent className="pt-5"><p className="text-xs text-muted-foreground">Saldo de banhos</p><p className="text-2xl font-bold">{selectedPackage.balance_baths}</p></CardContent></Card>
+                <Card><CardContent className="pt-5"><p className="text-xs text-muted-foreground">Tosas utilizadas</p><p className="text-2xl font-bold">{selectedPackage.consumed_groomings}/{selectedPackage.total_groomings}</p></CardContent></Card>
+                <Card><CardContent className="pt-5"><p className="text-xs text-muted-foreground">Saldo de tosas</p><p className="text-2xl font-bold">{selectedPackage.balance_groomings}</p></CardContent></Card>
+              </div>
+              <div className="flex flex-wrap justify-end gap-3 border-t pt-4">
+                {selectedPackage.status !== "cancelled" && (
+                  <Button
+                    variant="outline"
+                    className="border-destructive text-destructive hover:bg-destructive hover:text-white"
+                    disabled={cancelMutation.isPending}
+                    onClick={() => cancelMutation.mutate({ id: selectedPackage.id })}
+                  >
+                    <Ban className="mr-2 h-4 w-4" /> Cancelar pacote
+                  </Button>
+                )}
+                <Button
+                  className="bg-[#D8B768] text-[#07111E] hover:bg-[#c9a652]"
+                  disabled={renewMutation.isPending}
+                  onClick={() => renewMutation.mutate({ id: selectedPackage.id })}
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" /> Renovar em novo ciclo
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

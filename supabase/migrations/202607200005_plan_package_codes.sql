@@ -3,6 +3,12 @@ alter table public.packages
   add column if not exists audience_code text,
   add column if not exists duration_months integer;
 
+alter table public.packages no force row level security;
+alter table public.packages disable row level security;
+alter table public.client_packages no force row level security;
+alter table public.client_packages disable row level security;
+alter table public.packages disable trigger assign_profile_tenant;
+
 update public.packages
 set
   audience_code = coalesce(audience_code, case
@@ -48,12 +54,6 @@ create table if not exists public.organization_counters (
   primary key (organization_id, counter_key)
 );
 
-alter table public.organization_counters enable row level security;
-alter table public.organization_counters force row level security;
-create policy organization_counters_tenant on public.organization_counters for all to authenticated
-  using (organization_id = public.current_organization_id())
-  with check (organization_id = public.current_organization_id());
-
 insert into public.organization_counters(organization_id, counter_key, current_value)
 select organization_id, 'client_package', count(*)::integer
 from public.client_packages
@@ -87,5 +87,16 @@ from (
 ) ordered
 where public.client_packages.id = ordered.id
   and public.client_packages.code !~ '^PAC-[0-9]+$';
+
+alter table public.packages enable row level security;
+alter table public.packages force row level security;
+alter table public.client_packages enable row level security;
+alter table public.client_packages force row level security;
+alter table public.packages enable trigger assign_profile_tenant;
+alter table public.organization_counters enable row level security;
+alter table public.organization_counters force row level security;
+create policy organization_counters_tenant on public.organization_counters for all to authenticated
+  using (organization_id = public.current_organization_id())
+  with check (organization_id = public.current_organization_id());
 
 grant execute on function public.next_client_package_code(uuid) to authenticated;
