@@ -18,12 +18,12 @@ import { toast } from "sonner";
 type ViewType = "calendar" | "week" | "day" | "agenda";
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; badge: string }> = {
-  pending: { bg: "bg-gray-100", text: "text-gray-800", badge: "bg-gray-500" },
-  confirmed: { bg: "bg-blue-100", text: "text-blue-800", badge: "bg-blue-500" },
-  in_progress: { bg: "bg-yellow-100", text: "text-yellow-800", badge: "bg-yellow-500" },
-  completed: { bg: "bg-green-100", text: "text-green-800", badge: "bg-green-500" },
-  cancelled: { bg: "bg-red-100", text: "text-red-800", badge: "bg-red-500" },
-  no_show: { bg: "bg-red-200", text: "text-red-900", badge: "bg-red-600" },
+  pending: { bg: "bg-gray-100", text: "text-gray-800", badge: "bg-gray-600 text-white" },
+  confirmed: { bg: "bg-blue-100", text: "text-blue-800", badge: "bg-blue-700 text-white" },
+  in_progress: { bg: "bg-yellow-100", text: "text-yellow-800", badge: "bg-[#C9A24E] text-[#07111E]" },
+  completed: { bg: "bg-green-100", text: "text-green-800", badge: "bg-green-700 text-white" },
+  cancelled: { bg: "bg-red-100", text: "text-red-800", badge: "bg-red-700 text-white" },
+  no_show: { bg: "bg-red-200", text: "text-red-900", badge: "bg-red-800 text-white" },
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -392,7 +392,7 @@ export default function Appointments() {
         </div>
         <Button
           onClick={() => setShowForm(true)}
-          className="bg-secondary hover:bg-secondary/90 text-foreground font-bold"
+          className="bg-[#113A7A] text-white hover:bg-[#07111E] font-bold"
         >
           + Novo Agendamento
         </Button>
@@ -413,14 +413,14 @@ export default function Appointments() {
             onClick={() => setStatusFilter(f.id)}
             className={`px-4 py-2 rounded-full font-medium text-sm transition-all flex items-center gap-2 border ${
               statusFilter === f.id
-                ? "bg-secondary text-foreground border-secondary shadow-sm"
-                : "bg-white text-foreground border-border hover:border-secondary/30 hover:shadow-sm"
+                ? "bg-[#D8B768] text-[#07111E] border-[#C9A24E] shadow-sm"
+                : "bg-white text-foreground border-border hover:border-[#C9A24E] hover:shadow-sm"
             }`}
           >
             <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${
               statusFilter === f.id
-                ? "bg-foreground/20 text-foreground"
-                : "bg-secondary/10 text-secondary"
+                ? "bg-[#07111E]/10 text-[#07111E]"
+                : "bg-[#D8B768]/20 text-[#113A7A]"
             }`}>
               {f.icon}
             </span>
@@ -443,7 +443,8 @@ export default function Appointments() {
       <div className="flex gap-2 items-center flex-wrap">
         <div className="flex gap-2">
           <Button
-            variant={viewType === "calendar" ? "default" : "outline"}
+            variant="outline"
+            className={viewType === "calendar" ? "bg-[#D8B768] text-[#07111E] border-[#C9A24E]" : ""}
             onClick={() => setViewType("calendar")}
             size="sm"
           >
@@ -451,21 +452,24 @@ export default function Appointments() {
             Mês
           </Button>
           <Button
-            variant={viewType === "week" ? "default" : "outline"}
+            variant="outline"
+            className={viewType === "week" ? "bg-[#D8B768] text-[#07111E] border-[#C9A24E]" : ""}
             onClick={() => setViewType("week")}
             size="sm"
           >
             Semana
           </Button>
           <Button
-            variant={viewType === "day" ? "default" : "outline"}
+            variant="outline"
+            className={viewType === "day" ? "bg-[#D8B768] text-[#07111E] border-[#C9A24E]" : ""}
             onClick={() => setViewType("day")}
             size="sm"
           >
             Dia
           </Button>
           <Button
-            variant={viewType === "agenda" ? "default" : "outline"}
+            variant="outline"
+            className={viewType === "agenda" ? "bg-[#D8B768] text-[#07111E] border-[#C9A24E]" : ""}
             onClick={() => setViewType("agenda")}
             size="sm"
           >
@@ -506,17 +510,19 @@ export default function Appointments() {
 
       {/* Form Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="flex max-h-[92vh] w-[calc(100vw-2rem)] max-w-5xl flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle>Novo Agendamento</DialogTitle>
             <DialogDescription>
               Preencha os dados para criar um novo agendamento
             </DialogDescription>
           </DialogHeader>
-          <AppointmentForm
-            onClose={() => setShowForm(false)}
-            onSuccess={() => setShowForm(false)}
-          />
+          <div className="overflow-y-auto pr-2">
+            <AppointmentForm
+              onClose={() => setShowForm(false)}
+              onSuccess={() => setShowForm(false)}
+            />
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -15,24 +15,15 @@ export default function Packages() {
   const [isNewPackageOpen, setIsNewPackageOpen] = useState(false);
 
   // Fetch all packages
-  const { data: packages = [], isLoading } = trpc.packages.list.useQuery();
-
-  // Fetch all appointments to calculate consumed services
-  const { data: appointments = [] } = trpc.appointments.list.useQuery();
+  const { data: packages = [], isLoading } = trpc.clientPackages.list.useQuery();
 
   // Calculate consumed services for each package
   const getConsumedServices = (packageId: string) => {
-    const finalized = appointments.filter(
-      (apt: any) => apt.package_id === packageId && apt.status === "Finalizado/Check"
-    );
+    const pkg: any = packages.find((item: any) => item.id === packageId);
 
-    const consumedBaths = finalized.filter((apt: any) =>
-      ["Banho", "Combo Higiene"].includes(apt.service_name)
-    ).length;
+    const consumedBaths = (pkg?.contracted_baths || 0) - (pkg?.balance_baths || 0);
 
-    const consumedGroomings = finalized.filter((apt: any) =>
-      ["Tosa", "Trimming", "Higienização"].includes(apt.service_name)
-    ).length;
+    const consumedGroomings = (pkg?.contracted_groomings || 0) - (pkg?.balance_groomings || 0);
 
     return { consumedBaths, consumedGroomings };
   };
@@ -49,10 +40,10 @@ export default function Packages() {
     const today = new Date();
     const expiryDate = new Date(pkg.expiry_date);
 
-    if (pkg.status === "Cancelado") return <Badge variant="destructive">Cancelado</Badge>;
+    if (pkg.status === "cancelled") return <Badge variant="destructive">Cancelado</Badge>;
     if (expiryDate < today) return <Badge variant="outline">Vencido</Badge>;
     if (pkg.balance_baths <= 0 && pkg.balance_groomings <= 0) return <Badge variant="outline">Sem Saldo</Badge>;
-    return <Badge className="bg-secondary text-secondary-foreground">Ativo</Badge>;
+    return <Badge className="bg-[#D8B768] text-[#07111E]">Ativo</Badge>;
   };
 
   if (isLoading) {
@@ -93,7 +84,7 @@ export default function Packages() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {packages.filter((pkg: any) => pkg.status === "Ativo").length}
+              {packages.filter((pkg: any) => pkg.status === "active").length}
             </div>
           </CardContent>
         </Card>

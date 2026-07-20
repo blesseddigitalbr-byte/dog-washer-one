@@ -25,7 +25,6 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
   const { data: clients = [] } = trpc.clients.list.useQuery();
   const { data: professionals = [] } = trpc.professionals.list.useQuery();
   const { data: services = [] } = trpc.services.list.useQuery();
-  const { data: packages = [] } = trpc.packages.list.useQuery();
   const { data: students = [] } = trpc.students.list.useQuery({ filter: "authorized" });
 
   // Memoizar lista de pets
@@ -53,6 +52,10 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
   const [startTime, setStartTime] = useState("");
   const [recurrenceRule, setRecurrenceRule] = useState<"none" | "weekly" | "biweekly" | "monthly">("none");
   const [notes, setNotes] = useState("");
+  const { data: clientPackages = [] } = trpc.clientPackages.byClient.useQuery(
+    { clientId: selectedClient },
+    { enabled: !!selectedClient },
+  );
 
   // Mutations
   const createMutation = trpc.appointments.create.useMutation();
@@ -146,6 +149,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
         petId: selectedPet,
         serviceId: selectedService,
         professionalId,
+        clientPackageId: selectedPackage && selectedPackage !== "none" ? selectedPackage : undefined,
         appointmentDate: startsAt.toISOString(),
         recurrenceRule,
         notes,
@@ -170,7 +174,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-5 lg:grid-cols-2">
       {/* Cliente */}
       <div>
         <Label htmlFor="client" className="text-base font-semibold">
@@ -281,10 +285,10 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
             <SelectValue placeholder="Selecione um plano ou deixe em branco" />
           </SelectTrigger>
           <SelectContent>
-            {packages.length > 0 && <SelectItem value="null">Sem plano</SelectItem>}
-            {packages.map((pkg: any) => (
+            <SelectItem value="none">Sem pacote</SelectItem>
+            {clientPackages.filter((pkg: any) => !selectedPet || pkg.pet_id === selectedPet).map((pkg: any) => (
               <SelectItem key={pkg.id} value={pkg.id}>
-                {pkg.name} - {pkg.total_baths} banhos, {pkg.total_groomings} tosas
+                {pkg.plan?.name || pkg.code} — saldo {pkg.balance_baths} banho(s), {pkg.balance_groomings} tosa(s)
               </SelectItem>
             ))}
           </SelectContent>
@@ -440,7 +444,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
         </div>
       </div>
 
-      <div>
+      <div className="lg:col-span-2">
         <Label htmlFor="recurrence" className="text-base font-semibold">
           Recorrência
         </Label>
@@ -473,7 +477,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
       </div>
 
       {/* Botões */}
-      <div className="flex gap-3 justify-end pt-4 border-t">
+      <div className="sticky bottom-0 z-10 flex gap-3 justify-end border-t bg-background py-4 lg:col-span-2">
         <Button type="button" variant="outline" onClick={onClose}>
           Cancelar
         </Button>

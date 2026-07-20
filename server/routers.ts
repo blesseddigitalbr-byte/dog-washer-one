@@ -1019,7 +1019,16 @@ export const appRouter = router({
           .order("appointment_date", { ascending: false });
 
         if (error) throw error;
-        return appointments || [];
+        return (appointments || []).map((appointment: any) => ({
+          ...appointment,
+          appointmentDate: appointment.appointment_date,
+          clientId: appointment.client_id,
+          petId: appointment.pet_id,
+          serviceId: appointment.service_id,
+          professionalId: appointment.professional_id,
+          clientPackageId: appointment.client_package_id,
+          durationMinutes: appointment.duration_minutes,
+        }));
       } catch (error) {
         console.error("Error fetching appointments:", error);
         return [];
@@ -1058,6 +1067,7 @@ export const appRouter = router({
         petId: z.string().uuid(),
         serviceId: z.string().uuid(),
         professionalId: z.string().uuid(),
+        clientPackageId: z.string().uuid().optional(),
         appointmentDate: z.string().datetime(),
         notes: z.string().trim().max(2000).optional(),
         recurrenceRule: z.enum(["none", "weekly", "biweekly", "monthly"]).default("none"),
@@ -1070,11 +1080,14 @@ export const appRouter = router({
           }
 
           // Validar que cliente, pet e serviço existem
-          const [clientRes, petRes, serviceRes, profRes] = await Promise.all([
+          const [clientRes, petRes, serviceRes, profRes, packageRes] = await Promise.all([
             supabase.from("clientes").select("id, nome, email").eq("id", input.clientId).eq("unit_id", ctx.user.unitId).single(),
             supabase.from("pets").select("id, name, client_id").eq("id", input.petId).eq("unit_id", ctx.user.unitId).single(),
             supabase.from("services").select("id, name, price, duration_minutes").eq("id", input.serviceId).eq("unit_id", ctx.user.unitId).eq("status", "active").single(),
             supabase.from("professionals").select("id").eq("id", input.professionalId).eq("unit_id", ctx.user.unitId).eq("is_active", true).single(),
+            input.clientPackageId
+              ? supabase.from("client_packages").select("id, client_id, pet_id, status").eq("id", input.clientPackageId).eq("unit_id", ctx.user.unitId).single()
+              : Promise.resolve({ data: null, error: null }),
           ]);
 
           if (!clientRes.data) throw new Error("Cliente não encontrado nesta unidade");
@@ -1082,6 +1095,10 @@ export const appRouter = router({
           if (petRes.data.client_id !== input.clientId) throw new Error("O pet não pertence ao cliente selecionado");
           if (!serviceRes.data) throw new Error("Serviço não disponível nesta unidade");
           if (!profRes.data) throw new Error("Profissional não disponível nesta unidade");
+          if (input.clientPackageId && (!packageRes.data || packageRes.data.status !== "active")) throw new Error("Pacote não está ativo");
+          if (packageRes.data && (packageRes.data.client_id !== input.clientId || packageRes.data.pet_id !== input.petId)) {
+            throw new Error("O pacote não pertence ao cliente e pet selecionados");
+          }
 
           const startsAt = new Date(input.appointmentDate);
           const durationMinutes = Number(serviceRes.data.duration_minutes || 60);
@@ -1116,6 +1133,7 @@ export const appRouter = router({
               pet_id: input.petId,
               service_id: input.serviceId,
               professional_id: input.professionalId,
+              client_package_id: input.clientPackageId || null,
               appointment_date: input.appointmentDate,
               start_time: formatTime(startsAt),
               end_time: formatTime(endsAt),
@@ -1198,6 +1216,14 @@ export const appRouter = router({
         };
         if (!transitions[current.status]?.includes(input.status)) {
           throw new Error("Mudança de status não permitida");
+        }
+
+        if (input.status === "completed") {
+          const { data, error } = await supabase.rpc("complete_appointment", {
+            p_appointment_id: input.id,
+          });
+          if (error) throw new Error(error.message);
+          return data;
         }
 
         const now = new Date().toISOString();
@@ -1788,6 +1814,102 @@ export const appRouter = router({
           console.error("Error validating student permissions:", error);
           return { valid: false, reason: "Erro ao validar permissões" };
         }
+      }),
+  }),
+
+  visits: router({
+    byPet: protectedProcedure
+      .input(z.object({ petId: z.string().uuid() }))
+      .query(async ({ input, ctx }) => {
+        if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
+        const { data, error } = await supabase
+          .from("visit_history")
+          .select("*, service:service_id(name), professional:professional_id(name), client_package:client_package_id(code, plan:package_id(name))")
+          .eq("unit_id", ctx.user.unitId)
+          .eq("pet_id", input.petId)
+          .order("visited_at", { ascending: false });
+        if (error) throw new Error(error.message);
+        return (data ?? []).map((visit: any) => ({
+          id: visit.id,
+          date: visit.visited_at,
+          service: visit.service?.name || "Serviço",
+          professional: visit.professional?.name || "Não informado",
+          status: "completed" as const,
+          notes: visit.notes || undefined,
+          packageId: visit.client_package_id || undefined,
+          packageName: visit.client_package?.plan?.name || visit.client_package?.code || undefined,
+        }));
+      }),
+  }),
+
+  clientPackages: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
+      const { data, error } = await supabase
+        .from("client_packages")
+        .select("*, client:client_id(nome, id_cliente), pet:pet_id(name, id_pet), plan:package_id(name)")
+        .eq("unit_id", ctx.user.unitId)
+        .order("created_at", { ascending: false });
+      if (error) throw new Error(error.message);
+      return (data ?? []).map((item: any) => ({
+        ...item,
+        id_package: item.code,
+        pet_name: item.pet?.name,
+        client_name: item.client?.nome,
+        id_pet: item.pet?.id_pet,
+        id_client: item.client?.id_cliente,
+        plan_name: item.plan?.name || "Pacote personalizado",
+        total_baths: item.contracted_baths,
+        total_groomings: item.contracted_groomings,
+        value: Number(item.price || 0),
+      }));
+    }),
+    byClient: protectedProcedure
+      .input(z.object({ clientId: z.string().uuid() }))
+      .query(async ({ input, ctx }) => {
+        if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
+        const { data, error } = await supabase
+          .from("client_packages")
+          .select("*, plan:package_id(name)")
+          .eq("unit_id", ctx.user.unitId)
+          .eq("client_id", input.clientId)
+          .eq("status", "active")
+          .order("created_at", { ascending: false });
+        if (error) throw new Error(error.message);
+        return data ?? [];
+      }),
+    create: protectedProcedure
+      .input(z.object({
+        clientId: z.string().uuid(),
+        petId: z.string().uuid(),
+        packageId: z.string().uuid().optional(),
+        baths: z.number().int().min(0),
+        groomings: z.number().int().min(0),
+        price: z.number().min(0),
+        expiryDate: z.string().optional(),
+        notes: z.string().max(1000).optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.organizationId || !ctx.user.unitId) throw new Error("Unidade ativa não encontrada");
+        if (input.baths + input.groomings < 1) throw new Error("Informe ao menos um serviço no pacote");
+        const code = `PCT-${Date.now().toString(36).toUpperCase()}`;
+        const { data, error } = await supabase.from("client_packages").insert({
+          organization_id: ctx.user.organizationId,
+          unit_id: ctx.user.unitId,
+          client_id: input.clientId,
+          pet_id: input.petId,
+          package_id: input.packageId || null,
+          code,
+          contracted_baths: input.baths,
+          contracted_groomings: input.groomings,
+          balance_baths: input.baths,
+          balance_groomings: input.groomings,
+          price: input.price,
+          expiry_date: input.expiryDate || null,
+          notes: input.notes || null,
+        }).select().single();
+        if (error) throw new Error(error.message);
+        return data;
       }),
   }),
 
