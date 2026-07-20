@@ -1252,62 +1252,131 @@ export const appRouter = router({
       }),
 
     // Update an appointment
-    update: publicProcedure
+    update: protectedProcedure
       .input(z.object({
         id: z.string().uuid(),
-        clientId: z.string().uuid().optional(),
-        petId: z.string().uuid().optional(),
-        serviceId: z.string().uuid().optional(),
-        professionalId: z.string().uuid().optional(),
-        appointmentDate: z.string().datetime().optional(),
-        startTime: z.string().optional(),
-        durationMinutes: z.number().optional(),
-        status: z.string().optional(),
-        notes: z.string().optional(),
+        clientId: z.string().uuid(),
+        petId: z.string().uuid(),
+        serviceId: z.string().uuid(),
+        professionalId: z.string().uuid(),
+        clientPackageId: z.string().uuid().optional(),
+        appointmentDate: z.string().datetime(),
+        notes: z.string().trim().max(2000).optional(),
+        recurrenceRule: z.enum(["none", "weekly", "biweekly", "monthly"]).default("none"),
+        sendEmail: z.boolean().default(false),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
-          const updateData: Record<string, any> = {};
-          if (input.clientId) updateData.client_id = input.clientId;
-          if (input.petId) updateData.pet_id = input.petId;
-          if (input.serviceId) updateData.service_id = input.serviceId;
-          if (input.professionalId) updateData.professional_id = input.professionalId;
-          if (input.appointmentDate) updateData.appointment_date = input.appointmentDate;
-          if (input.startTime) updateData.start_time = input.startTime;
-          if (input.durationMinutes) updateData.duration_minutes = input.durationMinutes;
-          if (input.status) updateData.status = input.status;
-          if (input.notes !== undefined) updateData.notes = input.notes || null;
+          if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
+          const [currentRes, clientRes, petRes, serviceRes, professionalRes, packageRes] = await Promise.all([
+            supabase.from("appointments").select("id, status").eq("id", input.id).eq("unit_id", ctx.user.unitId).single(),
+            supabase.from("clientes").select("id").eq("id", input.clientId).eq("unit_id", ctx.user.unitId).single(),
+            supabase.from("pets").select("id, client_id").eq("id", input.petId).eq("unit_id", ctx.user.unitId).single(),
+            supabase.from("services").select("id, price, duration_minutes").eq("id", input.serviceId).eq("unit_id", ctx.user.unitId).eq("status", "active").single(),
+            supabase.from("professionals").select("id").eq("id", input.professionalId).eq("unit_id", ctx.user.unitId).eq("is_active", true).single(),
+            input.clientPackageId
+              ? supabase.from("client_packages").select("id, client_id, pet_id, status").eq("id", input.clientPackageId).eq("unit_id", ctx.user.unitId).single()
+              : Promise.resolve({ data: null, error: null }),
+          ]);
+          if (!currentRes.data) throw new Error("Agendamento não encontrado");
+          if (currentRes.data.status === "completed") throw new Error("Atendimento concluído não pode ser alterado");
+          if (!clientRes.data || !petRes.data || petRes.data.client_id !== input.clientId) throw new Error("Cliente ou pet inválido");
+          if (!serviceRes.data) throw new Error("Serviço não disponível");
+          if (!professionalRes.data) throw new Error("Profissional não disponível");
+          if (input.clientPackageId && (!packageRes.data || packageRes.data.status !== "active")) throw new Error("Pacote não está ativo");
+          if (packageRes.data && (packageRes.data.client_id !== input.clientId || packageRes.data.pet_id !== input.petId)) {
+            throw new Error("O pacote não pertence ao cliente e pet selecionados");
+          }
 
+          const startsAt = new Date(input.appointmentDate);
+          const durationMinutes = Number(serviceRes.data.duration_minutes || 60);
+          const endsAt = new Date(startsAt.getTime() + durationMinutes * 60_000);
+          const { data: conflicts, error: conflictError } = await supabase
+            .from("appointments")
+            .select("id, appointment_date, duration_minutes")
+            .eq("unit_id", ctx.user.unitId)
+            .eq("professional_id", input.professionalId)
+            .neq("id", input.id)
+            .not("status", "in", '("completed","cancelled","no_show")')
+            .gte("appointment_date", new Date(startsAt.getTime() - 12 * 60 * 60_000).toISOString())
+            .lte("appointment_date", endsAt.toISOString());
+          if (conflictError) throw conflictError;
+          if ((conflicts ?? []).some((item) => {
+            const existingStart = new Date(item.appointment_date);
+            const existingEnd = new Date(existingStart.getTime() + Number(item.duration_minutes || 60) * 60_000);
+            return startsAt < existingEnd && endsAt > existingStart;
+          })) throw new Error("O profissional já possui atendimento nesse horário");
+
+          const formatTime = (date: Date) => date.toLocaleTimeString("pt-BR", {
+            hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Sao_Paulo",
+          });
           const { data, error } = await supabase
             .from("appointments")
-            .update(updateData)
+            .update({
+              client_id: input.clientId,
+              pet_id: input.petId,
+              service_id: input.serviceId,
+              professional_id: input.professionalId,
+              client_package_id: input.clientPackageId || null,
+              appointment_date: input.appointmentDate,
+              start_time: formatTime(startsAt),
+              end_time: formatTime(endsAt),
+              duration_minutes: durationMinutes,
+              total_price: Number(serviceRes.data.price || 0),
+              recurrence_rule: input.recurrenceRule === "none" ? null : input.recurrenceRule,
+              notes: input.notes || null,
+              updated_at: new Date().toISOString(),
+            })
             .eq("id", input.id)
+            .eq("unit_id", ctx.user.unitId)
             .select()
             .single();
 
           if (error) throw error;
+          const { error: removeServiceError } = await supabase
+            .from("appointment_services")
+            .delete()
+            .eq("appointment_id", input.id);
+          if (removeServiceError) throw removeServiceError;
+          const { error: appointmentServiceError } = await supabase.from("appointment_services").insert({
+            appointment_id: input.id,
+            service_id: input.serviceId,
+            unit_price: Number(serviceRes.data.price || 0),
+            duration_minutes: durationMinutes,
+          });
+          if (appointmentServiceError) throw appointmentServiceError;
           return data;
         } catch (error) {
           console.error("Error updating appointment:", error);
-          throw new Error("Erro ao atualizar agendamento");
+          throw new Error(error instanceof Error ? error.message : "Erro ao atualizar agendamento");
         }
       }),
 
-    // Delete an appointment
-    delete: publicProcedure
-      .input(z.object({ id: z.string().uuid() }))
-      .mutation(async ({ input }) => {
+    // Exclusão operacional: cancela e preserva todo o histórico.
+    delete: protectedProcedure
+      .input(z.object({ id: z.string().uuid(), reason: z.string().trim().min(3).max(500) }))
+      .mutation(async ({ input, ctx }) => {
         try {
-          const { error } = await supabase
+          if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
+          const { data: current } = await supabase
             .from("appointments")
-            .delete()
-            .eq("id", input.id);
-
+            .select("status")
+            .eq("id", input.id)
+            .eq("unit_id", ctx.user.unitId)
+            .single();
+          if (!current) throw new Error("Agendamento não encontrado");
+          if (current.status === "completed") throw new Error("Atendimento concluído deve permanecer no histórico");
+          const { error } = await supabase.from("appointments").update({
+            status: "cancelled",
+            cancellation_reason: input.reason,
+            cancelled_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          }).eq("id", input.id).eq("unit_id", ctx.user.unitId);
           if (error) throw error;
           return { success: true };
         } catch (error) {
           console.error("Error deleting appointment:", error);
-          throw new Error("Erro ao deletar agendamento");
+          throw new Error(error instanceof Error ? error.message : "Erro ao excluir agendamento");
         }
       }),
   }),

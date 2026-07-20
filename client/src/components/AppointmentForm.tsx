@@ -18,9 +18,10 @@ import { X, Plus, Search, AlertCircle } from "lucide-react";
 interface AppointmentFormProps {
   onClose: () => void;
   onSuccess?: () => void;
+  appointment?: any;
 }
 
-export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
+export function AppointmentForm({ onClose, onSuccess, appointment }: AppointmentFormProps) {
   // Fetch data
   const { data: clients = [] } = trpc.clients.list.useQuery();
   const { data: professionals = [] } = trpc.professionals.list.useQuery();
@@ -39,19 +40,20 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
   }, [clients]);
 
   // State
-  const [selectedClient, setSelectedClient] = useState("");
+  const [selectedClient, setSelectedClient] = useState(appointment?.clientId || appointment?.client_id || "");
   const [clientSearchTerm, setClientSearchTerm] = useState("");
-  const [selectedPet, setSelectedPet] = useState<string | null>(null);
-  const [selectedService, setSelectedService] = useState("");
-  const [selectedPackage, setSelectedPackage] = useState("");
+  const [selectedPet, setSelectedPet] = useState<string | null>(appointment?.petId || appointment?.pet_id || null);
+  const [selectedService, setSelectedService] = useState(appointment?.serviceId || appointment?.service_id || "");
+  const [selectedPackage, setSelectedPackage] = useState(appointment?.clientPackageId || appointment?.client_package_id || "");
   const [executedBy, setExecutedBy] = useState<"professional" | "student">("professional");
-  const [selectedProfessional, setSelectedProfessional] = useState("");
+  const [selectedProfessional, setSelectedProfessional] = useState(appointment?.professionalId || appointment?.professional_id || "");
   const [selectedStudent, setSelectedStudent] = useState("");
   const [studentPermissions, setStudentPermissions] = useState<any>(null);
-  const [appointmentDate, setAppointmentDate] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [recurrenceRule, setRecurrenceRule] = useState<"none" | "weekly" | "biweekly" | "monthly">("none");
-  const [notes, setNotes] = useState("");
+  const initialDate = appointment?.appointmentDate || appointment?.appointment_date;
+  const [appointmentDate, setAppointmentDate] = useState(initialDate ? initialDate.slice(0, 10) : "");
+  const [startTime, setStartTime] = useState(initialDate ? new Date(initialDate).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Sao_Paulo" }) : "");
+  const [recurrenceRule, setRecurrenceRule] = useState<"none" | "weekly" | "biweekly" | "monthly">(appointment?.recurrence_rule || "none");
+  const [notes, setNotes] = useState(appointment?.notes || "");
   const { data: clientPackages = [] } = trpc.clientPackages.byClient.useQuery(
     { clientId: selectedClient },
     { enabled: !!selectedClient },
@@ -59,6 +61,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
 
   // Mutations
   const createMutation = trpc.appointments.create.useMutation();
+  const updateMutation = trpc.appointments.update.useMutation();
   const utils = trpc.useUtils();
 
   // Validate student permissions
@@ -156,20 +159,24 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
         sendEmail: true,
       };
 
-      await createMutation.mutateAsync(appointmentPayload);
+      if (appointment?.id) {
+        await updateMutation.mutateAsync({ id: appointment.id, ...appointmentPayload });
+      } else {
+        await createMutation.mutateAsync(appointmentPayload);
+      }
 
       // Se foi um aluno, registrar na tabela appointment_students
       if (executedBy === "student" && selectedStudent) {
         console.log("Aluno vinculado ao agendamento:", selectedStudent);
       }
 
-      toast.success("Agendamento criado com sucesso!");
+      toast.success(appointment?.id ? "Agendamento atualizado com sucesso!" : "Agendamento criado com sucesso!");
       await utils.appointments.list.invalidate();
       onSuccess?.();
       onClose();
     } catch (error) {
-      console.error("Erro ao criar agendamento:", error);
-      toast.error(error instanceof Error ? error.message : "Erro ao criar agendamento");
+      console.error("Erro ao salvar agendamento:", error);
+      toast.error(error instanceof Error ? error.message : "Erro ao salvar agendamento");
     }
   };
 
@@ -484,9 +491,13 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
         <Button
           type="submit"
           className="bg-green-600 hover:bg-green-700 text-white font-bold"
-          disabled={createMutation.isPending || (executedBy === "student" && validatePermissionsMutation.isLoading)}
+          disabled={createMutation.isPending || updateMutation.isPending || (executedBy === "student" && validatePermissionsMutation.isLoading)}
         >
-          {createMutation.isPending ? "Criando..." : "Criar Agendamento"}
+          {createMutation.isPending || updateMutation.isPending
+            ? "Salvando..."
+            : appointment?.id
+              ? "Salvar alterações"
+              : "Criar Agendamento"}
         </Button>
       </div>
     </form>
