@@ -37,6 +37,9 @@ import { toast } from "sonner";
 
 interface Package {
   id: string;
+  code: string;
+  audience_code: "RAC" | "OUT" | "MOD" | "GER";
+  duration_months: number;
   name: string;
   description?: string;
   total_baths: number;
@@ -55,6 +58,8 @@ export function PlansPage() {
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    audienceCode: "RAC" as "RAC" | "OUT" | "MOD" | "GER",
+    durationMonths: 3,
     totalBaths: 0,
     totalGroomings: 0,
     totalPrice: 0,
@@ -75,6 +80,8 @@ export function PlansPage() {
       setFormData({
         name: pkg.name,
         description: pkg.description || "",
+        audienceCode: pkg.audience_code,
+        durationMonths: pkg.duration_months,
         totalBaths: pkg.total_baths,
         totalGroomings: pkg.total_groomings,
         totalPrice: pkg.total_price,
@@ -87,6 +94,8 @@ export function PlansPage() {
       setFormData({
         name: "",
         description: "",
+        audienceCode: "RAC",
+        durationMonths: 3,
         totalBaths: 0,
         totalGroomings: 0,
         totalPrice: 0,
@@ -134,7 +143,7 @@ export function PlansPage() {
 
     try {
       await deleteMutation.mutateAsync({ id: deleteId });
-      toast.success("Plano deletado com sucesso!");
+      toast.success("Plano inativado com sucesso!");
       utils.packages.list.invalidate();
       setDeleteId(null);
     } catch (error) {
@@ -231,6 +240,30 @@ export function PlansPage() {
                   }
                   rows={3}
                 />
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor="audienceCode">Raça / Categoria *</Label>
+                  <select id="audienceCode" className="w-full rounded-md border border-input bg-background px-3 py-2" value={formData.audienceCode} onChange={(event) => setFormData({ ...formData, audienceCode: event.target.value as typeof formData.audienceCode })}>
+                    <option value="RAC">RAC — Raças específicas</option>
+                    <option value="OUT">OUT — Outras raças</option>
+                    <option value="MOD">MOD — Cão modelo</option>
+                    <option value="GER">GER — Categoria geral</option>
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="durationMonths">Duração do plano *</Label>
+                  <select id="durationMonths" className="w-full rounded-md border border-input bg-background px-3 py-2" value={formData.durationMonths} onChange={(event) => setFormData({ ...formData, durationMonths: Number(event.target.value) })}>
+                    <option value={1}>Mensal — M1</option>
+                    <option value={3}>Trimestral — T3</option>
+                    <option value={6}>Semestral — S6</option>
+                    <option value={12}>Anual — A12</option>
+                  </select>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Código: PLN-{formData.audienceCode}-{formData.durationMonths === 1 ? "M1" : formData.durationMonths === 3 ? "T3" : formData.durationMonths === 6 ? "S6" : "A12"}
+                  </p>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -436,7 +469,7 @@ export function PlansPage() {
                 <div className="col-span-2 lg:col-span-4">
                   <div className="mb-2 flex flex-wrap items-center gap-2">
                     <h3 className="text-lg font-bold leading-snug text-foreground">{pkg.name}</h3>
-                    <span className="text-xs font-bold text-accent bg-accent/10 px-2 py-1 rounded whitespace-nowrap">PAC-{String(packages.findIndex((p: Package) => p.id === pkg.id) + 1).padStart(4, '0')}</span>
+                    <span className="whitespace-nowrap rounded bg-accent/10 px-2 py-1 text-xs font-bold text-accent">{pkg.code}</span>
                   </div>
                   {pkg.description && (
                     <p className="mt-1 max-w-2xl whitespace-pre-line text-sm leading-6 text-muted-foreground">{pkg.description}</p>
@@ -506,7 +539,7 @@ export function PlansPage() {
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Deletar Plano?</AlertDialogTitle>
+            <AlertDialogTitle>Inativar plano?</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja deletar este plano? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
@@ -518,7 +551,7 @@ export function PlansPage() {
               disabled={deleteMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Deletar
+              Inativar
             </AlertDialogAction>
           </div>
         </AlertDialogContent>

@@ -10,6 +10,11 @@ import { sendAppointmentConfirmationEmail } from "./_core/emailService.js";
 // organization and unit boundaries to each request.
 const publicProcedure = protectedProcedure;
 
+function buildPlanCode(audienceCode: string, durationMonths: number) {
+  const durationCode: Record<number, string> = { 1: "M1", 3: "T3", 6: "S6", 12: "A12" };
+  return `PLN-${audienceCode}-${durationCode[durationMonths] || `M${durationMonths}`}`;
+}
+
 async function attachPetPhotoUrls(pets: any[]) {
   return Promise.all(
     pets.map(async (pet) => {
@@ -2200,13 +2205,31 @@ export const appRouter = router({
         baths: z.number().int().min(0),
         groomings: z.number().int().min(0),
         price: z.number().min(0),
+        contractDate: z.string().date().optional(),
         expiryDate: z.string().optional(),
         notes: z.string().max(1000).optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user?.organizationId || !ctx.user.unitId) throw new Error("Unidade ativa não encontrada");
-        if (input.baths + input.groomings < 1) throw new Error("Informe ao menos um serviço no pacote");
-        const code = `PCT-${Date.now().toString(36).toUpperCase()}`;
+        const { data: plan, error: planError } = input.packageId
+          ? await supabase.from("packages").select("*").eq("id", input.packageId).eq("unit_id", ctx.user.unitId).eq("status", "active").single()
+          : { data: null, error: null };
+        if (input.packageId && (planError || !plan)) throw new Error("Plano de referência não encontrado ou inativo");
+        const baths = plan ? Number(plan.total_baths) : input.baths;
+        const groomings = plan ? Number(plan.total_groomings) : input.groomings;
+        const price = plan ? Number(plan.total_price) : input.price;
+        if (baths + groomings < 1) throw new Error("Informe ao menos um serviço no pacote");
+        const contractDate = input.contractDate || new Date().toISOString().slice(0, 10);
+        let expiryDate = input.expiryDate || null;
+        if (plan?.duration_months && !expiryDate) {
+          const expiry = new Date(`${contractDate}T12:00:00-03:00`);
+          expiry.setMonth(expiry.getMonth() + Number(plan.duration_months));
+          expiryDate = expiry.toISOString().slice(0, 10);
+        }
+        const { data: code, error: codeError } = await supabase.rpc("next_client_package_code", {
+          p_organization_id: ctx.user.organizationId,
+        });
+        if (codeError || !code) throw new Error("Não foi possível gerar o código sequencial do pacote");
         const { data, error } = await supabase.from("client_packages").insert({
           organization_id: ctx.user.organizationId,
           unit_id: ctx.user.unitId,
@@ -2214,12 +2237,13 @@ export const appRouter = router({
           pet_id: input.petId,
           package_id: input.packageId || null,
           code,
-          contracted_baths: input.baths,
-          contracted_groomings: input.groomings,
-          balance_baths: input.baths,
-          balance_groomings: input.groomings,
-          price: input.price,
-          expiry_date: input.expiryDate || null,
+          contracted_baths: baths,
+          contracted_groomings: groomings,
+          balance_baths: baths,
+          balance_groomings: groomings,
+          price,
+          contract_date: contractDate,
+          expiry_date: expiryDate,
           notes: input.notes || null,
         }).select().single();
         if (error) throw new Error(error.message);
@@ -2229,11 +2253,13 @@ export const appRouter = router({
 
   packages: router({
     // List all packages
-    list: publicProcedure.query(async () => {
+    list: protectedProcedure.query(async ({ ctx }) => {
       try {
+        if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
         const { data: packages, error } = await supabase
           .from("packages")
           .select("*")
+          .eq("unit_id", ctx.user.unitId)
           .order("name", { ascending: true });
 
         if (error) throw error;
@@ -2268,6 +2294,8 @@ export const appRouter = router({
       .input(z.object({
         name: z.string().min(1, "Nome do plano é obrigatório"),
         description: z.string().optional(),
+        audienceCode: z.enum(["RAC", "OUT", "MOD", "GER"]),
+        durationMonths: z.number().int().min(1).max(60),
         totalBaths: z.number().min(0, "Qtd de banhos deve ser >= 0"),
         totalGroomings: z.number().min(0, "Qtd de tosas deve ser >= 0"),
         totalPrice: z.number().min(0, "Valor total deve ser > 0"),
@@ -2275,11 +2303,18 @@ export const appRouter = router({
         recurrenceType: z.string().optional(),
         status: z.string().default("active"),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
+          if (!ctx.user?.organizationId || !ctx.user.unitId) throw new Error("Unidade ativa não encontrada");
+          const code = buildPlanCode(input.audienceCode, input.durationMonths);
           const { data, error } = await supabase
             .from("packages")
             .insert([{
+              organization_id: ctx.user.organizationId,
+              unit_id: ctx.user.unitId,
+              code,
+              audience_code: input.audienceCode,
+              duration_months: input.durationMonths,
               name: input.name,
               description: input.description || null,
               total_baths: input.totalBaths,
@@ -2306,6 +2341,8 @@ export const appRouter = router({
         id: z.string().uuid(),
         name: z.string().min(1).optional(),
         description: z.string().optional(),
+        audienceCode: z.enum(["RAC", "OUT", "MOD", "GER"]).optional(),
+        durationMonths: z.number().int().min(1).max(60).optional(),
         totalBaths: z.number().min(0).optional(),
         totalGroomings: z.number().min(0).optional(),
         totalPrice: z.number().min(0).optional(),
@@ -2313,13 +2350,25 @@ export const appRouter = router({
         recurrenceType: z.string().optional(),
         status: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
+          if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
           const { id, ...updateData } = input;
           const updatePayload: Record<string, any> = {};
 
           if (updateData.name) updatePayload.name = updateData.name;
           if (updateData.description !== undefined) updatePayload.description = updateData.description || null;
+          if (updateData.audienceCode !== undefined) updatePayload.audience_code = updateData.audienceCode;
+          if (updateData.durationMonths !== undefined) updatePayload.duration_months = updateData.durationMonths;
+          if (updateData.audienceCode !== undefined || updateData.durationMonths !== undefined) {
+            const { data: current } = await supabase.from("packages")
+              .select("audience_code, duration_months").eq("id", id).eq("unit_id", ctx.user.unitId).single();
+            if (!current) throw new Error("Plano não encontrado");
+            updatePayload.code = buildPlanCode(
+              updateData.audienceCode ?? current.audience_code,
+              updateData.durationMonths ?? current.duration_months,
+            );
+          }
           if (updateData.totalBaths !== undefined) updatePayload.total_baths = updateData.totalBaths;
           if (updateData.totalGroomings !== undefined) updatePayload.total_groomings = updateData.totalGroomings;
           if (updateData.totalPrice !== undefined) updatePayload.total_price = updateData.totalPrice;
@@ -2331,6 +2380,7 @@ export const appRouter = router({
             .from("packages")
             .update(updatePayload)
             .eq("id", id)
+            .eq("unit_id", ctx.user.unitId)
             .select()
             .single();
 
@@ -2342,15 +2392,17 @@ export const appRouter = router({
         }
       }),
 
-    // Delete a package
-    delete: publicProcedure
+    // Planos vinculados são inativados para preservar contratos e histórico.
+    delete: protectedProcedure
       .input(z.object({ id: z.string().uuid() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
+          if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
           const { error } = await supabase
             .from("packages")
-            .delete()
-            .eq("id", input.id);
+            .update({ status: "inactive", updated_at: new Date().toISOString() })
+            .eq("id", input.id)
+            .eq("unit_id", ctx.user.unitId);
 
           if (error) throw error;
           return { success: true };

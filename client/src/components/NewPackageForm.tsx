@@ -18,6 +18,7 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
     baths: 5,
     groomings: 5,
     price: 0,
+    contractDate: new Date().toISOString().slice(0, 10),
     expiryDate: "",
   });
 
@@ -56,6 +57,7 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
       baths: formData.baths,
       groomings: formData.groomings,
       price: formData.price,
+      contractDate: formData.contractDate,
       expiryDate: formData.expiryDate || undefined,
     });
   };
@@ -69,12 +71,15 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
         <Label htmlFor="plan">Plano de referência</Label>
         <Select value={formData.packageId || "none"} onValueChange={(value) => {
           const plan = plans.find((item: any) => item.id === value);
+          const expiry = new Date(`${formData.contractDate}T12:00:00`);
+          if (plan?.duration_months) expiry.setMonth(expiry.getMonth() + Number(plan.duration_months));
           setFormData({
             ...formData,
             packageId: value === "none" ? "" : value,
             baths: plan?.total_baths ?? formData.baths,
             groomings: plan?.total_groomings ?? formData.groomings,
             price: Number(plan?.total_price ?? formData.price),
+            expiryDate: plan?.duration_months ? expiry.toISOString().slice(0, 10) : formData.expiryDate,
           });
         }}>
           <SelectTrigger id="plan"><SelectValue placeholder="Selecione um plano" /></SelectTrigger>
@@ -149,6 +154,16 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
           step="0.01"
           value={formData.price}
           onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="contractDate">Data de Contratação</Label>
+        <Input
+          id="contractDate"
+          type="date"
+          value={formData.contractDate}
+          onChange={(e) => setFormData({ ...formData, contractDate: e.target.value })}
         />
       </div>
 
