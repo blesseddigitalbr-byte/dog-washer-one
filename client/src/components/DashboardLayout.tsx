@@ -21,6 +21,7 @@ import {
   X,
   ArrowLeft,
   ArrowRight,
+  CalendarRange,
 } from "lucide-react";
 
 interface MenuSection {
@@ -53,6 +54,7 @@ export default function DashboardLayout({
       items: [
         { icon: <LayoutDashboard className="w-5 h-5" />, label: "Painel", path: "/" },
         { icon: <Calendar className="w-5 h-5" />, label: "Agendamento", path: "/appointments" },
+        { icon: <CalendarRange className="w-5 h-5" />, label: "Simulador", path: "/schedule-simulator" },
         { icon: <Users className="w-5 h-5" />, label: "Clientes", path: "/clients" },
         { icon: <Users2 className="w-5 h-5" />, label: "Alunos", path: "/students" },
         { icon: <Package className="w-5 h-5" />, label: "Pacotes", path: "/packages" },

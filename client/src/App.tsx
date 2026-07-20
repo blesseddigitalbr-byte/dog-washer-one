@@ -18,6 +18,7 @@ import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Units from "./pages/Units";
 import Team from "./pages/Team";
+import ScheduleSimulator from "./pages/ScheduleSimulator";
 
 function Router() {
   const { user, loading } = useAuth();
@@ -36,6 +37,7 @@ function Router() {
             <Route path="/" component={Home} />
             <Route path="/schedule" component={Schedule} />
             <Route path="/appointments" component={Appointments} />
+            <Route path="/schedule-simulator" component={ScheduleSimulator} />
             <Route path="/clients" component={Clients} />
             <Route path="/students" component={Students} />
             <Route path="/services" component={Services} />

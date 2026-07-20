@@ -1817,6 +1817,320 @@ export const appRouter = router({
       }),
   }),
 
+  scheduleSimulator: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
+      const { data, error } = await supabase
+        .from("schedule_simulations")
+        .select("*, client:client_id(nome, phone), pet:pet_id(name, breed), service:service_id(name), professional:professional_id(name), client_package:client_package_id(code)")
+        .eq("unit_id", ctx.user.unitId)
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) throw new Error(error.message);
+      return data ?? [];
+    }),
+
+    get: protectedProcedure
+      .input(z.object({ id: z.string().uuid() }))
+      .query(async ({ input, ctx }) => {
+        if (!ctx.user?.organizationId || !ctx.user.unitId) throw new Error("Unidade ativa não encontrada");
+        const { data, error } = await supabase
+          .from("schedule_simulations")
+          .select("*, items:schedule_simulation_items(*), client:client_id(nome, phone), pet:pet_id(name, breed), service:service_id(name), professional:professional_id(name), client_package:client_package_id(code)")
+          .eq("id", input.id)
+          .eq("unit_id", ctx.user.unitId)
+          .single();
+        if (error) throw new Error(error.message);
+        return data;
+      }),
+
+    simulate: protectedProcedure
+      .input(z.object({
+        clientId: z.string().uuid(),
+        petId: z.string().uuid(),
+        appointmentType: z.enum(["package", "standalone"]).default("standalone"),
+        clientPackageId: z.string().uuid().optional(),
+        serviceId: z.string().uuid(),
+        professionalId: z.string().uuid(),
+        frequency: z.enum(["weekly", "biweekly", "every_21_days", "monthly", "once"]),
+        startDate: z.string().date(),
+        endDate: z.string().date().optional(),
+        defaultTime: z.string().regex(/^\d{2}:\d{2}$/),
+        quantity: z.number().int().min(1).max(60),
+        notes: z.string().max(2000).optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.organizationId || !ctx.user.unitId) throw new Error("Unidade ativa não encontrada");
+        const [clientRes, petRes, serviceRes, professionalRes, packageRes] = await Promise.all([
+          supabase.from("clientes").select("id, nome, phone").eq("id", input.clientId).eq("unit_id", ctx.user.unitId).single(),
+          supabase.from("pets").select("id, name, breed, client_id").eq("id", input.petId).eq("unit_id", ctx.user.unitId).single(),
+          supabase.from("services").select("id, name, duration_minutes, price, category").eq("id", input.serviceId).eq("unit_id", ctx.user.unitId).eq("status", "active").single(),
+          supabase.from("professionals").select("id, name").eq("id", input.professionalId).eq("unit_id", ctx.user.unitId).eq("is_active", true).single(),
+          input.clientPackageId
+            ? supabase.from("client_packages").select("*").eq("id", input.clientPackageId).eq("unit_id", ctx.user.unitId).single()
+            : Promise.resolve({ data: null, error: null }),
+        ]);
+        if (!clientRes.data || !petRes.data || petRes.data.client_id !== input.clientId) throw new Error("Cliente ou pet inválido");
+        if (!serviceRes.data || !professionalRes.data) throw new Error("Serviço ou profissional indisponível");
+        if (input.clientPackageId && (!packageRes.data || packageRes.data.pet_id !== input.petId || packageRes.data.status !== "active")) {
+          throw new Error("O pacote selecionado não está vigente para este pet");
+        }
+        const serviceText = `${serviceRes.data.category || ""} ${serviceRes.data.name || ""}`.toLowerCase();
+        const consumesGrooming = serviceText.includes("tosa") || serviceText.includes("trimming");
+        let selectedPackage: any = packageRes.data;
+        if (input.appointmentType === "package" && !selectedPackage) {
+          const { data: candidates, error: candidatesError } = await supabase
+            .from("client_packages")
+            .select("*")
+            .eq("unit_id", ctx.user.unitId)
+            .eq("pet_id", input.petId)
+            .eq("status", "active")
+            .order("expiry_date", { ascending: true, nullsFirst: false });
+          if (candidatesError) throw candidatesError;
+          selectedPackage = (candidates ?? []).find((item: any) => {
+            const withinValidity = !item.expiry_date || item.expiry_date >= input.startDate;
+            const hasBalance = Number(consumesGrooming ? item.balance_groomings : item.balance_baths) > 0;
+            return withinValidity && hasBalance;
+          });
+          if (!selectedPackage) throw new Error("Pet sem pacote vigente e com saldo para este serviço");
+        }
+
+        const intervalDays: Record<string, number> = { weekly: 7, biweekly: 14, every_21_days: 21, once: 0 };
+        const dates: Date[] = [];
+        let cursor = new Date(`${input.startDate}T${input.defaultTime}:00-03:00`);
+        const limit = input.endDate ? new Date(`${input.endDate}T23:59:59-03:00`) : null;
+        for (let index = 0; index < input.quantity; index += 1) {
+          if (limit && cursor > limit) break;
+          dates.push(new Date(cursor));
+          if (input.frequency === "monthly") cursor.setMonth(cursor.getMonth() + 1);
+          else if (input.frequency === "once") break;
+          else cursor.setDate(cursor.getDate() + intervalDays[input.frequency]);
+        }
+        if (!dates.length) throw new Error("Nenhuma data foi gerada dentro da vigência informada");
+
+        const rangeStart = dates[0].toISOString();
+        const rangeEnd = new Date(dates[dates.length - 1].getTime() + 24 * 60 * 60_000).toISOString();
+        const { data: existing, error: existingError } = await supabase
+          .from("appointments")
+          .select("id, pet_id, professional_id, appointment_date, duration_minutes, status")
+          .eq("unit_id", ctx.user.unitId)
+          .not("status", "in", '("cancelled","no_show")')
+          .gte("appointment_date", rangeStart)
+          .lte("appointment_date", rangeEnd);
+        if (existingError) throw existingError;
+
+        const availableBalance = selectedPackage
+          ? Number(consumesGrooming ? selectedPackage.balance_groomings : selectedPackage.balance_baths)
+          : null;
+        const duration = Number(serviceRes.data.duration_minutes || 60);
+        const items = dates.map((scheduledAt, index) => {
+          const alerts: string[] = [];
+          if (selectedPackage?.expiry_date && scheduledAt > new Date(`${selectedPackage.expiry_date}T23:59:59-03:00`)) alerts.push("Data fora da vigência do pacote");
+          if (availableBalance !== null && index >= availableBalance) alerts.push("Quantidade maior que o saldo disponível");
+          const scheduledEnd = new Date(scheduledAt.getTime() + duration * 60_000);
+          for (const appointment of existing ?? []) {
+            const existingStart = new Date(appointment.appointment_date);
+            const existingEnd = new Date(existingStart.getTime() + Number(appointment.duration_minutes || 60) * 60_000);
+            if (appointment.pet_id === input.petId && existingStart.getTime() === scheduledAt.getTime()) alerts.push("Pet já possui atendimento nesta data e horário");
+            if (appointment.professional_id === input.professionalId && scheduledAt < existingEnd && scheduledEnd > existingStart) alerts.push("Profissional indisponível neste horário");
+          }
+          return {
+            scheduled_at: scheduledAt.toISOString(),
+            client_package_id: selectedPackage?.id || null,
+            status: alerts.some((alert) => alert.includes("possui") || alert.includes("indisponível")) ? "conflict" : alerts.length ? "warning" : "valid",
+            alerts: Array.from(new Set(alerts)),
+          };
+        });
+
+        const message = `Olá, ${clientRes.data.nome}! Organizamos a pré-agenda de ${petRes.data.name}.\n\n${items.map((item, index) => `${index + 1}. ${new Date(item.scheduled_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })} às ${input.defaultTime} — ${serviceRes.data.name}`).join("\n")}\n\nCaso precise de algum ajuste, verificaremos conforme a disponibilidade da agenda.\n\nLux Dog`;
+        const { data: simulation, error: simulationError } = await supabase.from("schedule_simulations").insert({
+          organization_id: ctx.user.organizationId,
+          unit_id: ctx.user.unitId,
+          client_id: input.clientId,
+          pet_id: input.petId,
+          client_package_id: selectedPackage?.id || null,
+          appointment_type: input.appointmentType,
+          service_id: input.serviceId,
+          professional_id: input.professionalId,
+          frequency: input.frequency,
+          start_date: input.startDate,
+          end_date: input.endDate || null,
+          default_time: input.defaultTime,
+          quantity: items.length,
+          notes: input.notes || null,
+          message_text: message,
+          created_by: ctx.user.id,
+        }).select().single();
+        if (simulationError) throw new Error(simulationError.message);
+        const { data: savedItems, error: itemsError } = await supabase.from("schedule_simulation_items")
+          .insert(items.map((item) => ({ ...item, simulation_id: simulation.id })))
+          .select();
+        if (itemsError) {
+          await supabase.from("schedule_simulations").delete().eq("id", simulation.id);
+          throw new Error(itemsError.message);
+        }
+        return { ...simulation, items: savedItems ?? [], message_text: message };
+      }),
+
+    updateItem: protectedProcedure
+      .input(z.object({ id: z.string().uuid(), scheduledAt: z.string().datetime(), ignored: z.boolean().optional() }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
+        const { data: current, error: currentError } = await supabase
+          .from("schedule_simulation_items")
+          .select("*, simulation:simulation_id(*, service:service_id(duration_minutes), client_package:client_package_id(expiry_date, balance_baths, balance_groomings))")
+          .eq("id", input.id)
+          .single();
+        if (currentError || !current?.simulation) throw new Error("Item da simulação não encontrado");
+        if (input.ignored) {
+          const { data, error } = await supabase.from("schedule_simulation_items")
+            .update({ status: "ignored" }).eq("id", input.id).select().single();
+          if (error) throw new Error(error.message);
+          return data;
+        }
+        const simulation = current.simulation;
+        const scheduledAt = new Date(input.scheduledAt);
+        const duration = Number(simulation.service?.duration_minutes || 60);
+        const scheduledEnd = new Date(scheduledAt.getTime() + duration * 60_000);
+        const alerts: string[] = [];
+        if (simulation.client_package?.expiry_date && scheduledAt > new Date(`${simulation.client_package.expiry_date}T23:59:59-03:00`)) {
+          alerts.push("Data fora da vigência do pacote");
+        }
+        const { data: existing, error: existingError } = await supabase
+          .from("appointments")
+          .select("pet_id, professional_id, appointment_date, duration_minutes")
+          .eq("unit_id", ctx.user.unitId)
+          .not("status", "in", '("cancelled","no_show")')
+          .gte("appointment_date", new Date(scheduledAt.getTime() - 12 * 60 * 60_000).toISOString())
+          .lte("appointment_date", scheduledEnd.toISOString());
+        if (existingError) throw existingError;
+        for (const appointment of existing ?? []) {
+          const existingStart = new Date(appointment.appointment_date);
+          const existingEnd = new Date(existingStart.getTime() + Number(appointment.duration_minutes || 60) * 60_000);
+          if (appointment.pet_id === simulation.pet_id && existingStart.getTime() === scheduledAt.getTime()) alerts.push("Pet já possui atendimento nesta data e horário");
+          if (appointment.professional_id === simulation.professional_id && scheduledAt < existingEnd && scheduledEnd > existingStart) alerts.push("Profissional indisponível neste horário");
+        }
+        const status = alerts.some((alert) => alert.includes("possui") || alert.includes("indisponível"))
+          ? "conflict"
+          : alerts.length ? "warning" : "valid";
+        const { data, error } = await supabase.from("schedule_simulation_items").update({
+          scheduled_at: input.scheduledAt,
+          status,
+          alerts: Array.from(new Set(alerts)),
+        }).eq("id", input.id).select().single();
+        if (error) throw new Error(error.message);
+        return data;
+      }),
+
+    confirm: protectedProcedure
+      .input(z.object({ id: z.string().uuid(), includeWarnings: z.boolean().default(true) }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.organizationId || !ctx.user.unitId) throw new Error("Unidade ativa não encontrada");
+        const { data: simulation, error } = await supabase
+          .from("schedule_simulations")
+          .select("*, items:schedule_simulation_items(*)")
+          .eq("id", input.id)
+          .eq("unit_id", ctx.user.unitId)
+          .eq("status", "draft")
+          .single();
+        if (error || !simulation) throw new Error("Simulação não encontrada ou já confirmada");
+        const selectedItems = (simulation.items ?? []).filter((item: any) =>
+          item.status === "valid" || (input.includeWarnings && item.status === "warning"),
+        );
+        if (!selectedItems.length) throw new Error("Não há datas válidas para incluir");
+        const { data: service } = await supabase.from("services").select("price, duration_minutes").eq("id", simulation.service_id).single();
+        const duration = Number(service?.duration_minutes || 60);
+        const starts = selectedItems.map((item: any) => new Date(item.scheduled_at));
+        const rangeStart = new Date(Math.min(...starts.map((date: Date) => date.getTime())) - 12 * 60 * 60_000).toISOString();
+        const rangeEnd = new Date(Math.max(...starts.map((date: Date) => date.getTime())) + duration * 60_000).toISOString();
+        const { data: currentAppointments, error: validationError } = await supabase
+          .from("appointments")
+          .select("pet_id, professional_id, appointment_date, duration_minutes")
+          .eq("unit_id", ctx.user.unitId)
+          .not("status", "in", '("cancelled","no_show")')
+          .gte("appointment_date", rangeStart)
+          .lte("appointment_date", rangeEnd);
+        if (validationError) throw validationError;
+        for (const item of selectedItems) {
+          const newStart = new Date(item.scheduled_at);
+          const newEnd = new Date(newStart.getTime() + duration * 60_000);
+          const conflict = (currentAppointments ?? []).some((appointment: any) => {
+            const existingStart = new Date(appointment.appointment_date);
+            const existingEnd = new Date(existingStart.getTime() + Number(appointment.duration_minutes || 60) * 60_000);
+            return (
+              (appointment.pet_id === simulation.pet_id && existingStart.getTime() === newStart.getTime()) ||
+              (appointment.professional_id === simulation.professional_id && newStart < existingEnd && newEnd > existingStart)
+            );
+          });
+          if (conflict) throw new Error("A agenda mudou após a simulação. Revise os conflitos antes de confirmar.");
+        }
+        const appointmentsPayload = selectedItems.map((item: any) => {
+          const startsAt = new Date(item.scheduled_at);
+          const endsAt = new Date(startsAt.getTime() + duration * 60_000);
+          return {
+            organization_id: ctx.user!.organizationId,
+            unit_id: ctx.user!.unitId,
+            client_id: simulation.client_id,
+            pet_id: simulation.pet_id,
+            service_id: simulation.service_id,
+            professional_id: simulation.professional_id,
+            client_package_id: item.client_package_id,
+            appointment_type: simulation.appointment_type,
+            appointment_date: item.scheduled_at,
+            start_time: startsAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Sao_Paulo" }),
+            end_time: endsAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Sao_Paulo" }),
+            duration_minutes: duration,
+            total_price: Number(service?.price || 0),
+            recurrence_rule: simulation.frequency,
+            status: "pending",
+            notes: simulation.notes,
+            created_by: ctx.user!.id,
+          };
+        });
+        const { data: created, error: createError } = await supabase.from("appointments").insert(appointmentsPayload).select();
+        if (createError) throw new Error(createError.message);
+        const appointmentServices = (created ?? []).map((appointment: any) => ({
+          appointment_id: appointment.id,
+          service_id: simulation.service_id,
+          unit_price: Number(service?.price || 0),
+          duration_minutes: duration,
+        }));
+        const { error: servicesError } = await supabase.from("appointment_services").insert(appointmentServices);
+        if (servicesError) {
+          await supabase.from("appointments").delete().in("id", (created ?? []).map((item: any) => item.id));
+          throw new Error(servicesError.message);
+        }
+        await Promise.all((created ?? []).map((appointment: any, index: number) =>
+          supabase.from("schedule_simulation_items").update({ status: "created", appointment_id: appointment.id }).eq("id", selectedItems[index].id),
+        ));
+        await supabase.from("schedule_simulations").update({ status: "confirmed", confirmed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", input.id);
+        return { created: created?.length ?? 0 };
+      }),
+
+    saveMessage: protectedProcedure
+      .input(z.object({ id: z.string().uuid(), content: z.string().trim().min(1).max(10000) }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.organizationId || !ctx.user.unitId) throw new Error("Unidade ativa não encontrada");
+        const { data: simulation } = await supabase.from("schedule_simulations").select("client_id, pet_id, client_package_id").eq("id", input.id).eq("unit_id", ctx.user.unitId).single();
+        if (!simulation) throw new Error("Simulação não encontrada");
+        await supabase.from("schedule_simulations").update({ message_text: input.content, updated_at: new Date().toISOString() }).eq("id", input.id);
+        const { data, error } = await supabase.from("communication_history").insert({
+          organization_id: ctx.user.organizationId,
+          unit_id: ctx.user.unitId,
+          client_id: simulation.client_id,
+          pet_id: simulation.pet_id,
+          client_package_id: simulation.client_package_id,
+          simulation_id: input.id,
+          channel: "whatsapp",
+          content: input.content,
+          status: "generated",
+          created_by: ctx.user.id,
+        }).select().single();
+        if (error) throw new Error(error.message);
+        return data;
+      }),
+  }),
+
   visits: router({
     byPet: protectedProcedure
       .input(z.object({ petId: z.string().uuid() }))
