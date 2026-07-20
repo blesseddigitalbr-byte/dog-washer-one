@@ -10,7 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { AppointmentForm } from "@/components/AppointmentForm";
 import { trpc } from "@/lib/trpc";
-import { ChevronLeft, ChevronRight, Calendar, List } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, List, Pencil, Trash2 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, addDays, isSameDay, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -39,6 +39,8 @@ export default function Appointments() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<ViewType>("calendar");
   const [showForm, setShowForm] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [editingAppointment, setEditingAppointment] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState("all");
 
   // Fetch appointments
@@ -53,6 +55,20 @@ export default function Appointments() {
     },
     onError: (error) => toast.error(error.message),
   });
+  const deleteMutation = trpc.appointments.delete.useMutation({
+    onSuccess: async () => {
+      await utils.appointments.list.invalidate();
+      setSelectedAppointment(null);
+      toast.success("Agendamento excluído da operação e preservado no histórico");
+    },
+    onError: (error) => toast.error(error.message),
+  });
+  const openAppointment = (appointment: any) => setSelectedAppointment(appointment);
+  const deleteAppointment = () => {
+    if (!selectedAppointment) return;
+    const reason = window.prompt("Informe o motivo da exclusão/cancelamento:");
+    if (reason) deleteMutation.mutate({ id: selectedAppointment.id, reason });
+  };
 
   const advanceStatus = (appointment: any) => {
     const nextStatus: Record<string, "confirmed" | "in_progress" | "completed"> = {
@@ -124,16 +140,20 @@ export default function Appointments() {
   const handlePrevious = () => {
     if (viewType === "calendar") {
       setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
-    } else {
+    } else if (viewType === "week") {
       setCurrentDate(addDays(currentDate, -7));
+    } else {
+      setCurrentDate(addDays(currentDate, -1));
     }
   };
 
   const handleNext = () => {
     if (viewType === "calendar") {
       setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
-    } else {
+    } else if (viewType === "week") {
       setCurrentDate(addDays(currentDate, 7));
+    } else {
+      setCurrentDate(addDays(currentDate, 1));
     }
   };
 
@@ -167,7 +187,10 @@ export default function Appointments() {
                 {dayAppointments.slice(0, 2).map((apt: any) => (
                   <div
                     key={apt.id}
-                    className={`text-xs p-1 rounded truncate ${
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openAppointment(apt)}
+                    className={`cursor-pointer text-xs p-1 rounded truncate hover:ring-2 hover:ring-[#C9A24E] ${
                       STATUS_COLORS[apt.status]?.bg
                     }`}
                     title={`${apt.petName} (${apt.clientName})`}
@@ -220,7 +243,10 @@ export default function Appointments() {
                   {hourAppointments.map((apt: any) => (
                     <div
                       key={apt.id}
-                      className={`text-xs p-1 rounded mb-1 ${STATUS_COLORS[apt.status]?.bg}`}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openAppointment(apt)}
+                      className={`cursor-pointer text-xs p-1 rounded mb-1 hover:ring-2 hover:ring-[#C9A24E] ${STATUS_COLORS[apt.status]?.bg}`}
                       title={`${apt.petName} (${apt.clientName})`}
                     >
                       {apt.petName}
@@ -265,7 +291,10 @@ export default function Appointments() {
                     hourAppointments.map((apt: any) => (
                       <div
                         key={apt.id}
-                        className={`p-3 rounded-lg border-l-4 ${STATUS_COLORS[apt.status]?.bg}`}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openAppointment(apt)}
+                        className={`cursor-pointer p-3 rounded-lg border-l-4 hover:ring-2 hover:ring-[#C9A24E] ${STATUS_COLORS[apt.status]?.bg}`}
                         style={{ borderLeftColor: "#8e6e3e" }}
                       >
                         <div className="font-semibold">{apt.petName}</div>
@@ -341,7 +370,12 @@ export default function Appointments() {
                   </div>
 
                   {/* Card do agendamento */}
-                  <div className={`flex-1 p-4 rounded-lg border-l-4 ${STATUS_COLORS[apt.status]?.bg}`}>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openAppointment(apt)}
+                    className={`flex-1 cursor-pointer p-4 rounded-lg border-l-4 hover:ring-2 hover:ring-[#C9A24E] ${STATUS_COLORS[apt.status]?.bg}`}
+                  >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="font-semibold text-lg">{apt.petId}</div>
@@ -362,7 +396,10 @@ export default function Appointments() {
                           size="sm"
                           className="bg-[#113A7A] hover:bg-[#07111E] text-white"
                           disabled={statusMutation.isPending}
-                          onClick={() => advanceStatus(apt)}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            advanceStatus(apt);
+                          }}
                         >
                           {apt.status === "pending"
                             ? "Confirmar"
@@ -522,6 +559,55 @@ export default function Appointments() {
               onClose={() => setShowForm(false)}
               onSuccess={() => setShowForm(false)}
             />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!selectedAppointment} onOpenChange={(open) => !open && setSelectedAppointment(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Detalhes do agendamento</DialogTitle>
+            <DialogDescription>Consulte os dados e escolha uma ação.</DialogDescription>
+          </DialogHeader>
+          {selectedAppointment && (
+            <div className="space-y-5">
+              <div className="grid gap-4 rounded-xl border bg-[#F8F6F1] p-5 sm:grid-cols-2">
+                <div><p className="text-xs font-semibold uppercase text-muted-foreground">Pet / Tutor</p><p className="font-semibold">{selectedAppointment.petName} / {selectedAppointment.clientName}</p></div>
+                <div><p className="text-xs font-semibold uppercase text-muted-foreground">Serviço</p><p className="font-semibold">{selectedAppointment.serviceName}</p></div>
+                <div><p className="text-xs font-semibold uppercase text-muted-foreground">Data e horário</p><p className="font-semibold">{format(new Date(selectedAppointment.appointmentDate), "dd/MM/yyyy 'às' HH:mm")}</p></div>
+                <div><p className="text-xs font-semibold uppercase text-muted-foreground">Duração</p><p className="font-semibold">{selectedAppointment.durationMinutes || 60} min</p></div>
+                <div><p className="text-xs font-semibold uppercase text-muted-foreground">Profissional</p><p className="font-semibold">{selectedAppointment.professional?.name || "Não informado"}</p></div>
+                <div><p className="text-xs font-semibold uppercase text-muted-foreground">Status</p><Badge className={STATUS_COLORS[selectedAppointment.status]?.badge}>{STATUS_LABELS[selectedAppointment.status]}</Badge></div>
+                {selectedAppointment.notes && <div className="sm:col-span-2"><p className="text-xs font-semibold uppercase text-muted-foreground">Observações</p><p>{selectedAppointment.notes}</p></div>}
+              </div>
+              <div className="flex flex-wrap justify-end gap-3">
+                <Button variant="outline" onClick={() => setSelectedAppointment(null)}>Fechar</Button>
+                {selectedAppointment.status !== "completed" && (
+                  <>
+                    <Button variant="outline" onClick={() => { setEditingAppointment(selectedAppointment); setSelectedAppointment(null); }}>
+                      <Pencil className="mr-2 h-4 w-4" /> Editar
+                    </Button>
+                    <Button variant="destructive" disabled={deleteMutation.isPending} onClick={deleteAppointment}>
+                      <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editingAppointment} onOpenChange={(open) => !open && setEditingAppointment(null)}>
+        <DialogContent className="flex max-h-[92vh] w-[calc(100vw-2rem)] max-w-5xl flex-col overflow-hidden">
+          <DialogHeader>
+            <DialogTitle>Editar agendamento</DialogTitle>
+            <DialogDescription>As alterações serão salvas na Agenda oficial do DWO.</DialogDescription>
+          </DialogHeader>
+          <div className="overflow-y-auto pr-2">
+            {editingAppointment && (
+              <AppointmentForm appointment={editingAppointment} onClose={() => setEditingAppointment(null)} onSuccess={() => setEditingAppointment(null)} />
+            )}
           </div>
         </DialogContent>
       </Dialog>
