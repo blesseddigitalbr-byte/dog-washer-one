@@ -341,7 +341,7 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
             </SelectTrigger>
             <SelectContent>
               {executedBy === "professional" ? (
-                professionals.map((prof: any) => (
+                professionals.filter((prof: any) => prof.is_active).map((prof: any) => (
                   <SelectItem key={prof.id} value={prof.id}>
                     {prof.name}
                   </SelectItem>
