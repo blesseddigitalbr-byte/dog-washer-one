@@ -14,7 +14,7 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
   const [formData, setFormData] = useState({
     clientId: "",
     petId: "",
-    packageType: "standard",
+    packageId: "",
     baths: 5,
     groomings: 5,
     price: 0,
@@ -22,7 +22,8 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
   });
 
   const { data: clients = [] } = trpc.clients.list.useQuery();
-  const createMutation = trpc.packages.create.useMutation({
+  const { data: plans = [] } = trpc.packages.list.useQuery();
+  const createMutation = trpc.clientPackages.create.useMutation({
     onSuccess: () => {
       toast.success("Pacote criado com sucesso!");
       onClose();
@@ -51,12 +52,12 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
     await createMutation.mutateAsync({
       clientId: formData.clientId,
       petId: formData.petId,
-      packageType: formData.packageType,
+      packageId: formData.packageId || undefined,
       baths: formData.baths,
       groomings: formData.groomings,
       price: formData.price,
-      expiryDate: new Date(formData.expiryDate).toISOString(),
-    } as any);
+      expiryDate: formData.expiryDate || undefined,
+    });
   };
 
   const selectedClient = clients.find((c: any) => c.id === formData.clientId);
@@ -64,6 +65,26 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="plan">Plano de referência</Label>
+        <Select value={formData.packageId || "none"} onValueChange={(value) => {
+          const plan = plans.find((item: any) => item.id === value);
+          setFormData({
+            ...formData,
+            packageId: value === "none" ? "" : value,
+            baths: plan?.total_baths ?? formData.baths,
+            groomings: plan?.total_groomings ?? formData.groomings,
+            price: Number(plan?.total_price ?? formData.price),
+          });
+        }}>
+          <SelectTrigger id="plan"><SelectValue placeholder="Selecione um plano" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">Pacote personalizado</SelectItem>
+            {plans.map((plan: any) => <SelectItem key={plan.id} value={plan.id}>{plan.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+
       <div>
         <Label htmlFor="client">Cliente *</Label>
         <Select value={formData.clientId} onValueChange={(value) => setFormData({ ...formData, clientId: value, petId: "" })}>

@@ -55,6 +55,10 @@ export function ClientDetailModal({
   const [deletingPet, setDeletingPet] = useState<Pet | null>(null);
   const [historyPetId, setHistoryPetId] = useState<string | null>(null);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const { data: petVisits = [] } = trpc.visits.byPet.useQuery(
+    { petId: historyPetId || "00000000-0000-0000-0000-000000000000" },
+    { enabled: historyOpen && !!historyPetId },
+  );
 
   const deletePetMutation = trpc.pets.delete.useMutation();
   const utils = trpc.useUtils();
@@ -396,7 +400,7 @@ export function ClientDetailModal({
             petSize={pet?.size}
             clientName={clientName}
             petPhoto={pet?.photo}
-            visits={[]}
+            visits={petVisits.map((visit: any) => ({ ...visit, date: new Date(visit.date) }))}
           />
         );
       })()}
