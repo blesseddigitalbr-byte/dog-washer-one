@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,7 +23,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2, Edit2, Plus } from "lucide-react";
+import {
+  Bath,
+  CircleDollarSign,
+  Edit2,
+  PackageCheck,
+  Plus,
+  Repeat2,
+  Scissors,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 
 interface Package {
@@ -168,9 +177,9 @@ export function PlansPage() {
   };
 
   return (
-    <div className="max-w-[1280px] mx-auto px-8 py-8 space-y-6">
+    <div className="mx-auto w-full max-w-[1440px] space-y-6 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Planos</h1>
           <p className="text-muted-foreground mt-2">
@@ -185,7 +194,7 @@ export function PlansPage() {
               className="bg-secondary hover:bg-secondary/90 text-secondary-foreground"
             >
               <Plus className="mr-2 h-4 w-4" />
-              + Novo Plano
+              Novo Plano
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
@@ -224,7 +233,7 @@ export function PlansPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <Label htmlFor="totalBaths">Qtd de Banhos</Label>
                   <Input
@@ -258,7 +267,7 @@ export function PlansPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <Label htmlFor="totalPrice">Valor Total (R$) *</Label>
                   <Input
@@ -294,7 +303,7 @@ export function PlansPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <Label htmlFor="recurrenceType">Recorrência</Label>
                   <Input
@@ -345,20 +354,21 @@ export function PlansPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="border-l-4 border-l-chart-3 rounded-lg shadow-sm">
-          <CardContent className="pt-6">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Card className="rounded-xl border-l-4 border-l-chart-3 shadow-sm">
+          <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground uppercase font-semibold">Total de Planos</p>
                 <p className="text-2xl font-bold text-foreground mt-1">{packages.length}</p>
               </div>
+              <PackageCheck className="h-7 w-7 text-[#C9A24E]/45" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-chart-3 rounded-lg shadow-sm">
-          <CardContent className="pt-6">
+        <Card className="rounded-xl border-l-4 border-l-chart-3 shadow-sm">
+          <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground uppercase font-semibold">Planos Ativos</p>
@@ -366,12 +376,13 @@ export function PlansPage() {
                   {packages.filter((p: Package) => p.status === "active").length}
                 </p>
               </div>
+              <PackageCheck className="h-7 w-7 text-emerald-600/35" />
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-chart-3 rounded-lg shadow-sm">
-          <CardContent className="pt-6">
+        <Card className="rounded-xl border-l-4 border-l-chart-3 shadow-sm">
+          <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs text-muted-foreground uppercase font-semibold">Planos Inativos</p>
@@ -379,6 +390,7 @@ export function PlansPage() {
                   {packages.filter((p: Package) => p.status !== "active").length}
                 </p>
               </div>
+              <PackageCheck className="h-7 w-7 text-slate-400/50" />
             </div>
           </CardContent>
         </Card>
@@ -403,66 +415,70 @@ export function PlansPage() {
       ) : (
         <div className="space-y-4">
           {/* Column Headers - FORA DOS CARDS */}
-          <div className="grid grid-cols-12 gap-4 px-6 py-3 text-xs font-semibold text-muted-foreground uppercase">
-            <div className="col-span-2">IDENTIFICAÇÃO DO PLANO</div>
+          <div className="hidden grid-cols-12 gap-4 px-6 py-3 text-xs font-semibold uppercase text-muted-foreground lg:grid">
+            <div className="col-span-4">IDENTIFICAÇÃO DO PLANO</div>
             <div className="col-span-1 text-center">BANHOS</div>
             <div className="col-span-1 text-center">TOSAS</div>
             <div className="col-span-2 text-center">INVESTIMENTO</div>
             <div className="col-span-2 text-center">FATURAMENTO</div>
-            <div className="col-span-2 text-center">AÇÕES</div>
-            <div className="col-span-2"></div>
+            <div className="col-span-1 text-center">STATUS</div>
+            <div className="col-span-1 text-center">AÇÕES</div>
           </div>
 
           {/* Plan Rows */}
           {packages.map((pkg: Package) => (
             <div
               key={pkg.id}
-              className="border-l-4 border-l-chart-3 bg-card rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
+              className="rounded-2xl border border-border border-l-4 border-l-chart-3 bg-card p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6"
             >
-              <div className="grid grid-cols-12 gap-4 items-center">
+              <div className="grid grid-cols-2 items-start gap-5 lg:grid-cols-12 lg:items-center">
                 {/* Plan Name and Description */}
-                <div className="col-span-2">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-bold text-foreground">{pkg.name}</h3>
+                <div className="col-span-2 lg:col-span-4">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <h3 className="text-lg font-bold leading-snug text-foreground">{pkg.name}</h3>
                     <span className="text-xs font-bold text-accent bg-accent/10 px-2 py-1 rounded whitespace-nowrap">PAC-{String(packages.findIndex((p: Package) => p.id === pkg.id) + 1).padStart(4, '0')}</span>
                   </div>
                   {pkg.description && (
-                    <p className="text-xs text-muted-foreground mt-1">{pkg.description}</p>
+                    <p className="mt-1 max-w-2xl whitespace-pre-line text-sm leading-6 text-muted-foreground">{pkg.description}</p>
                   )}
                 </div>
 
                 {/* Banhos */}
-                <div className="col-span-1 text-center">
+                <div className="rounded-xl bg-muted/45 p-3 text-left lg:col-span-1 lg:bg-transparent lg:p-0 lg:text-center">
+                  <p className="mb-1 text-[11px] font-semibold uppercase text-muted-foreground lg:hidden">Banhos</p>
                   <p className="font-medium text-foreground">{pkg.total_baths}</p>
                 </div>
 
                 {/* Tosas */}
-                <div className="col-span-1 text-center">
+                <div className="rounded-xl bg-muted/45 p-3 text-left lg:col-span-1 lg:bg-transparent lg:p-0 lg:text-center">
+                  <p className="mb-1 text-[11px] font-semibold uppercase text-muted-foreground lg:hidden">Tosas</p>
                   <p className="font-medium text-foreground">{pkg.total_groomings}</p>
                 </div>
 
                 {/* Investimento (Valor Total) */}
-                <div className="col-span-2 text-center">
+                <div className="rounded-xl bg-muted/45 p-3 text-left lg:col-span-2 lg:bg-transparent lg:p-0 lg:text-center">
+                  <p className="mb-1 text-[11px] font-semibold uppercase text-muted-foreground lg:hidden">Investimento</p>
                   <p className="font-medium text-foreground">
                     {formatCurrency(pkg.total_price)}
                   </p>
                 </div>
 
                 {/* Faturamento (Mensalidade) */}
-                <div className="col-span-2 text-center">
+                <div className="rounded-xl bg-muted/45 p-3 text-left lg:col-span-2 lg:bg-transparent lg:p-0 lg:text-center">
+                  <p className="mb-1 text-[11px] font-semibold uppercase text-muted-foreground lg:hidden">Faturamento</p>
                   <p className="text-sm text-muted-foreground">Mensalidade: {formatCurrency(pkg.monthly_price)}</p>
                   <p className="text-xs text-muted-foreground">{pkg.recurrence_type || "-"}</p>
                 </div>
 
                 {/* Status Badge */}
-                <div className="col-span-2 flex justify-center">
+                <div className="col-span-1 flex items-center lg:justify-center">
                   <Badge className={`${getStatusColor(pkg.status)} text-xs font-medium border`}>
                     {getStatusLabel(pkg.status)}
                   </Badge>
                 </div>
 
                 {/* Actions */}
-                <div className="col-span-2 flex justify-end gap-2">
+                <div className="col-span-1 flex justify-end gap-2">
                   <Button
                     variant="outline"
                     size="sm"
