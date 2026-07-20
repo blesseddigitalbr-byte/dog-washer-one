@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,6 +64,44 @@ const COAT_TYPES = [
   "Áspera",
 ];
 
+function parseVaccines(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(String);
+  if (typeof value !== "string" || !value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+function petToFormData(petData?: any | null) {
+  return {
+    name: String(petData?.name || ""),
+    breed: String(petData?.breed || ""),
+    size: String(petData?.size || ""),
+    coatType: String(petData?.coat_type ?? petData?.coatType ?? ""),
+    species: String(petData?.species || ""),
+    color: String(petData?.color || ""),
+    birthDate: String(petData?.birth_date ?? petData?.birthDate ?? ""),
+    weight: petData?.weight == null ? "" : String(petData.weight),
+    microchip: String(petData?.microchip || ""),
+    notes: String(petData?.notes || ""),
+    photo: String(petData?.photo || petData?.foto_url || ""),
+    status: String(petData?.status || "active"),
+    vaccines: parseVaccines(petData?.vaccines),
+    dewormed: Boolean(petData?.dewormed),
+    hasDiseasesOrAllergies: Boolean(
+      petData?.has_diseases_or_allergies ?? petData?.hasDiseasesOrAllergies,
+    ),
+    diseasesOrAllergiesDescription: String(
+      petData?.diseases_or_allergies_description ??
+      petData?.diseasesOrAllergiesDescription ??
+      "",
+    ),
+  };
+}
+
 export function PetForm({
   isOpen,
   onClose,
@@ -72,24 +110,7 @@ export function PetForm({
   petData,
   onSuccess,
 }: PetFormProps) {
-  const [formData, setFormData] = useState({
-    name: petData?.name || "",
-    breed: petData?.breed || "",
-    size: petData?.size || "",
-    coatType: petData?.coatType || "",
-    species: petData?.species || "",
-    color: petData?.color || "",
-    birthDate: petData?.birthDate || "",
-    weight: petData?.weight || "",
-    microchip: petData?.microchip || "",
-    notes: petData?.notes || "",
-    photo: petData?.photo || "",
-    status: petData?.status || "active",
-    vaccines: petData?.vaccines ? JSON.parse(petData.vaccines) : [],
-    dewormed: petData?.dewormed || false,
-    hasDiseasesOrAllergies: petData?.hasDiseasesOrAllergies || false,
-    diseasesOrAllergiesDescription: petData?.diseasesOrAllergiesDescription || "",
-  });
+  const [formData, setFormData] = useState(() => petToFormData(petData));
 
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>(petData?.photo || "");
@@ -103,6 +124,15 @@ export function PetForm({
 
   const isEditing = !!petId;
   const isLoading = createMutation.isPending || updateMutation.isPending || isUploadingPhoto;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const next = petToFormData(petData);
+    setFormData(next);
+    setPhotoPreview(next.photo);
+    setPhotoFile(null);
+    setErrors({});
+  }, [isOpen, petData, petId]);
 
   const availableVaccines = [
     { id: "raiva", label: "Raiva" },
@@ -119,7 +149,7 @@ export function PetForm({
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.name.trim()) {
+    if (!String(formData.name).trim()) {
       newErrors.name = "Nome do pet é obrigatório";
     }
 
@@ -127,13 +157,13 @@ export function PetForm({
       newErrors.breed = "Raça é obrigatória";
     }
 
-    if (!formData.weight.trim()) {
+    if (!String(formData.weight).trim()) {
       newErrors.weight = "Peso é obrigatório";
     } else if (isNaN(parseFloat(formData.weight))) {
       newErrors.weight = "Peso deve ser um número";
     }
 
-    if (formData.hasDiseasesOrAllergies && !formData.diseasesOrAllergiesDescription.trim()) {
+    if (formData.hasDiseasesOrAllergies && !String(formData.diseasesOrAllergiesDescription).trim()) {
       newErrors.diseasesOrAllergiesDescription = "Descreva as doenças ou alergias";
     }
 
@@ -207,38 +237,26 @@ export function PetForm({
     if (!validateForm()) return;
 
     try {
-      let photoUrl = formData.photo;
-      
-      // Se há novo arquivo de foto, fazer upload
-      if (photoFile && petId) {
-        const uploadedUrl = await uploadPhoto(photoFile, petId);
-        if (uploadedUrl) {
-          photoUrl = uploadedUrl;
-        } else {
-          // Se upload falhar, usar preview local como fallback
-          photoUrl = photoPreview;
-        }
-      } else if (photoFile && !petId) {
-        // Para novo pet, fazer upload primeiro
-        const uploadedUrl = await uploadPhoto(photoFile, "temp");
-        if (uploadedUrl) {
-          photoUrl = uploadedUrl;
-        }
-      }
-
       const submitData = {
         ...formData,
-        photo: photoUrl,
         vaccines: JSON.stringify(formData.vaccines),
         clientId,
       };
 
+      let savedPetId = petId;
       if (isEditing && petId) {
         await updateMutation.mutateAsync({ id: petId, ...submitData });
       } else {
-        await createMutation.mutateAsync(submitData);
+        const createdPet = await createMutation.mutateAsync(submitData);
+        savedPetId = createdPet.id;
       }
 
+      if (photoFile && savedPetId) {
+        const uploadedUrl = await uploadPhoto(photoFile, savedPetId);
+        if (!uploadedUrl) throw new Error("Não foi possível salvar a foto");
+      }
+
+      await utils.clients.list.invalidate();
       await utils.clients.getById.invalidate({ id: clientId });
       
       const action = isEditing ? "atualizado" : "criado";

@@ -10,6 +10,23 @@ import { sendAppointmentConfirmationEmail } from "./_core/emailService.js";
 // organization and unit boundaries to each request.
 const publicProcedure = protectedProcedure;
 
+async function attachPetPhotoUrls(pets: any[]) {
+  return Promise.all(
+    pets.map(async (pet) => {
+      if (!pet.photo_storage_key) return pet;
+      const { data, error } = await supabaseAdmin.storage
+        .from("pet-photos")
+        .createSignedUrl(pet.photo_storage_key, 60 * 60);
+      if (error || !data?.signedUrl) return pet;
+      return {
+        ...pet,
+        photo: data.signedUrl,
+        foto_url: data.signedUrl,
+      };
+    }),
+  );
+}
+
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
@@ -255,6 +272,78 @@ export const appRouter = router({
 
         return { unitId: data as string };
       }),
+
+    saveUnit: protectedProcedure
+      .input(z.object({
+        id: z.string().uuid().optional(),
+        legalEntityId: z.string().uuid().optional(),
+        name: z.string().trim().min(2).max(120),
+        code: z.string().trim().min(2).max(40),
+        cnpj: z.string().trim().max(20).optional(),
+        razaoSocial: z.string().trim().max(160).optional(),
+        city: z.string().trim().max(100).optional(),
+        state: z.string().trim().max(2).optional(),
+        operationMode: z.enum(["salon", "school", "hybrid"]),
+        ownershipModel: z.enum(["owned", "licensed", "franchised"]),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.organizationId || !["owner", "admin"].includes(ctx.user.role)) {
+          throw new Error("Somente administradores podem gerenciar unidades");
+        }
+
+        const payload = {
+          organization_id: ctx.user.organizationId,
+          legal_entity_id: input.legalEntityId || null,
+          name: input.name,
+          code: input.code.toUpperCase().replace(/\s+/g, "-"),
+          cnpj: input.cnpj || null,
+          razao_social: input.razaoSocial || null,
+          city: input.city || null,
+          state: input.state?.toUpperCase() || null,
+          operation_mode: input.operationMode,
+          unit_type: input.operationMode,
+          ownership_model: input.ownershipModel,
+          status: "active",
+          is_active: true,
+          updated_at: new Date().toISOString(),
+        };
+
+        if (input.id) {
+          const { data, error } = await supabase
+            .from("units")
+            .update(payload)
+            .eq("id", input.id)
+            .eq("organization_id", ctx.user.organizationId)
+            .select()
+            .single();
+          if (error) throw new Error(error.message);
+          return data;
+        }
+
+        const { data: unit, error: unitError } = await supabase
+          .from("units")
+          .insert(payload)
+          .select()
+          .single();
+        if (unitError || !unit) throw new Error(unitError?.message || "Erro ao criar unidade");
+
+        const { error: accessError } = await supabase
+          .from("user_unit_access")
+          .insert({
+            user_id: ctx.user.id,
+            organization_id: ctx.user.organizationId,
+            unit_id: unit.id,
+            access_role: ctx.user.role,
+            is_default: false,
+            active: true,
+          });
+        if (accessError) {
+          await supabase.from("units").delete().eq("id", unit.id);
+          throw new Error(accessError.message);
+        }
+
+        return unit;
+      }),
   }),
 
   // Clients & Pets routers
@@ -276,26 +365,29 @@ export const appRouter = router({
         if (error) throw error;
 
         // Transformar resposta para formato esperado
-        return (clientes || []).map((cliente: any) => ({
-          id: cliente.id,
-          name: cliente.nome,
-          email: cliente.email,
-          phone: cliente.phone,
-          cpf: cliente.cpf,
-          cep: cliente.cep,
-          logradouro: cliente.logradouro,
-          numero: cliente.numero,
-          complemento: cliente.complemento,
-          bairro: cliente.bairro,
-          cidade: cliente.cidade,
-          uf: cliente.uf,
-          isVip: cliente.is_vip,
-          isModelDog: cliente.is_model_dog,
-          status: cliente.status,
-          pets: (cliente.pets || []).map((pet: any) => ({
-            ...pet,
-            displayName: `${pet.name} (${cliente.nome})`,
-          })),
+        return Promise.all((clientes || []).map(async (cliente: any) => {
+          const pets = await attachPetPhotoUrls(cliente.pets || []);
+          return {
+            id: cliente.id,
+            name: cliente.nome,
+            email: cliente.email,
+            phone: cliente.phone,
+            cpf: cliente.cpf,
+            cep: cliente.cep,
+            logradouro: cliente.logradouro,
+            numero: cliente.numero,
+            complemento: cliente.complemento,
+            bairro: cliente.bairro,
+            cidade: cliente.cidade,
+            uf: cliente.uf,
+            isVip: cliente.is_vip,
+            isModelDog: cliente.is_model_dog,
+            status: cliente.status,
+            pets: pets.map((pet: any) => ({
+              ...pet,
+              displayName: `${pet.name} (${cliente.nome})`,
+            })),
+          };
         }));
       } catch (error) {
         console.error("Error fetching clients:", error);
@@ -324,6 +416,7 @@ export const appRouter = router({
           if (!clientes || clientes.length === 0) return null;
 
           const cliente = clientes[0];
+          const pets = await attachPetPhotoUrls(cliente.pets || []);
           return {
             id: cliente.id,
             name: cliente.nome,
@@ -340,7 +433,7 @@ export const appRouter = router({
             isVip: cliente.is_vip,
             isModelDog: cliente.is_model_dog,
             status: cliente.status,
-            pets: (cliente.pets || []).map((pet: any) => ({
+            pets: pets.map((pet: any) => ({
               ...pet,
               displayName: `${pet.name} (${cliente.nome})`,
             })),
@@ -651,7 +744,6 @@ export const appRouter = router({
               weight: updateData.weight,
               microchip: updateData.microchip || null,
               notes: updateData.notes || null,
-              photo: updateData.photo || null,
               status: updateData.status,
               vaccines: updateData.vaccines || null,
               dewormed: updateData.dewormed || false,
@@ -731,13 +823,26 @@ export const appRouter = router({
 
           const { data: signed, error: signedError } = await supabaseAdmin.storage
             .from("pet-photos")
-            .createSignedUrl(fileKey, 60 * 10);
+            .createSignedUrl(fileKey, 60 * 60);
           if (signedError) throw signedError;
+
+          const { error: updateError } = await supabase
+            .from("pets")
+            .update({
+              photo_storage_key: fileKey,
+              photo: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", input.petId);
+          if (updateError) {
+            await supabaseAdmin.storage.from("pet-photos").remove([fileKey]);
+            throw updateError;
+          }
 
           return { url: signed.signedUrl, key: fileKey, success: true };
         } catch (error) {
           console.error("Error uploading pet photo:", error);
-          throw new Error("Erro ao fazer upload da foto");
+          throw new Error(error instanceof Error ? error.message : "Erro ao fazer upload da foto");
         }
       }),
   }),
@@ -1166,7 +1271,10 @@ export const appRouter = router({
           .order("name", { ascending: true });
 
         if (error) throw error;
-        return services || [];
+        return (services || []).map((service) => ({
+          ...service,
+          durationMinutes: service.duration_minutes,
+        }));
       } catch (error) {
         console.error("Error fetching services:", error);
         return [];
@@ -1185,7 +1293,9 @@ export const appRouter = router({
             .single();
 
           if (error) throw error;
-          return service;
+          return service
+            ? { ...service, durationMinutes: service.duration_minutes }
+            : null;
         } catch (error) {
           console.error("Error fetching service:", error);
           return null;

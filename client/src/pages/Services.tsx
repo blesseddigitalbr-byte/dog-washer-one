@@ -51,7 +51,7 @@ export default function Services() {
         name: service.name,
         description: service.description || "",
         price: service.price?.toString() || "",
-        durationMinutes: service.durationMinutes?.toString() || "60",
+        durationMinutes: (service.durationMinutes ?? service.duration_minutes ?? 60).toString(),
       });
     } else {
       setEditingId(null);
@@ -291,7 +291,11 @@ export default function Services() {
                 <p className="text-2xl font-bold text-foreground mt-1">
                   {services.length > 0
                     ? Math.round(
-                        services.reduce((sum: number, s: any) => sum + (s.durationMinutes || 0), 0) /
+                        services.reduce(
+                          (sum: number, s: any) =>
+                            sum + Number(s.durationMinutes ?? s.duration_minutes ?? 0),
+                          0,
+                        ) /
                           services.length
                       )
                     : 0}{" "}
@@ -365,7 +369,7 @@ export default function Services() {
                 <div>
                   <p className="text-xs text-gray-600 uppercase font-semibold">Duração</p>
                   <p className="text-sm font-medium text-gray-900 mt-1">
-                    {service.durationMinutes} min
+                    {service.durationMinutes ?? service.duration_minutes ?? 0} min
                   </p>
                 </div>
               </div>

@@ -1,5 +1,9 @@
-import { Building2, GraduationCap, MapPin, Scissors } from "lucide-react";
+import { useState } from "react";
+import { Building2, GraduationCap, MapPin, Pencil, Plus, Scissors } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import UnitFormDialog from "@/components/UnitFormDialog";
 
 const MODE_LABELS: Record<string, string> = {
   salon: "Salão",
@@ -24,8 +28,12 @@ function formatTaxId(value?: string | null) {
 }
 
 export default function Units() {
+  const { user } = useAuth();
   const contextQuery = trpc.workspace.context.useQuery();
   const workspace = contextQuery.data;
+  const [unitFormOpen, setUnitFormOpen] = useState(false);
+  const [editingUnit, setEditingUnit] = useState<any | null>(null);
+  const canManage = user?.role === "owner" || user?.role === "admin";
 
   if (contextQuery.isLoading) {
     return (
@@ -46,16 +54,24 @@ export default function Units() {
   return (
     <div className="flex-1 overflow-auto bg-background p-4 sm:p-6">
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#C9A24E]">
-            Estrutura empresarial
-          </p>
-          <h1 className="text-3xl font-bold text-foreground">
-            Empresas e unidades
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            CNPJs e operações autorizadas para seu usuário no DWO.
-          </p>
+        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#C9A24E]">
+              Estrutura empresarial
+            </p>
+            <h1 className="text-3xl font-bold text-foreground">
+              Empresas e unidades
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              CNPJs e operações autorizadas para seu usuário no DWO.
+            </p>
+          </div>
+          {canManage && (
+            <Button onClick={() => { setEditingUnit(null); setUnitFormOpen(true); }}>
+              <Plus className="mr-2 h-4 w-4" />
+              Nova unidade
+            </Button>
+          )}
         </div>
 
         <section className="mb-8">
@@ -164,12 +180,33 @@ export default function Units() {
                       </span>
                     ))}
                   </div>
+                  {canManage && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="mt-5"
+                      onClick={() => {
+                        setEditingUnit(unit);
+                        setUnitFormOpen(true);
+                      }}
+                    >
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Editar unidade
+                    </Button>
+                  )}
                 </article>
               );
             })}
           </div>
         </section>
       </div>
+      <UnitFormDialog
+        open={unitFormOpen}
+        onOpenChange={setUnitFormOpen}
+        unit={editingUnit}
+        legalEntities={workspace.legalEntities}
+      />
     </div>
   );
 }
