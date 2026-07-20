@@ -849,11 +849,13 @@ export const appRouter = router({
 
   professionals: router({
     // List all professionals
-    list: publicProcedure.query(async () => {
+    list: protectedProcedure.query(async ({ ctx }) => {
       try {
+        if (!ctx.user?.unitId) throw new Error("Selecione uma unidade ativa");
         const { data: professionals, error } = await supabase
           .from("professionals")
           .select("*")
+          .eq("unit_id", ctx.user.unitId)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
@@ -886,29 +888,36 @@ export const appRouter = router({
     // Create a new professional
     create: publicProcedure
       .input(z.object({
-        organizationId: z.string().uuid(),
-        unitId: z.string().uuid(),
         name: z.string().min(1, "Nome é obrigatório"),
         email: z.string().email().optional(),
         phone: z.string().optional(),
         cpf: z.string().optional(),
         specialization: z.string().optional(),
-        status: z.string().default("active"),
+        roleTitle: z.string().optional(),
+        hireDate: z.string().optional(),
+        commissionPercent: z.number().min(0).max(100).optional(),
+        notes: z.string().max(2000).optional(),
+        status: z.enum(["active", "inactive", "vacation"]).default("active"),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
+          if (!ctx.user?.organizationId || !ctx.user.unitId) throw new Error("Selecione uma unidade ativa");
           const { data, error } = await supabase
             .from("professionals")
             .insert([{
-              organization_id: input.organizationId,
-              unit_id: input.unitId,
+              organization_id: ctx.user.organizationId,
+              unit_id: ctx.user.unitId,
               name: input.name,
               email: input.email || null,
               phone: input.phone || null,
               cpf: input.cpf || null,
               specialization: input.specialization || null,
+              role_title: input.roleTitle || null,
+              hire_date: input.hireDate || null,
+              commission_percent: input.commissionPercent ?? 0,
+              notes: input.notes || null,
               status: input.status,
-              is_active: true,
+              is_active: input.status === "active",
             }])
             .select()
             .single();
@@ -930,24 +939,38 @@ export const appRouter = router({
         phone: z.string().optional(),
         cpf: z.string().optional(),
         specialization: z.string().optional(),
-        status: z.string().optional(),
+        roleTitle: z.string().optional(),
+        hireDate: z.string().optional(),
+        commissionPercent: z.number().min(0).max(100).optional(),
+        notes: z.string().max(2000).optional(),
+        status: z.enum(["active", "inactive", "vacation"]).optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
+          if (!ctx.user?.unitId) throw new Error("Selecione uma unidade ativa");
           const { id, ...updateData } = input;
           const updatePayload: Record<string, any> = {};
           
           if (updateData.name) updatePayload.name = updateData.name;
-          if (updateData.email) updatePayload.email = updateData.email;
-          if (updateData.phone) updatePayload.phone = updateData.phone;
-          if (updateData.cpf) updatePayload.cpf = updateData.cpf;
-          if (updateData.specialization) updatePayload.specialization = updateData.specialization;
-          if (updateData.status) updatePayload.status = updateData.status;
+          if (updateData.email !== undefined) updatePayload.email = updateData.email || null;
+          if (updateData.phone !== undefined) updatePayload.phone = updateData.phone || null;
+          if (updateData.cpf !== undefined) updatePayload.cpf = updateData.cpf || null;
+          if (updateData.specialization !== undefined) updatePayload.specialization = updateData.specialization || null;
+          if (updateData.roleTitle !== undefined) updatePayload.role_title = updateData.roleTitle || null;
+          if (updateData.hireDate !== undefined) updatePayload.hire_date = updateData.hireDate || null;
+          if (updateData.commissionPercent !== undefined) updatePayload.commission_percent = updateData.commissionPercent;
+          if (updateData.notes !== undefined) updatePayload.notes = updateData.notes || null;
+          if (updateData.status !== undefined) {
+            updatePayload.status = updateData.status;
+            updatePayload.is_active = updateData.status === "active";
+          }
+          updatePayload.updated_at = new Date().toISOString();
 
           const { data, error } = await supabase
             .from("professionals")
             .update(updatePayload)
             .eq("id", id)
+            .eq("unit_id", ctx.user.unitId)
             .select()
             .single();
 
@@ -962,12 +985,14 @@ export const appRouter = router({
     // Delete a professional
     delete: publicProcedure
       .input(z.object({ id: z.string().uuid() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
+          if (!ctx.user?.unitId) throw new Error("Selecione uma unidade ativa");
           const { error } = await supabase
             .from("professionals")
-            .delete()
-            .eq("id", input.id);
+            .update({ status: "inactive", is_active: false, updated_at: new Date().toISOString() })
+            .eq("id", input.id)
+            .eq("unit_id", ctx.user.unitId);
 
           if (error) throw error;
           return { success: true };
