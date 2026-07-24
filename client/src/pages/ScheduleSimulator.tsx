@@ -37,6 +37,9 @@ const serviceModeLabels: Record<string, string> = {
   custom: "Personalizado",
 };
 
+const fieldClass = "mt-1 rounded-none border-0 border-b border-[#C9D0DA] bg-transparent px-0 shadow-none focus:ring-0 focus-visible:ring-0";
+const labelClass = "text-[11px] font-black uppercase tracking-wide text-[#44516A]";
+
 function todayDate() {
   return new Date().toISOString().slice(0, 10);
 }
@@ -52,6 +55,15 @@ function toLocalDateTimeInput(value: string) {
   return new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
     .toISOString()
     .slice(0, 16);
+}
+
+function formatDate(value?: string) {
+  if (!value) return "-";
+  return new Date(`${value}T00:00:00-03:00`).toLocaleDateString("pt-BR");
+}
+
+function firstName(name?: string) {
+  return name?.trim().split(/\s+/)[0] || "-";
 }
 
 export default function ScheduleSimulator() {
@@ -93,7 +105,6 @@ export default function ScheduleSimulator() {
   const packagesQuery = trpc.clientPackages.byClient.useQuery({ clientId }, { enabled: !!clientId });
   const packages = (packagesQuery.data ?? []).filter((item: any) => !petId || item.pet_id === petId);
   const selectedPackage = packages.find((item: any) => item.id === clientPackageId) || packages[0];
-  const selectedProfessional = (professionalsQuery.data ?? []).find((item: any) => item.id === professionalId);
   const selectedService = (servicesQuery.data ?? []).find((item: any) => item.id === serviceId);
 
   useEffect(() => {
@@ -101,8 +112,10 @@ export default function ScheduleSimulator() {
   }, [selectedPet?.breed, petType]);
 
   useEffect(() => {
-    if (selectedPackage?.expiry_date) setEndDate(selectedPackage.expiry_date);
-    if (selectedPackage?.expiry_date) setNextRenewalDate(selectedPackage.expiry_date);
+    if (selectedPackage?.expiry_date) {
+      setEndDate(selectedPackage.expiry_date);
+      setNextRenewalDate(selectedPackage.expiry_date);
+    }
   }, [selectedPackage?.expiry_date]);
 
   useEffect(() => {
@@ -154,6 +167,8 @@ export default function ScheduleSimulator() {
     };
   }, [simulation]);
 
+  const baseDateMatchesWeekday = Number(standardWeekday) === new Date(`${referenceDate}T00:00:00-03:00`).getDay();
+
   const simulate = () => {
     if (!clientId || !petId || !serviceId || !professionalId || !referenceDate || !defaultTime) {
       toast.error("Preencha tutor, pet, serviço, profissional, data de referência e horário");
@@ -197,245 +212,296 @@ export default function ScheduleSimulator() {
   const whatsappUrl = phone ? `https://wa.me/${phone.startsWith("55") ? phone : `55${phone}`}?text=${encodeURIComponent(message)}` : null;
 
   return (
-    <div className="bg-background p-4 sm:p-6">
-      <div className="mx-auto max-w-[1520px] space-y-5">
-        <header className="rounded-lg border border-[#D8B768]/45 bg-white p-5 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#C9A24E]">Agenda sugerida por pet/pacote</p>
-          <h1 className="mt-1 text-3xl font-extrabold text-[#07111E]">Simulador de Agenda</h1>
-          <p className="mt-1 text-sm font-medium text-muted-foreground">
-            Gere a previsão do ciclo, ajuste tosa/trimming por data e confirme somente depois de revisar.
-          </p>
+    <div className="min-h-screen bg-[#F8F6F1] p-4 sm:p-6">
+      <div className="mx-auto max-w-[1480px] space-y-6">
+        <header className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#C9A24E]">Simulador de Agenda</p>
+            <h1 className="mt-1 text-3xl font-black tracking-tight text-[#07111E]">Agenda sugerida por pet/pacote</h1>
+            <p className="mt-1 max-w-3xl text-sm font-semibold text-[#44516A]">
+              Monte o ciclo sugerido antes de criar os atendimentos oficiais. O saldo do pacote só baixa quando o atendimento é finalizado.
+            </p>
+          </div>
+          <Button className="bg-[#07111E] text-white hover:bg-[#113A7A]">Novo pet</Button>
         </header>
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(640px,0.95fr)_minmax(0,1.45fr)]">
-          <section className="rounded-lg border border-[#D8B768]/35 bg-white shadow-sm">
-            <div className="border-b border-[#D8B768]/30 bg-[#F8F6F1] px-5 py-3">
-              <h2 className="text-base font-extrabold text-[#07111E]">Campos da planilha</h2>
-            </div>
-            <div className="grid gap-3 p-5 lg:grid-cols-2">
-              <div>
-                <Label>Profissional / executante *</Label>
-                <Select value={professionalId} onValueChange={setProfessionalId}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{(professionalsQuery.data ?? []).filter((item: any) => item.is_active).map((item: any) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent>
-                </Select>
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <main className="space-y-6">
+            <section className="overflow-hidden rounded-xl border border-[#E7DEC8] bg-white shadow-sm">
+              <div className="border-b border-[#E7DEC8] px-7 py-5">
+                <h2 className="flex items-center gap-2 text-xl font-black tracking-tight text-[#07111E]">
+                  <span className="text-[#C9A24E]">☷</span>
+                  Configuração do Plano
+                </h2>
               </div>
-              <div>
-                <Label>Nome do tutor *</Label>
-                <Select value={clientId} onValueChange={(value) => { setClientId(value); setPetId(""); setClientPackageId(""); }}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{clients.map((client: any) => <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Nome do pet *</Label>
-                <Select value={petId} onValueChange={(value) => { setPetId(value); setClientPackageId(""); }}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{pets.map((pet: any) => <SelectItem key={pet.id} value={pet.id}>{pet.name}{selectedClient?.name ? ` (Tutor: ${selectedClient.name.split(/\s+/)[0]})` : ""}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Tipo pet / raça</Label>
-                <Input className="mt-1" value={petType} onChange={(event) => setPetType(event.target.value)} placeholder="Ex.: Spitz, Golden, demais raças" />
-              </div>
-              <div>
-                <Label>Plano</Label>
-                {appointmentType === "package" ? (
-                  <Select value={clientPackageId || "auto"} onValueChange={(value) => setClientPackageId(value === "auto" ? "" : value)}>
-                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+              <div className="grid gap-x-8 gap-y-5 p-7 md:grid-cols-2">
+                <div>
+                  <Label className={labelClass}>Profissional / executante *</Label>
+                  <Select value={professionalId} onValueChange={setProfessionalId}>
+                    <SelectTrigger className={fieldClass}><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>{(professionalsQuery.data ?? []).filter((item: any) => item.is_active).map((item: any) => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className={labelClass}>Nome do tutor *</Label>
+                  <Select value={clientId} onValueChange={(value) => { setClientId(value); setPetId(""); setClientPackageId(""); }}>
+                    <SelectTrigger className={fieldClass}><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>{clients.map((client: any) => <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className={labelClass}>Nome do pet *</Label>
+                  <Select value={petId} onValueChange={(value) => { setPetId(value); setClientPackageId(""); }}>
+                    <SelectTrigger className={fieldClass}><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>{pets.map((pet: any) => <SelectItem key={pet.id} value={pet.id}>{pet.name}{selectedClient?.name ? ` (Tutor: ${firstName(selectedClient.name)})` : ""}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className={labelClass}>Tipo pet / raça</Label>
+                  <Input className={fieldClass} value={petType} onChange={(event) => setPetType(event.target.value)} placeholder="Ex.: Spitz, Golden, demais raças" />
+                </div>
+                <div>
+                  <Label className={labelClass}>Plano contratado</Label>
+                  {appointmentType === "package" ? (
+                    <Select value={clientPackageId || "auto"} onValueChange={(value) => setClientPackageId(value === "auto" ? "" : value)}>
+                      <SelectTrigger className={fieldClass}><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="auto">Selecionar automaticamente</SelectItem>
+                        {packages.map((item: any) => <SelectItem key={item.id} value={item.id}>{item.plan?.name || item.plan_code || item.code}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input className={fieldClass} value="Avulso" readOnly />
+                  )}
+                </div>
+                <div>
+                  <Label className={labelClass}>Quantidade de atendimentos</Label>
+                  <Input className={fieldClass} type="number" min={1} max={60} value={quantity} onChange={(event) => setQuantity(Number(event.target.value))} />
+                </div>
+                <div>
+                  <Label className={labelClass}>Quantidade de tosas/trimming</Label>
+                  <Input className={fieldClass} type="number" min={0} max={quantity} value={groomingQuantity} onChange={(event) => setGroomingQuantity(Number(event.target.value))} />
+                </div>
+                <div>
+                  <Label className={labelClass}>Frequência</Label>
+                  <Select value={frequency} onValueChange={(value: any) => setFrequency(value)}>
+                    <SelectTrigger className={fieldClass}><SelectValue /></SelectTrigger>
+                    <SelectContent>{Object.entries(frequencyLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className={labelClass}>Próxima renovação</Label>
+                  <Input className={fieldClass} type="date" value={nextRenewalDate} onChange={(event) => setNextRenewalDate(event.target.value)} />
+                </div>
+                <div>
+                  <Label className={labelClass}>Tipo de atendimento</Label>
+                  <Select value={appointmentType} onValueChange={(value: any) => { setAppointmentType(value); setClientPackageId(""); }}>
+                    <SelectTrigger className={fieldClass}><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="package">Pacote</SelectItem><SelectItem value="standalone">Avulso</SelectItem></SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className={labelClass}>Serviço padrão *</Label>
+                  <Select value={serviceId} onValueChange={(value) => { setServiceId(value); const found = (servicesQuery.data ?? []).find((service: any) => service.id === value); if (found?.name) setFinalServiceName(found.name); }}>
+                    <SelectTrigger className={fieldClass}><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>{(servicesQuery.data ?? []).map((service: any) => <SelectItem key={service.id} value={service.id}>{service.name}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className={labelClass}>Tipo de serviço</Label>
+                  <Select value={serviceMode} onValueChange={(value) => { setServiceMode(value); if (!selectedService?.name) setFinalServiceName(serviceModeLabels[value]); }}>
+                    <SelectTrigger className={fieldClass}><SelectValue /></SelectTrigger>
+                    <SelectContent>{Object.entries(serviceModeLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className={labelClass}>Intervalo tosa/trimming</Label>
+                  <Select value={String(groomingIntervalWeeks)} onValueChange={(value) => setGroomingIntervalWeeks(Number(value))}>
+                    <SelectTrigger className={fieldClass}><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="auto">Selecionar automaticamente</SelectItem>
-                      {packages.map((item: any) => <SelectItem key={item.id} value={item.id}>{item.plan?.name || item.plan_code || item.code}</SelectItem>)}
+                      <SelectItem value="7">A cada 7 semanas</SelectItem>
+                      <SelectItem value="8">A cada 8 semanas</SelectItem>
                     </SelectContent>
                   </Select>
-                ) : (
-                  <Input className="mt-1" value="Avulso" readOnly />
-                )}
+                </div>
               </div>
-              <div>
-                <Label>Tipo de atendimento</Label>
-                <Select value={appointmentType} onValueChange={(value: any) => { setAppointmentType(value); setClientPackageId(""); }}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="package">Pacote</SelectItem><SelectItem value="standalone">Avulso</SelectItem></SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Serviço padrão *</Label>
-                <Select value={serviceId} onValueChange={(value) => { setServiceId(value); const found = (servicesQuery.data ?? []).find((service: any) => service.id === value); if (found?.name) setFinalServiceName(found.name); }}>
-                  <SelectTrigger className="mt-1"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent>{(servicesQuery.data ?? []).map((service: any) => <SelectItem key={service.id} value={service.id}>{service.name}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Tipo de serviço</Label>
-                <Select value={serviceMode} onValueChange={(value) => { setServiceMode(value); if (!selectedService?.name) setFinalServiceName(serviceModeLabels[value]); }}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>{Object.entries(serviceModeLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Frequência</Label>
-                <Select value={frequency} onValueChange={(value: any) => setFrequency(value)}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>{Object.entries(frequencyLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Quantidade de atendimentos</Label>
-                <Input className="mt-1" type="number" min={1} max={60} value={quantity} onChange={(event) => setQuantity(Number(event.target.value))} />
-              </div>
-              <div>
-                <Label>Quantidade de tosas/trimming</Label>
-                <Input className="mt-1" type="number" min={0} max={quantity} value={groomingQuantity} onChange={(event) => setGroomingQuantity(Number(event.target.value))} />
-              </div>
-              <div>
-                <Label>Intervalo tosa/trimming</Label>
-                <Select value={String(groomingIntervalWeeks)} onValueChange={(value) => setGroomingIntervalWeeks(Number(value))}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7">A cada 7 semanas</SelectItem>
-                    <SelectItem value="8">A cada 8 semanas</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Data ativação/pagamento</Label>
-                <Input className="mt-1" type="date" value={paymentActivationDate} onChange={(event) => setPaymentActivationDate(event.target.value)} />
-              </div>
-              <div>
-                <Label>Último atendimento incluso</Label>
-                <Input className="mt-1" type="date" value={lastIncludedDate} onChange={(event) => setLastIncludedDate(event.target.value)} />
-              </div>
-              <div>
-                <Label>Próxima renovação/cobrança</Label>
-                <Input className="mt-1" type="date" value={nextRenewalDate} onChange={(event) => setNextRenewalDate(event.target.value)} />
-              </div>
-              <div>
-                <Label>Dia padrão da semana</Label>
-                <Select value={standardWeekday} onValueChange={setStandardWeekday}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent>{weekdayLabels.map((label, index) => <SelectItem key={label} value={String(index)}>{label}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Regra de recorrência</Label>
-                <Select value={recurrenceRuleMode} onValueChange={(value: any) => setRecurrenceRuleMode(value)}>
-                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="standard_weekday">Usar dia padrão da semana</SelectItem><SelectItem value="exact_interval">Usar intervalo exato</SelectItem></SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Data de referência/base</Label>
-                <Input className="mt-1" type="date" value={referenceDate} onChange={(event) => setReferenceDate(event.target.value)} />
-              </div>
-              <div>
-                <Label>Horário padrão</Label>
-                <Input className="mt-1" type="time" value={defaultTime} onChange={(event) => setDefaultTime(event.target.value)} />
-              </div>
-              <div>
-                <Label>Início do ciclo de utilização</Label>
-                <Input className="mt-1" type="date" value={cycleStartDate} onChange={(event) => setCycleStartDate(event.target.value)} />
-              </div>
-              <div>
-                <Label>Fim do ciclo atual</Label>
-                <Input className="mt-1" type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
-              </div>
-              <div className="lg:col-span-2">
-                <Label>Serviço final padrão</Label>
-                <Input className="mt-1" value={finalServiceName} onChange={(event) => setFinalServiceName(event.target.value)} placeholder="Ex.: Combo Higiene" />
-                <p className="mt-1 text-xs font-medium text-muted-foreground">Na grade, ajuste o serviço final de cada data conforme o que será executado naquele atendimento.</p>
-              </div>
-              <div className="lg:col-span-2">
-                <Label>Observação</Label>
-                <Textarea className="mt-1 min-h-20" value={notes} onChange={(event) => setNotes(event.target.value)} />
-              </div>
-            </div>
-            <div className="border-t p-5">
-              <Button className="w-full bg-[#113A7A] font-extrabold text-white shadow-sm hover:bg-[#07111E]" disabled={simulateMutation.isPending} onClick={simulate}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                {simulateMutation.isPending ? "Simulando..." : "Gerar pré-agenda"}
-              </Button>
-            </div>
-          </section>
+            </section>
 
-          <section className="min-w-0 space-y-5">
-            <div className="rounded-lg border border-[#D8B768]/35 bg-white p-5 shadow-sm">
-              <div className="grid gap-4 md:grid-cols-4">
-                <div><p className="text-xs font-bold uppercase text-muted-foreground">Tutor</p><p className="mt-1 font-extrabold text-[#07111E]">{selectedClient?.name?.split(/\s+/)[0] || "-"}</p></div>
-                <div><p className="text-xs font-bold uppercase text-muted-foreground">Pet / tipo</p><p className="mt-1 font-extrabold text-[#07111E]">{selectedPet ? `${selectedPet.name} / ${petType || selectedPet.breed || "-"}` : "-"}</p></div>
-                <div><p className="text-xs font-bold uppercase text-muted-foreground">Plano</p><p className="mt-1 font-extrabold text-[#07111E]">{selectedPackage?.plan_code || selectedPackage?.code || "Avulso"}</p></div>
-                <div><p className="text-xs font-bold uppercase text-muted-foreground">Alerta de conferência</p><p className="mt-1 font-extrabold text-[#113A7A]">{Number(standardWeekday) === new Date(`${referenceDate}T00:00:00-03:00`).getDay() ? "Data base confere" : "Ajustará para o dia padrão"}</p></div>
+            <section className="overflow-hidden rounded-xl border border-[#E7DEC8] bg-white shadow-sm">
+              <div className="border-b border-[#E7DEC8] px-7 py-5">
+                <h2 className="flex items-center gap-2 text-xl font-black tracking-tight text-[#07111E]">
+                  <CalendarRange className="h-5 w-5 text-[#C9A24E]" />
+                  Regras de Recorrência
+                </h2>
               </div>
-            </div>
+              <div className="grid gap-x-8 gap-y-5 p-7 md:grid-cols-3">
+                <div>
+                  <Label className={labelClass}>Data de ativação</Label>
+                  <Input className={fieldClass} type="date" value={paymentActivationDate} onChange={(event) => setPaymentActivationDate(event.target.value)} />
+                </div>
+                <div>
+                  <Label className={labelClass}>Regra de recorrência</Label>
+                  <Select value={recurrenceRuleMode} onValueChange={(value: any) => setRecurrenceRuleMode(value)}>
+                    <SelectTrigger className={fieldClass}><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="standard_weekday">Usar dia padrão da semana</SelectItem><SelectItem value="exact_interval">Usar intervalo exato</SelectItem></SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className={labelClass}>Horário padrão</Label>
+                  <Input className={fieldClass} type="time" value={defaultTime} onChange={(event) => setDefaultTime(event.target.value)} />
+                </div>
+                <div>
+                  <Label className={labelClass}>Último atendimento incluso</Label>
+                  <Input className={fieldClass} type="date" value={lastIncludedDate} onChange={(event) => setLastIncludedDate(event.target.value)} />
+                </div>
+                <div>
+                  <Label className={labelClass}>Dia padrão da semana</Label>
+                  <Select value={standardWeekday} onValueChange={setStandardWeekday}>
+                    <SelectTrigger className={fieldClass}><SelectValue /></SelectTrigger>
+                    <SelectContent>{weekdayLabels.map((label, index) => <SelectItem key={label} value={String(index)}>{label}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className={labelClass}>Data de referência/base</Label>
+                  <Input className={fieldClass} type="date" value={referenceDate} onChange={(event) => setReferenceDate(event.target.value)} />
+                </div>
+                <div>
+                  <Label className={labelClass}>Início do ciclo de utilização</Label>
+                  <Input className={fieldClass} type="date" value={cycleStartDate} onChange={(event) => setCycleStartDate(event.target.value)} />
+                </div>
+                <div>
+                  <Label className={labelClass}>Fim do ciclo atual</Label>
+                  <Input className={fieldClass} type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
+                </div>
+                <div>
+                  <Label className={labelClass}>Serviço final padrão</Label>
+                  <Input className={fieldClass} value={finalServiceName} onChange={(event) => setFinalServiceName(event.target.value)} placeholder="Ex.: Combo Higiene" />
+                </div>
+                <div className="md:col-span-3">
+                  <div className="rounded-lg border border-[#F1D7A1] bg-[#FFF7E8] p-4 text-sm font-semibold text-[#6B4D12]">
+                    {baseDateMatchesWeekday
+                      ? `A data base confere com o dia padrão da semana (${weekdayLabels[Number(standardWeekday)]}). O sistema sugere agendamentos automáticos baseados nessa preferência.`
+                      : `A data base será ajustada para o dia padrão da semana (${weekdayLabels[Number(standardWeekday)]}). O sistema encontra a próxima data compatível.`}
+                  </div>
+                </div>
+                <div className="md:col-span-3">
+                  <Label className={labelClass}>Observação</Label>
+                  <Textarea className="mt-1 min-h-20 border-[#E7DEC8] bg-[#FFFEFB]" value={notes} onChange={(event) => setNotes(event.target.value)} />
+                </div>
+              </div>
+            </section>
 
             {!simulation ? (
-              <div className="flex min-h-[420px] flex-col items-center justify-center rounded-lg border border-dashed bg-white p-8 text-center">
+              <section className="flex min-h-[330px] flex-col items-center justify-center rounded-xl border border-dashed border-[#D8B768] bg-white p-8 text-center shadow-sm">
                 <CalendarRange className="mb-4 h-12 w-12 text-[#C9A24E]" />
-                <h2 className="text-xl font-extrabold text-[#07111E]">A prévia aparecerá aqui</h2>
-                <p className="mt-2 max-w-md text-sm font-medium text-muted-foreground">Nenhum atendimento será criado até você revisar e confirmar.</p>
-              </div>
+                <h2 className="text-xl font-black text-[#07111E]">A prévia aparecerá aqui</h2>
+                <p className="mt-2 max-w-md text-sm font-semibold text-[#44516A]">Nenhum atendimento será criado até você revisar e confirmar.</p>
+                <Button className="mt-6 bg-[#113A7A] font-black text-white hover:bg-[#07111E]" disabled={simulateMutation.isPending} onClick={simulate}>
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  {simulateMutation.isPending ? "Simulando..." : "Gerar pré-agenda"}
+                </Button>
+              </section>
             ) : (
-              <>
-                <div className="grid grid-cols-4 gap-3">
-                  {[["Datas", summary.total], ["Válidas", summary.valid], ["Conflitos", summary.conflicts], ["Tosa/trim", summary.grooming]].map(([label, value]) => (
-                    <div key={String(label)} className="rounded-lg border border-[#D8B768]/35 bg-white p-4 shadow-sm">
-                      <p className="text-xs font-bold uppercase text-muted-foreground">{label}</p>
-                      <p className="mt-1 text-2xl font-extrabold text-[#07111E]">{value}</p>
+              <section className="overflow-hidden rounded-xl border border-[#E7DEC8] bg-white shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E7DEC8] px-7 py-5">
+                  <h2 className="text-xl font-black tracking-tight text-[#07111E]">Agenda Sugerida (Ciclo Atual)</h2>
+                  <div className="flex gap-2 text-xs font-black uppercase">
+                    <span className="rounded-full bg-[#F8F6F1] px-3 py-1 text-[#07111E]">{summary.total} datas</span>
+                    <span className="rounded-full bg-[#EAF7EF] px-3 py-1 text-emerald-700">{summary.valid} válidas</span>
+                    <span className="rounded-full bg-[#FFF7E8] px-3 py-1 text-[#8A640D]">{summary.grooming} tosa/trim</span>
+                  </div>
+                </div>
+                <div className="hidden grid-cols-[70px_1.2fr_1fr_0.8fr_1.1fr_1.2fr_1.2fr_auto] gap-3 border-b border-[#E7DEC8] bg-[#F2EFE7] px-7 py-3 text-[11px] font-black uppercase tracking-wide text-[#44516A] md:grid">
+                  <span>Sessão</span><span>Data sugerida</span><span>Dia</span><span>Horário</span><span>Serviço padrão</span><span>Tosa/trimming?</span><span>Serviço final</span><span>Ação</span>
+                </div>
+                <div className="divide-y">
+                  {(simulation.items ?? []).sort((a: any, b: any) => a.scheduled_at.localeCompare(b.scheduled_at)).map((item: any, index: number) => (
+                    <div key={item.id} className="grid gap-3 px-7 py-4 md:grid-cols-[70px_1.2fr_1fr_0.8fr_1.1fr_1.2fr_1.2fr_auto] md:items-center">
+                      <span className="text-sm font-black text-[#07111E]">{String(index + 1).padStart(2, "0")}</span>
+                      <Input aria-label={`Alterar data ${index + 1}`} type="datetime-local" className="h-9 border-[#E7DEC8] text-xs font-bold" value={toLocalDateTimeInput(item.scheduled_at)} onChange={(event) => updateItemMutation.mutate({ id: item.id, scheduledAt: new Date(event.target.value).toISOString() })} />
+                      <span className="text-sm font-bold capitalize text-[#44516A]">{format(new Date(item.scheduled_at), "EEEE", { locale: ptBR })}</span>
+                      <span className="text-sm font-black text-[#07111E]">{format(new Date(item.scheduled_at), "HH:mm")}</span>
+                      <span className="rounded-full bg-[#EEF1F4] px-3 py-1 text-center text-[11px] font-black uppercase text-[#44516A]">{selectedService?.name || finalServiceName}</span>
+                      <label className="flex items-center gap-2 text-sm font-bold">
+                        <Checkbox
+                          checked={!!item.include_grooming}
+                          onCheckedChange={(checked) => updateItemMutation.mutate({ id: item.id, includeGrooming: !!checked })}
+                        />
+                        {item.include_grooming ? "Sim" : "Não"}
+                      </label>
+                      <Input className="h-9 border-[#E7DEC8] text-xs font-bold" value={item.final_service_name || finalServiceName} onChange={(event) => updateItemMutation.mutate({ id: item.id, finalServiceName: event.target.value })} />
+                      <div className="flex items-center justify-end gap-2">
+                        {(item.alerts ?? []).length ? <AlertTriangle className="h-4 w-4 text-amber-700" /> : <CheckCircle2 className="h-4 w-4 text-emerald-700" />}
+                        <Button variant="outline" size="sm" disabled={item.status === "created"} onClick={() => updateItemMutation.mutate({ id: item.id, ignored: item.status !== "ignored" })}>{item.status === "ignored" ? "Reativar" : "Ignorar"}</Button>
+                      </div>
                     </div>
                   ))}
                 </div>
-
-                <div className="overflow-hidden rounded-lg border border-[#D8B768]/35 bg-white shadow-sm">
-                  <div className="border-b border-[#D8B768]/30 bg-[#07111E] px-4 py-3 text-sm font-extrabold text-white">
-                    Resumo para enviar e incluir na agenda
-                  </div>
-                  <div className="hidden grid-cols-[48px_1fr_1fr_1fr_1.1fr_1.2fr_1fr_auto] gap-3 border-b border-[#D8B768]/25 bg-[#F8F6F1] px-4 py-3 text-xs font-extrabold uppercase tracking-wide text-[#44516A] md:grid">
-                    <span>Nº</span><span>Data sugerida</span><span>Dia da semana</span><span>Horário</span><span>Serviço padrão</span><span>Agendar tosa/trimming?</span><span>Serviço final</span><span>Ação</span>
-                  </div>
-                  <div className="divide-y">
-                    {(simulation.items ?? []).sort((a: any, b: any) => a.scheduled_at.localeCompare(b.scheduled_at)).map((item: any, index: number) => (
-                      <div key={item.id} className="grid gap-3 p-4 md:grid-cols-[48px_1fr_1fr_1fr_1.1fr_1.2fr_1fr_auto] md:items-center">
-                        <span className="font-extrabold text-[#07111E]">{index + 1}</span>
-                        <Input aria-label={`Alterar data ${index + 1}`} type="datetime-local" className="h-9 text-xs font-semibold" value={toLocalDateTimeInput(item.scheduled_at)} onChange={(event) => updateItemMutation.mutate({ id: item.id, scheduledAt: new Date(event.target.value).toISOString() })} />
-                        <span className="text-sm font-bold capitalize">{format(new Date(item.scheduled_at), "EEEE", { locale: ptBR })}</span>
-                        <span className="text-sm font-bold">{format(new Date(item.scheduled_at), "HH:mm")}</span>
-                        <span className="text-sm font-semibold">{selectedService?.name || finalServiceName}</span>
-                        <label className="flex items-center gap-2 text-sm font-bold">
-                          <Checkbox
-                            checked={!!item.include_grooming}
-                            onCheckedChange={(checked) => updateItemMutation.mutate({ id: item.id, includeGrooming: !!checked })}
-                          />
-                          {item.include_grooming ? "Sim" : "Não"}
-                        </label>
-                        <Input className="h-9 text-xs font-semibold" value={item.final_service_name || finalServiceName} onChange={(event) => updateItemMutation.mutate({ id: item.id, finalServiceName: event.target.value })} />
-                        <div className="flex items-center justify-end gap-2">
-                          {(item.alerts ?? []).length ? <AlertTriangle className="h-4 w-4 text-amber-700" /> : <CheckCircle2 className="h-4 w-4 text-emerald-700" />}
-                          <Button variant="outline" size="sm" disabled={item.status === "created"} onClick={() => updateItemMutation.mutate({ id: item.id, ignored: item.status !== "ignored" })}>{item.status === "ignored" ? "Reativar" : "Ignorar"}</Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex flex-wrap justify-end gap-3 border-t p-5">
-                    <Button variant="outline" onClick={() => { setSimulation(null); setMessage(""); }}>Limpar</Button>
-                    <Button className="bg-[#D8B768] font-extrabold text-[#07111E] hover:bg-[#C9A24E]" disabled={confirmMutation.isPending || simulation.status === "confirmed"} onClick={() => confirmMutation.mutate({ id: simulation.id, includeWarnings: true })}>{simulation.status === "confirmed" ? "Incluído na Agenda" : "Confirmar e incluir na Agenda"}</Button>
-                  </div>
+                <div className="flex flex-wrap justify-end gap-3 border-t p-5">
+                  <Button variant="outline" onClick={() => { setSimulation(null); setMessage(""); }}>Limpar</Button>
+                  <Button className="bg-[#07111E] font-black text-white hover:bg-[#113A7A]" disabled={confirmMutation.isPending || simulation.status === "confirmed"} onClick={() => confirmMutation.mutate({ id: simulation.id, includeWarnings: true })}>{simulation.status === "confirmed" ? "Incluído na Agenda" : "Incluir na Agenda Oficial"}</Button>
                 </div>
-
-                <div className="rounded-lg border border-[#D8B768]/35 bg-white p-5 shadow-sm">
-                  <div className="mb-3 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2"><MessageCircle className="h-5 w-5 text-emerald-600" /><h2 className="font-extrabold text-[#07111E]">Mensagem editável para WhatsApp</h2></div>
-                    {whatsappUrl && <a className="text-sm font-extrabold text-[#113A7A] underline" href={whatsappUrl} target="_blank" rel="noreferrer">Gerar link para WhatsApp</a>}
-                  </div>
-                  <Textarea rows={12} value={message} onChange={(event) => setMessage(event.target.value)} />
-                  <div className="mt-3 flex flex-wrap justify-end gap-2">
-                    <Button variant="outline" onClick={copyMessage}><Copy className="mr-2 h-4 w-4" />Copiar</Button>
-                    <Button variant="outline" onClick={() => saveMessageMutation.mutate({ id: simulation.id, content: message })}>Registrar no histórico</Button>
-                    {whatsappUrl && <Button asChild className="bg-emerald-700 text-white hover:bg-emerald-800"><a href={whatsappUrl} target="_blank" rel="noreferrer"><MessageCircle className="mr-2 h-4 w-4" />Abrir WhatsApp</a></Button>}
-                  </div>
-                </div>
-              </>
+              </section>
             )}
-          </section>
+          </main>
+
+          <aside className="space-y-5 xl:sticky xl:top-5 xl:self-start">
+            <section className="rounded-xl bg-[#07111E] p-6 text-white shadow-sm">
+              <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-[#D8B768]">
+                <AlertTriangle className="h-4 w-4" />
+                Regras de lógica
+              </h2>
+              <div className="mt-5 space-y-4 border-t border-white/10 pt-5 text-xs font-semibold leading-relaxed text-white/80">
+                <p><span className="font-black text-[#D8B768]">Regra:</span> usar data de referência. O cronograma começa exatamente na data informada e soma a frequência contratada.</p>
+                <p><span className="font-black text-[#D8B768]">Regra:</span> usar dia padrão da semana. O cronograma encontra a próxima data daquele dia, a partir da referência base.</p>
+                <p><span className="font-black text-[#D8B768]">Tosa/Trimming:</span> quando existir no pacote, o serviço entra no ciclo conforme intervalo configurado de 7 ou 8 semanas.</p>
+              </div>
+            </section>
+
+            <section className="rounded-xl border border-[#E7DEC8] bg-[#E6E1D8] p-5 shadow-sm">
+              <h2 className="text-lg font-black text-[#07111E]">Resumo para Envio</h2>
+              <div className="mt-4 rounded-lg bg-white p-4 text-xs font-semibold leading-relaxed text-[#44516A] shadow-sm">
+                {message ? (
+                  <pre className="max-h-[420px] whitespace-pre-wrap font-sans">{message}</pre>
+                ) : (
+                  <p>Gere a pré-agenda para visualizar o texto de confirmação do ciclo.</p>
+                )}
+              </div>
+              <div className="mt-4 space-y-3">
+                <Button className="w-full bg-emerald-600 font-black text-white hover:bg-emerald-700" disabled={!message} onClick={copyMessage}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  Copiar mensagem
+                </Button>
+                {whatsappUrl && (
+                  <Button asChild className="w-full bg-emerald-700 font-black text-white hover:bg-emerald-800">
+                    <a href={whatsappUrl} target="_blank" rel="noreferrer"><MessageCircle className="mr-2 h-4 w-4" />Enviar via WhatsApp</a>
+                  </Button>
+                )}
+                <Button className="w-full bg-[#07111E] font-black text-white hover:bg-[#113A7A]" disabled={!simulation || confirmMutation.isPending || simulation?.status === "confirmed"} onClick={() => simulation && confirmMutation.mutate({ id: simulation.id, includeWarnings: true })}>
+                  {simulation?.status === "confirmed" ? "Agenda já incluída" : "Incluir na agenda oficial"}
+                </Button>
+                {simulation && (
+                  <Button variant="outline" className="w-full bg-white font-black" onClick={() => saveMessageMutation.mutate({ id: simulation.id, content: message })}>
+                    Registrar no histórico
+                  </Button>
+                )}
+                {!simulation && (
+                  <Button className="w-full bg-[#113A7A] font-black text-white hover:bg-[#07111E]" disabled={simulateMutation.isPending} onClick={simulate}>
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    {simulateMutation.isPending ? "Simulando..." : "Gerar pré-agenda"}
+                  </Button>
+                )}
+              </div>
+            </section>
+
+            <section className="overflow-hidden rounded-xl bg-[#07111E] shadow-sm">
+              <div className="h-32 bg-gradient-to-br from-[#113A7A] via-[#07111E] to-[#C9A24E]" />
+              <div className="p-4">
+                <p className="text-[11px] font-black uppercase tracking-wide text-[#D8B768]">Dica da especialista</p>
+                <p className="mt-1 text-sm font-semibold text-white">Sessões quinzenais ajudam a manter o ciclo e facilitam a previsão da agenda.</p>
+              </div>
+            </section>
+          </aside>
         </div>
       </div>
     </div>
