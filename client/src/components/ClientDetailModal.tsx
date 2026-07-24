@@ -19,6 +19,7 @@ interface Pet {
   color?: string;
   weight?: number;
   birthDate?: string;
+  birth_date?: string;
   photo?: string;
   is_vip?: boolean;
   is_model_dog?: boolean;
@@ -43,6 +44,71 @@ interface ClientDetailModalProps {
   clientId: string;
   onEditClient?: () => void;
 }
+
+const getPetBirthDateValue = (pet: Pet) =>
+  pet.birthDate ||
+  pet.birth_date ||
+  (pet as any).dateOfBirth ||
+  (pet as any).date_of_birth ||
+  (pet as any).dataNascimento ||
+  (pet as any).data_nascimento ||
+  "";
+
+const parsePetBirthDate = (value?: string | null) => {
+  if (!value) return null;
+
+  const rawValue = String(value).trim();
+  if (!rawValue) return null;
+
+  const isoMatch = rawValue.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoMatch) {
+    const [, year, month, day] = isoMatch;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  const brMatch = rawValue.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (brMatch) {
+    const [, day, month, year] = brMatch;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  const parsed = new Date(rawValue);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const formatPetBirthDate = (pet: Pet) => {
+  const birthDate = parsePetBirthDate(getPetBirthDateValue(pet));
+  return birthDate ? birthDate.toLocaleDateString("pt-BR") : "Não informado";
+};
+
+const formatPetAge = (pet: Pet) => {
+  const birthDate = parsePetBirthDate(getPetBirthDateValue(pet));
+  if (!birthDate) return "Não informado";
+
+  const today = new Date();
+  if (birthDate > today) return "Não informado";
+
+  let years = today.getFullYear() - birthDate.getFullYear();
+  let months = today.getMonth() - birthDate.getMonth();
+
+  if (today.getDate() < birthDate.getDate()) {
+    months -= 1;
+  }
+
+  if (months < 0) {
+    years -= 1;
+    months += 12;
+  }
+
+  const yearText = years === 1 ? "1 ano" : `${years} anos`;
+  const monthText = months === 1 ? "1 mês" : `${months} meses`;
+
+  if (years <= 0) {
+    return monthText;
+  }
+
+  return months > 0 ? `${yearText} e ${monthText}` : yearText;
+};
 
 export function ClientDetailModal({
   isOpen,
@@ -257,7 +323,7 @@ export function ClientDetailModal({
                                   💫 Data de Nascimento
                                 </p>
                                 <p className="text-sm font-semibold text-foreground">
-                                  {pet.birthDate ? new Date(pet.birthDate).toLocaleDateString('pt-BR') : 'Não informado'}
+                                  {formatPetBirthDate(pet)}
                                 </p>
                               </div>
                               <div>
@@ -265,12 +331,7 @@ export function ClientDetailModal({
                                   🎂 Idade
                                 </p>
                                 <p className="text-sm font-semibold text-foreground">
-                                  {(() => {
-                                    const birthDate = pet.birthDate ? new Date(pet.birthDate) : null;
-                                    const age = birthDate ? Math.floor((Date.now() - birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null;
-                                    const months = birthDate ? Math.floor(((Date.now() - birthDate.getTime()) % (365.25 * 24 * 60 * 60 * 1000)) / (30 * 24 * 60 * 60 * 1000)) : null;
-                                    return age !== null ? `${age} ${age === 1 ? 'ano' : 'anos'}${months ? ` e ${months} ${months === 1 ? 'mês' : 'meses'}` : ''}` : 'Não informado';
-                                  })()}
+                                  {formatPetAge(pet)}
                                 </p>
                               </div>
                             </div>
