@@ -30,14 +30,61 @@ interface AppointmentFormProps {
   appointment?: any;
 }
 
+const STATUS_META: Record<string, { label: string; badge: string; option: string }> = {
+  pending: {
+    label: "Agendado",
+    badge: "bg-gray-600 text-white",
+    option: "bg-gray-100 text-gray-900",
+  },
+  confirmed: {
+    label: "Confirmado",
+    badge: "bg-blue-700 text-white",
+    option: "bg-blue-100 text-blue-900",
+  },
+  in_progress: {
+    label: "Em Andamento",
+    badge: "bg-[#C9A24E] text-[#07111E]",
+    option: "bg-[#F3E4B8] text-[#07111E]",
+  },
+  completed: {
+    label: "Concluído",
+    badge: "bg-green-700 text-white",
+    option: "bg-green-100 text-green-900",
+  },
+  cancelled: {
+    label: "Cancelado",
+    badge: "bg-red-700 text-white",
+    option: "bg-red-100 text-red-900",
+  },
+  no_show: {
+    label: "Não Compareceu",
+    badge: "bg-red-800 text-white",
+    option: "bg-red-200 text-red-950",
+  },
+};
+
 export function AppointmentForm({ onClose, onSuccess, appointment }: AppointmentFormProps) {
   const statusOptions: Record<string, { value: string; label: string }[]> = {
-    pending: [{ value: "pending", label: "Agendado" }, { value: "confirmed", label: "Confirmado" }, { value: "cancelled", label: "Cancelado" }, { value: "no_show", label: "Não compareceu" }],
-    confirmed: [{ value: "confirmed", label: "Confirmado" }, { value: "in_progress", label: "Em andamento" }, { value: "cancelled", label: "Cancelado" }, { value: "no_show", label: "Não compareceu" }],
-    in_progress: [{ value: "in_progress", label: "Em andamento" }, { value: "completed", label: "Concluído" }, { value: "cancelled", label: "Cancelado" }],
-    completed: [{ value: "completed", label: "Concluído" }],
-    cancelled: [{ value: "cancelled", label: "Cancelado" }],
-    no_show: [{ value: "no_show", label: "Não compareceu" }],
+    pending: [
+      { value: "pending", label: STATUS_META.pending.label },
+      { value: "confirmed", label: STATUS_META.confirmed.label },
+      { value: "cancelled", label: STATUS_META.cancelled.label },
+      { value: "no_show", label: STATUS_META.no_show.label },
+    ],
+    confirmed: [
+      { value: "confirmed", label: STATUS_META.confirmed.label },
+      { value: "in_progress", label: STATUS_META.in_progress.label },
+      { value: "cancelled", label: STATUS_META.cancelled.label },
+      { value: "no_show", label: STATUS_META.no_show.label },
+    ],
+    in_progress: [
+      { value: "in_progress", label: STATUS_META.in_progress.label },
+      { value: "completed", label: STATUS_META.completed.label },
+      { value: "cancelled", label: STATUS_META.cancelled.label },
+    ],
+    completed: [{ value: "completed", label: STATUS_META.completed.label }],
+    cancelled: [{ value: "cancelled", label: STATUS_META.cancelled.label }],
+    no_show: [{ value: "no_show", label: STATUS_META.no_show.label }],
   };
   // Fetch data
   const { data: clients = [] } = trpc.clients.list.useQuery();
@@ -293,10 +340,23 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
 
       {appointment?.id && (
         <div className="rounded-xl border border-[#D8B768]/50 bg-[#F8F6F1] p-4">
-          <Label htmlFor="appointment-status" className="text-base font-semibold">Status do atendimento</Label>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <Label htmlFor="appointment-status" className="text-base font-semibold">Status do atendimento</Label>
+            <span className={`rounded-md px-3 py-1 text-xs font-extrabold ${STATUS_META[appointmentStatus]?.badge}`}>
+              {STATUS_META[appointmentStatus]?.label || appointmentStatus}
+            </span>
+          </div>
           <Select value={appointmentStatus} onValueChange={setAppointmentStatus}>
             <SelectTrigger id="appointment-status" className="mt-2 bg-white"><SelectValue /></SelectTrigger>
-            <SelectContent>{(statusOptions[appointment.status || "pending"] || []).map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
+            <SelectContent>
+              {(statusOptions[appointment.status || "pending"] || []).map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  <span className={`inline-flex rounded-md px-2 py-0.5 text-xs font-extrabold ${STATUS_META[option.value]?.option}`}>
+                    {option.label}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
           </Select>
           {["cancelled", "no_show"].includes(appointmentStatus) && <div className="mt-3"><Label htmlFor="status-reason" className="text-sm font-semibold">Motivo *</Label><Input id="status-reason" value={statusReason} onChange={(event) => setStatusReason(event.target.value)} className="mt-2 bg-white" placeholder="Informe o motivo" required /></div>}
           <p className="mt-2 text-xs text-muted-foreground">O status avança uma etapa por vez para preservar o histórico e a baixa do pacote.</p>
