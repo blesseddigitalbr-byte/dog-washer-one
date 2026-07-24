@@ -44,6 +44,26 @@ const BREEDS = [
   "Boxer",
   "Rottweiler",
   "Husky",
+  "Akita",
+  "American Bully",
+  "Australian Shepherd",
+  "Basset Hound",
+  "Border Collie",
+  "Boston Terrier",
+  "Cane Corso",
+  "Chihuahua",
+  "Chow Chow",
+  "Doberman",
+  "Fila Brasileiro",
+  "Fox Paulistinha",
+  "Jack Russell Terrier",
+  "Mastiff",
+  "Pastor Belga",
+  "Pastor de Shetland",
+  "Pit Bull",
+  "Samoieda",
+  "Spitz Alemão",
+  "Vira-lata / SRD",
   "Outro",
 ];
 
@@ -296,7 +316,7 @@ export function PetForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[min(96vw,980px)] max-w-none max-h-[90vh] overflow-y-auto rounded-2xl sm:max-w-none">
         <DialogHeader className="text-center">
           <DialogTitle className="text-center">{isEditing ? "Editar Pet" : "Novo Pet"}</DialogTitle>
         </DialogHeader>

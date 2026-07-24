@@ -49,8 +49,10 @@ export default function Packages() {
     if (pkg.operational_status === "expired") return <Badge variant="outline">Vencido</Badge>;
     if (pkg.operational_status === "consumed") return <Badge variant="outline">Sem saldo</Badge>;
     if (pkg.operational_status === "expiring") return <Badge className="bg-amber-500 text-[#07111E]">Vence em breve</Badge>;
-    return <Badge className="bg-[#D8B768] text-[#07111E]">Ativo</Badge>;
+    return <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">Ativo</Badge>;
   };
+
+  const tutorFirstName = (name?: string) => (name || "Tutor não informado").trim().split(/\s+/)[0].toUpperCase();
 
   const frequencyLabel: Record<string, string> = {
     weekly: "Semanal",
@@ -75,7 +77,7 @@ export default function Packages() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Pacotes Contratados</h1>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Pacotes Contratados</h1>
           <p className="text-muted-foreground mt-2">Gerencie os pacotes e saldos dos clientes</p>
         </div>
         <Button 
@@ -91,7 +93,7 @@ export default function Packages() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-l-4 border-l-chart-3">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total de Pacotes</CardTitle>
+            <CardTitle className="text-sm font-semibold text-muted-foreground">Total de Pacotes</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{packages.length}</div>
@@ -100,7 +102,7 @@ export default function Packages() {
 
         <Card className="border-l-4 border-l-chart-3">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pacotes Ativos</CardTitle>
+            <CardTitle className="text-sm font-semibold text-muted-foreground">Pacotes Ativos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -111,7 +113,7 @@ export default function Packages() {
 
         <Card className="border-l-4 border-l-chart-3">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pacotes Vencidos</CardTitle>
+            <CardTitle className="text-sm font-semibold text-muted-foreground">Pacotes Vencidos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -124,7 +126,7 @@ export default function Packages() {
 
         <Card className="border-l-4 border-l-chart-3">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Faturamento Total</CardTitle>
+            <CardTitle className="text-sm font-semibold text-muted-foreground">Faturamento efetivado</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -189,7 +191,7 @@ export default function Packages() {
                     return (
                       <TableRow key={pkg.id} className="cursor-pointer bg-white transition hover:bg-[#F8F6F1]" onClick={() => setSelectedPackage(pkg)}>
                         <TableCell className="font-mono text-sm font-bold text-[#113A7A]">{pkg.id_package}</TableCell>
-                        <TableCell className="font-medium">{pkg.pet_name} ({pkg.pet_breed || "Raça não informada"}) <span className="text-muted-foreground">| {pkg.client_name}</span></TableCell>
+                        <TableCell className="font-semibold">{pkg.pet_name} ({pkg.pet_breed || "Raça não informada"}) <span className="text-muted-foreground">| {tutorFirstName(pkg.client_name)}</span></TableCell>
                         <TableCell>{new Date(pkg.contract_date).toLocaleDateString("pt-BR")}</TableCell>
                         <TableCell><span className="font-mono text-xs font-semibold text-[#113A7A]">{pkg.plan_code || pkg.plan_name}</span></TableCell>
                         <TableCell>{frequencyLabel[pkg.frequency] || pkg.frequency || "Não informada"}</TableCell>
@@ -211,7 +213,7 @@ export default function Packages() {
 
       {/* New Package Dialog */}
       <Dialog open={isNewPackageOpen} onOpenChange={setIsNewPackageOpen}>
-        <DialogContent>
+        <DialogContent className="w-[min(96vw,940px)] max-w-none rounded-2xl sm:max-w-none">
           <DialogHeader>
             <DialogTitle>Novo Pacote</DialogTitle>
           </DialogHeader>
@@ -227,7 +229,7 @@ export default function Packages() {
       </Dialog>
 
       <Dialog open={Boolean(selectedPackage)} onOpenChange={(open) => !open && setSelectedPackage(null)}>
-        <DialogContent className="max-w-3xl rounded-2xl">
+        <DialogContent className="w-[min(96vw,1080px)] max-w-none rounded-2xl sm:max-w-none">
           <DialogHeader>
             <DialogTitle>Detalhes do pacote {selectedPackage?.id_package}</DialogTitle>
           </DialogHeader>
@@ -236,7 +238,7 @@ export default function Packages() {
               <div className="grid grid-cols-2 gap-4 rounded-xl bg-[#F8F6F1] p-5 md:grid-cols-4">
                 <div><p className="text-xs text-muted-foreground">Plano</p><p className="font-semibold">{selectedPackage.plan_name}</p></div>
                 <div><p className="text-xs text-muted-foreground">Pet / raça</p><p className="font-semibold">{selectedPackage.pet_name} / {selectedPackage.pet_breed || "Não informada"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Tutor</p><p className="font-semibold">{selectedPackage.client_name}</p></div>
+                <div><p className="text-xs text-muted-foreground">Tutor</p><p className="font-semibold">{tutorFirstName(selectedPackage.client_name)}</p></div>
                 <div><p className="text-xs text-muted-foreground">Situação</p>{getStatusBadge(selectedPackage)}</div>
               </div>
               <div className="grid grid-cols-2 gap-x-6 gap-y-4 rounded-xl border p-5 text-sm md:grid-cols-4">

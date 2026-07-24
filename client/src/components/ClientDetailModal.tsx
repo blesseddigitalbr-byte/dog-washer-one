@@ -103,7 +103,7 @@ export function ClientDetailModal({
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[min(96vw,1120px)] max-w-none max-h-[90vh] overflow-y-auto rounded-2xl sm:max-w-none">
           <DialogHeader className="flex items-center justify-between">
             <DialogTitle className="text-2xl font-bold">Detalhes do Cliente</DialogTitle>
             <button

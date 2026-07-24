@@ -22,6 +22,14 @@ interface AppointmentFormProps {
 }
 
 export function AppointmentForm({ onClose, onSuccess, appointment }: AppointmentFormProps) {
+  const statusOptions: Record<string, { value: string; label: string }[]> = {
+    pending: [{ value: "pending", label: "Agendado" }, { value: "confirmed", label: "Confirmado" }, { value: "cancelled", label: "Cancelado" }, { value: "no_show", label: "Não compareceu" }],
+    confirmed: [{ value: "confirmed", label: "Confirmado" }, { value: "in_progress", label: "Em andamento" }, { value: "cancelled", label: "Cancelado" }, { value: "no_show", label: "Não compareceu" }],
+    in_progress: [{ value: "in_progress", label: "Em andamento" }, { value: "completed", label: "Concluído" }, { value: "cancelled", label: "Cancelado" }],
+    completed: [{ value: "completed", label: "Concluído" }],
+    cancelled: [{ value: "cancelled", label: "Cancelado" }],
+    no_show: [{ value: "no_show", label: "Não compareceu" }],
+  };
   // Fetch data
   const { data: clients = [] } = trpc.clients.list.useQuery();
   const { data: professionals = [] } = trpc.professionals.list.useQuery();
@@ -52,6 +60,8 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
   const [appointmentDate, setAppointmentDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [recurrenceRule, setRecurrenceRule] = useState<"none" | "weekly" | "biweekly" | "monthly">("none");
+  const [appointmentStatus, setAppointmentStatus] = useState("pending");
+  const [statusReason, setStatusReason] = useState("");
   const [notes, setNotes] = useState("");
   const { data: clientPackages = [] } = trpc.clientPackages.byClient.useQuery(
     { clientId: selectedClient },
@@ -61,6 +71,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
   // Mutations
   const createMutation = trpc.appointments.create.useMutation();
   const updateMutation = trpc.appointments.update.useMutation();
+  const setStatusMutation = trpc.appointments.setStatus.useMutation();
   const utils = trpc.useUtils();
 
   useEffect(() => {
@@ -80,6 +91,8 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
     setStartTime(appointment.start_time?.slice(0, 5) || `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`);
     setRecurrenceRule(appointment.recurrence_rule || "none");
     setNotes(appointment.notes || "");
+    setAppointmentStatus(appointment.status || "pending");
+    setStatusReason(appointment.cancellation_reason || "");
   }, [appointment]);
 
   // Validate student permissions
@@ -183,6 +196,13 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
           ...appointmentPayload,
           clientPackageId: appointmentPayload.clientPackageId || null,
         });
+        if (appointmentStatus !== (appointment.status || "pending")) {
+          await setStatusMutation.mutateAsync({
+            id: appointment.id,
+            status: appointmentStatus as "confirmed" | "in_progress" | "completed" | "cancelled" | "no_show",
+            reason: ["cancelled", "no_show"].includes(appointmentStatus) ? statusReason : undefined,
+          });
+        }
       } else {
         await createMutation.mutateAsync(appointmentPayload);
       }
@@ -203,7 +223,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
   };
 
   return (
-    <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6 md:grid-cols-2">
       {/* Cliente */}
       <div>
         <Label htmlFor="client" className="text-base font-semibold">
@@ -216,6 +236,15 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
             onChange={(e) => setClientSearchTerm(e.target.value)}
             className="mt-2"
           />
+          {clientSearchTerm.trim() && (
+            <div className="max-h-36 overflow-y-auto rounded-xl border border-[#D8B768]/60 bg-white p-1 shadow-sm">
+              {filteredClients.length ? filteredClients.map((client: any) => (
+                <button key={client.id} type="button" onClick={() => { setSelectedClient(client.id); setSelectedPet(null); setClientSearchTerm(""); }} className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[#07111E] transition hover:bg-[#F8F6F1]">
+                  {client.name}
+                </button>
+              )) : <p className="px-3 py-2 text-sm text-muted-foreground">Nenhum cliente encontrado.</p>}
+            </div>
+          )}
           <Select value={selectedClient} onValueChange={(value) => {
             setSelectedClient(value);
             setClientSearchTerm("");
@@ -234,6 +263,18 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
           </Select>
         </div>
       </div>
+
+      {appointment?.id && (
+        <div className="rounded-xl border border-[#D8B768]/50 bg-[#F8F6F1] p-4">
+          <Label htmlFor="appointment-status" className="text-base font-semibold">Status do atendimento</Label>
+          <Select value={appointmentStatus} onValueChange={setAppointmentStatus}>
+            <SelectTrigger id="appointment-status" className="mt-2 bg-white"><SelectValue /></SelectTrigger>
+            <SelectContent>{(statusOptions[appointment.status || "pending"] || []).map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent>
+          </Select>
+          {["cancelled", "no_show"].includes(appointmentStatus) && <div className="mt-3"><Label htmlFor="status-reason" className="text-sm font-semibold">Motivo *</Label><Input id="status-reason" value={statusReason} onChange={(event) => setStatusReason(event.target.value)} className="mt-2 bg-white" placeholder="Informe o motivo" required /></div>}
+          <p className="mt-2 text-xs text-muted-foreground">O status avança uma etapa por vez para preservar o histórico e a baixa do pacote.</p>
+        </div>
+      )}
 
       {/* Pets */}
       <div>
@@ -473,7 +514,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
         </div>
       </div>
 
-      <div className="lg:col-span-2">
+      <div className="md:col-span-2">
         <Label htmlFor="recurrence" className="text-base font-semibold">
           Recorrência
         </Label>
@@ -506,7 +547,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
       </div>
 
       {/* Botões */}
-      <div className="sticky bottom-0 z-10 flex gap-3 justify-end border-t bg-background py-4 lg:col-span-2">
+      <div className="sticky bottom-0 z-10 flex gap-3 justify-end border-t bg-background py-4 md:col-span-2">
         <Button type="button" variant="outline" onClick={onClose}>
           Cancelar
         </Button>

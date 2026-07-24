@@ -541,11 +541,11 @@ export default function Appointments() {
         setShowForm(open);
         if (!open) setSelectedAppointment(null);
       }}>
-        <DialogContent className="flex max-h-[92vh] w-[calc(100vw-2rem)] max-w-5xl flex-col overflow-hidden">
+        <DialogContent className="flex max-h-[90vh] w-[min(96vw,1120px)] max-w-none flex-col overflow-hidden rounded-2xl p-7 sm:max-w-none">
           <DialogHeader>
             <DialogTitle>{selectedAppointment ? "Editar Agendamento" : "Novo Agendamento"}</DialogTitle>
             <DialogDescription>
-              Preencha os dados para criar um novo agendamento
+              {selectedAppointment ? "Atualize dados, profissional, horário ou situação do atendimento." : "Preencha os dados para criar um novo agendamento."}
             </DialogDescription>
           </DialogHeader>
           <div className="overflow-y-auto pr-2">

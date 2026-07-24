@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 const frequencyLabels: Record<string, string> = {
   weekly: "Semanal",
@@ -51,6 +53,10 @@ export default function ScheduleSimulator() {
     { enabled: !!clientId },
   );
   const packages = (packagesQuery.data ?? []).filter((item: any) => !petId || item.pet_id === petId);
+  const selectedPackage = packages.find((item: any) => item.id === clientPackageId) || packages[0];
+  const selectedPet = pets.find((pet: any) => pet.id === petId);
+  const selectedProfessional = (professionalsQuery.data ?? []).find((item: any) => item.id === professionalId);
+  const selectedService = (servicesQuery.data ?? []).find((item: any) => item.id === serviceId);
 
   const simulateMutation = trpc.scheduleSimulator.simulate.useMutation({
     onSuccess: (data) => {
@@ -133,7 +139,7 @@ export default function ScheduleSimulator() {
           </div>
         </header>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(320px,0.85fr)_minmax(0,1.6fr)]">
+        <div className="grid gap-6 xl:grid-cols-[minmax(380px,0.9fr)_minmax(0,1.6fr)]">
           <section className="rounded-2xl border bg-white p-5 shadow-sm">
             <div className="mb-5 flex items-center gap-2"><CalendarRange className="h-5 w-5 text-[#C9A24E]" /><h2 className="font-bold text-[#07111E]">Parâmetros da pré-agenda</h2></div>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
@@ -149,6 +155,18 @@ export default function ScheduleSimulator() {
               <div><Label>Observações</Label><Textarea className="mt-2" value={notes} onChange={(event) => setNotes(event.target.value)} /></div>
             </div>
             <Button className="mt-5 w-full bg-[#113A7A] text-white hover:bg-[#07111E]" disabled={simulateMutation.isPending} onClick={simulate}><RefreshCw className="mr-2 h-4 w-4" />{simulateMutation.isPending ? "Simulando..." : "Simular datas"}</Button>
+            <div className="mt-5 rounded-xl border border-[#D8B768]/50 bg-[#F8F6F1] p-4">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-[#8E6E3E]">Resumo operacional</p>
+              <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
+                <div><dt className="text-muted-foreground">Tutor</dt><dd className="font-semibold">{selectedClient?.name?.split(/\s+/)[0] || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">Pet</dt><dd className="font-semibold">{selectedPet ? `${selectedPet.name} (${selectedPet.breed || "sem raça"})` : "—"}</dd></div>
+                <div><dt className="text-muted-foreground">Plano</dt><dd className="font-semibold">{selectedPackage?.plan_code || selectedPackage?.code || "Avulso"}</dd></div>
+                <div><dt className="text-muted-foreground">Profissional</dt><dd className="font-semibold">{selectedProfessional?.name || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">Serviço padrão</dt><dd className="font-semibold">{selectedService?.name || "—"}</dd></div>
+                <div><dt className="text-muted-foreground">Próxima renovação</dt><dd className="font-semibold">{selectedPackage?.expiry_date ? format(new Date(selectedPackage.expiry_date), "dd/MM/yyyy") : "—"}</dd></div>
+              </dl>
+              <p className="mt-4 border-t pt-3 text-xs text-muted-foreground"><span className="font-semibold text-[#07111E]">Regra:</span> usa a data de referência e soma a frequência; a prévia preserva o mesmo dia da semana quando aplicável.</p>
+            </div>
           </section>
 
           <section className="min-w-0 space-y-5">
@@ -165,11 +183,16 @@ export default function ScheduleSimulator() {
                 </div>
                 <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
                   <div className="border-b p-5"><h2 className="font-bold text-[#07111E]">Prévia editável</h2><p className="text-sm text-muted-foreground">Conflitos não serão incluídos. Ajuste a data ou ignore o item.</p></div>
+                  <div className="hidden grid-cols-[48px_1fr_1fr_1.1fr_1fr_auto] gap-3 border-b bg-[#F8F6F1] px-4 py-3 text-xs font-bold uppercase tracking-wide text-muted-foreground md:grid">
+                    <span>#</span><span>Data sugerida</span><span>Dia / horário</span><span>Serviço final</span><span>Validação</span><span>Ação</span>
+                  </div>
                   <div className="divide-y">
                     {(simulation.items ?? []).sort((a: any, b: any) => a.scheduled_at.localeCompare(b.scheduled_at)).map((item: any, index: number) => (
-                      <div key={item.id} className="grid gap-3 p-4 md:grid-cols-[48px_minmax(220px,1fr)_minmax(180px,1.4fr)_auto] md:items-center">
+                      <div key={item.id} className="grid gap-3 p-4 md:grid-cols-[48px_1fr_1fr_1.1fr_1fr_auto] md:items-center">
                         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D8B768]/20 text-sm font-bold text-[#113A7A]">{index + 1}</span>
-                        <Input type="datetime-local" value={toLocalDateTimeInput(item.scheduled_at)} onChange={(event) => updateItemMutation.mutate({ id: item.id, scheduledAt: new Date(event.target.value).toISOString() })} />
+                        <div><p className="text-sm font-semibold">{format(new Date(item.scheduled_at), "dd/MM/yyyy")}</p><Input aria-label={`Alterar data ${index + 1}`} type="datetime-local" className="mt-1 h-8 text-xs" value={toLocalDateTimeInput(item.scheduled_at)} onChange={(event) => updateItemMutation.mutate({ id: item.id, scheduledAt: new Date(event.target.value).toISOString() })} /></div>
+                        <div className="text-sm"><p className="font-semibold capitalize">{format(new Date(item.scheduled_at), "EEEE", { locale: ptBR })}</p><p className="text-muted-foreground">{format(new Date(item.scheduled_at), "HH:mm")}</p></div>
+                        <p className="text-sm font-semibold">{selectedService?.name || "Serviço selecionado"}</p>
                         <div>{(item.alerts ?? []).length ? (item.alerts ?? []).map((alert: string) => <p key={alert} className="flex items-center gap-1 text-xs text-amber-700"><AlertTriangle className="h-3.5 w-3.5" />{alert}</p>) : <p className="flex items-center gap-1 text-xs font-semibold text-emerald-700"><CheckCircle2 className="h-3.5 w-3.5" />Disponível</p>}</div>
                         <Button variant="outline" size="sm" disabled={item.status === "created"} onClick={() => updateItemMutation.mutate({ id: item.id, scheduledAt: item.scheduled_at, ignored: item.status !== "ignored" })}>{item.status === "ignored" ? "Reativar" : "Ignorar"}</Button>
                       </div>
