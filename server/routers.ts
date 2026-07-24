@@ -1942,7 +1942,7 @@ export const appRouter = router({
           supabase.from("services").select("id, name, duration_minutes, price, category").eq("id", input.serviceId).eq("unit_id", ctx.user.unitId).eq("status", "active").single(),
           supabase.from("professionals").select("id, name").eq("id", input.professionalId).eq("unit_id", ctx.user.unitId).eq("is_active", true).single(),
           input.clientPackageId
-            ? supabase.from("client_packages").select("*").eq("id", input.clientPackageId).eq("unit_id", ctx.user.unitId).single()
+            ? supabase.from("client_packages").select("*, plan:package_id(name, code)").eq("id", input.clientPackageId).eq("unit_id", ctx.user.unitId).single()
             : Promise.resolve({ data: null, error: null }),
         ]);
         if (!clientRes.data || !petRes.data || petRes.data.client_id !== input.clientId) throw new Error("Cliente ou pet inválido");
@@ -1956,7 +1956,7 @@ export const appRouter = router({
         if (input.appointmentType === "package" && !selectedPackage) {
           const { data: candidates, error: candidatesError } = await supabase
             .from("client_packages")
-            .select("*")
+            .select("*, plan:package_id(name, code)")
             .eq("unit_id", ctx.user.unitId)
             .eq("pet_id", input.petId)
             .eq("status", "active")
@@ -2039,7 +2039,11 @@ export const appRouter = router({
         const serviceNameForIndex = (index: number) => groomingIndexes.has(index)
           ? `${finalServiceName} + Tosa/Trimming`
           : finalServiceName;
-        const message = `Olá, ${clientRes.data.nome}! Confirmamos a assinatura do Termo de Adesão e a confirmação do pagamento.\nO plano do ${petRes.data.name} está ativo.\n\nPlano contratado: ${selectedPackage?.plan_name || selectedPackage?.plan_code || "Avulso"}\nFrequência: ${input.frequency === "weekly" ? "Semanal" : input.frequency === "biweekly" ? "Quinzenal" : input.frequency === "monthly" ? "Mensal" : input.frequency === "every_21_days" ? "A cada 21 dias" : "Atendimento único"}\nData de ativação/pagamento: ${new Date(`${input.paymentActivationDate || input.startDate}T00:00:00-03:00`).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}\nInício do ciclo de utilização: ${new Date(`${input.cycleStartDate || input.startDate}T00:00:00-03:00`).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}\nAtendimentos inclusos: ${items.length} atendimento(s)\n${input.nextRenewalDate ? `Próxima renovação/cobrança: ${new Date(`${input.nextRenewalDate}T00:00:00-03:00`).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}\n` : ""}\nPara facilitar a organização da agenda, deixamos abaixo a previsão de atendimentos do ciclo atual:\n\n${items.map((item, index) => `${index + 1}. ${new Date(item.scheduled_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })} às ${input.defaultTime} — ${serviceNameForIndex(index)}`).join("\n")}\n\nObrigada pela confiança na Lux Dog!`;
+        const planName = selectedPackage?.plan?.name || selectedPackage?.plan_name || selectedPackage?.plan?.code || selectedPackage?.plan_code || selectedPackage?.code || "Avulso";
+        const groomingLine = input.groomingQuantity > 0
+          ? `Tosas/Trimming inclusos: ${input.groomingQuantity} atendimento(s)\n`
+          : "";
+        const message = `Olá, ${clientRes.data.nome}! Confirmamos a assinatura do Termo de Adesão e a confirmação do pagamento.\nO plano do ${petRes.data.name} está ativo.\n\nPlano contratado:\n- ${planName}\nFrequência: ${input.frequency === "weekly" ? "Semanal" : input.frequency === "biweekly" ? "Quinzenal" : input.frequency === "monthly" ? "Mensal" : input.frequency === "every_21_days" ? "A cada 21 dias" : "Atendimento único"}\nData de ativação/pagamento: ${new Date(`${input.paymentActivationDate || input.startDate}T00:00:00-03:00`).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}\nInício do ciclo de utilização: ${new Date(`${input.cycleStartDate || input.startDate}T00:00:00-03:00`).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}\nAtendimentos inclusos: ${items.length} atendimento(s)\n${groomingLine}${input.nextRenewalDate ? `Próxima renovação/cobrança: ${new Date(`${input.nextRenewalDate}T00:00:00-03:00`).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}\n` : ""}\nPara facilitar a organização da agenda, deixamos abaixo a previsão de atendimentos do ciclo atual:\n\n${items.map((item, index) => `${index + 1}. ${new Date(item.scheduled_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })} às ${input.defaultTime} — ${serviceNameForIndex(index)}`).join("\n")}\n\nObrigada pela confiança na Lux Dog!`;
         const { data: simulation, error: simulationError } = await supabase.from("schedule_simulations").insert({
           organization_id: ctx.user.organizationId,
           unit_id: ctx.user.unitId,

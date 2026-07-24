@@ -37,11 +37,11 @@ describe("Simulador de Agenda", () => {
   it("cria agenda oficial somente na confirmação", () => {
     expect(router).toContain("confirm: protectedProcedure");
     expect(router).toContain('.from("appointments").insert(appointmentsPayload)');
-    expect(page).toContain("Confirmar e incluir na Agenda");
+    expect(page).toContain("Incluir na Agenda Oficial");
   });
 
   it("mantém WhatsApp manual e registra a mensagem no histórico", () => {
-    expect(page).toContain("Abrir WhatsApp");
+    expect(page).toContain("Enviar via WhatsApp");
     expect(router).toContain('.from("communication_history").insert');
     expect(page).toContain("Registrar no histórico");
   });

@@ -74,6 +74,19 @@ function packageNumber(item: any, keys: string[], fallback = 0) {
   return fallback;
 }
 
+function preferredServiceForMode(services: any[], mode: string) {
+  const normalizedMode = String(mode ?? "").toLowerCase();
+  const byName = (pattern: string) =>
+    services.find((service: any) => String(service.name ?? "").toLowerCase().includes(pattern));
+
+  if (normalizedMode === "bath_hygiene") return byName("combo higiene") || byName("higiene") || byName("banho");
+  if (normalizedMode === "bath") return byName("banho");
+  if (normalizedMode === "grooming") return byName("tosa");
+  if (normalizedMode === "trimming") return byName("trimming") || byName("tosa");
+
+  return services[0];
+}
+
 export default function ScheduleSimulator() {
   const clientsQuery = trpc.clients.list.useQuery();
   const servicesQuery = trpc.services.list.useQuery();
@@ -149,16 +162,30 @@ export default function ScheduleSimulator() {
 
   useEffect(() => {
     if (serviceId || activeServices.length === 0) return;
-    const preferredService =
-      activeServices.find((service: any) => String(service.name ?? "").toLowerCase().includes("combo higiene")) ||
-      activeServices.find((service: any) => String(service.name ?? "").toLowerCase().includes("banho")) ||
-      activeServices[0];
+    const preferredService = preferredServiceForMode(activeServices, serviceMode);
 
     if (preferredService?.id) {
       setServiceId(preferredService.id);
       if (preferredService.name) setFinalServiceName(preferredService.name);
     }
-  }, [activeServices, serviceId]);
+  }, [activeServices, serviceId, serviceMode]);
+
+  useEffect(() => {
+    if (activeServices.length === 0) return;
+    const preferredService = preferredServiceForMode(activeServices, serviceMode);
+    if (!preferredService?.id || preferredService.id === serviceId) return;
+
+    const selectedName = String(selectedService?.name ?? "").toLowerCase();
+    const shouldSyncService =
+      !serviceId ||
+      Object.values(serviceModeLabels).some((label) => selectedName.includes(label.toLowerCase())) ||
+      selectedName.includes("corte de unhas");
+
+    if (shouldSyncService) {
+      setServiceId(preferredService.id);
+      if (preferredService.name) setFinalServiceName(preferredService.name);
+    }
+  }, [activeServices, serviceMode, selectedService?.name, serviceId]);
 
   useEffect(() => {
     if (selectedService?.name && finalServiceName === serviceModeLabels[serviceMode]) {
@@ -479,7 +506,7 @@ export default function ScheduleSimulator() {
                       <Input className="h-9 border-[#E7DEC8] text-xs font-bold" value={item.final_service_name || finalServiceName} onChange={(event) => updateItemMutation.mutate({ id: item.id, finalServiceName: event.target.value })} />
                       <div className="flex items-center justify-end gap-2">
                         {(item.alerts ?? []).length ? <AlertTriangle className="h-4 w-4 text-amber-700" /> : <CheckCircle2 className="h-4 w-4 text-emerald-700" />}
-                        <Button variant="outline" size="sm" disabled={item.status === "created"} onClick={() => updateItemMutation.mutate({ id: item.id, ignored: item.status !== "ignored" })}>{item.status === "ignored" ? "Reativar" : "Ignorar"}</Button>
+                        <Button variant="outline" size="sm" disabled={item.status === "created"} onClick={() => updateItemMutation.mutate({ id: item.id, ignored: item.status !== "ignored" })}>{item.status === "ignored" ? "Incluir" : "Não incluir"}</Button>
                       </div>
                     </div>
                   ))}
