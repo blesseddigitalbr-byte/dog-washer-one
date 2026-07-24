@@ -66,6 +66,14 @@ function firstName(name?: string) {
   return name?.trim().split(/\s+/)[0] || "-";
 }
 
+function packageNumber(item: any, keys: string[], fallback = 0) {
+  for (const key of keys) {
+    const value = Number(item?.[key]);
+    if (Number.isFinite(value) && value >= 0) return value;
+  }
+  return fallback;
+}
+
 export default function ScheduleSimulator() {
   const clientsQuery = trpc.clients.list.useQuery();
   const servicesQuery = trpc.services.list.useQuery();
@@ -106,6 +114,7 @@ export default function ScheduleSimulator() {
   const packages = (packagesQuery.data ?? []).filter((item: any) => !petId || item.pet_id === petId);
   const selectedPackage = packages.find((item: any) => item.id === clientPackageId) || packages[0];
   const selectedService = (servicesQuery.data ?? []).find((item: any) => item.id === serviceId);
+  const activeServices = (servicesQuery.data ?? []).filter((item: any) => !item.status || item.status === "active");
 
   useEffect(() => {
     if (selectedPet?.breed && !petType) setPetType(selectedPet.breed);
@@ -116,7 +125,40 @@ export default function ScheduleSimulator() {
       setEndDate(selectedPackage.expiry_date);
       setNextRenewalDate(selectedPackage.expiry_date);
     }
-  }, [selectedPackage?.expiry_date]);
+    if (!selectedPackage) return;
+
+    const contractedBaths = packageNumber(selectedPackage, ["contracted_baths", "total_baths", "balance_baths"], quantity);
+    const contractedGroomings = packageNumber(selectedPackage, ["contracted_groomings", "total_groomings", "balance_groomings"], groomingQuantity);
+
+    if (contractedBaths > 0) setQuantity(contractedBaths);
+    setGroomingQuantity(contractedGroomings);
+    if (selectedPackage.frequency && selectedPackage.frequency !== "custom") {
+      setFrequency(selectedPackage.frequency);
+    }
+  }, [
+    selectedPackage?.id,
+    selectedPackage?.expiry_date,
+    selectedPackage?.contracted_baths,
+    selectedPackage?.contracted_groomings,
+    selectedPackage?.total_baths,
+    selectedPackage?.total_groomings,
+    selectedPackage?.balance_baths,
+    selectedPackage?.balance_groomings,
+    selectedPackage?.frequency,
+  ]);
+
+  useEffect(() => {
+    if (serviceId || activeServices.length === 0) return;
+    const preferredService =
+      activeServices.find((service: any) => String(service.name ?? "").toLowerCase().includes("combo higiene")) ||
+      activeServices.find((service: any) => String(service.name ?? "").toLowerCase().includes("banho")) ||
+      activeServices[0];
+
+    if (preferredService?.id) {
+      setServiceId(preferredService.id);
+      if (preferredService.name) setFinalServiceName(preferredService.name);
+    }
+  }, [activeServices, serviceId]);
 
   useEffect(() => {
     if (selectedService?.name && finalServiceName === serviceModeLabels[serviceMode]) {
