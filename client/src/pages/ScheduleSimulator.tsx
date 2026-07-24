@@ -69,6 +69,7 @@ export default function ScheduleSimulator() {
   const [frequency, setFrequency] = useState<"weekly" | "biweekly" | "every_21_days" | "monthly" | "once">("biweekly");
   const [quantity, setQuantity] = useState(4);
   const [groomingQuantity, setGroomingQuantity] = useState(0);
+  const [groomingIntervalWeeks, setGroomingIntervalWeeks] = useState(8);
   const [paymentActivationDate, setPaymentActivationDate] = useState(todayDate());
   const [lastIncludedDate, setLastIncludedDate] = useState("");
   const [nextRenewalDate, setNextRenewalDate] = useState(addMonths(todayDate(), 1));
@@ -174,6 +175,7 @@ export default function ScheduleSimulator() {
       petType: petType || undefined,
       serviceMode,
       groomingQuantity,
+      groomingIntervalWeeks,
       paymentActivationDate: paymentActivationDate || undefined,
       lastIncludedDate: lastIncludedDate || undefined,
       nextRenewalDate: nextRenewalDate || undefined,
@@ -197,20 +199,20 @@ export default function ScheduleSimulator() {
   return (
     <div className="bg-background p-4 sm:p-6">
       <div className="mx-auto max-w-[1520px] space-y-5">
-        <header className="rounded-lg border border-[#E6DAAA] bg-white p-5 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A62D8]">Agenda sugerida por pet/pacote</p>
+        <header className="rounded-lg border border-[#D8B768]/45 bg-white p-5 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#C9A24E]">Agenda sugerida por pet/pacote</p>
           <h1 className="mt-1 text-3xl font-extrabold text-[#07111E]">Simulador de Agenda</h1>
           <p className="mt-1 text-sm font-medium text-muted-foreground">
             Gere a previsão do ciclo, ajuste tosa/trimming por data e confirme somente depois de revisar.
           </p>
         </header>
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(520px,0.95fr)_minmax(0,1.45fr)]">
-          <section className="rounded-lg border bg-white shadow-sm">
-            <div className="border-b bg-[#F8F6F1] px-5 py-3">
+        <div className="grid gap-5 xl:grid-cols-[minmax(640px,0.95fr)_minmax(0,1.45fr)]">
+          <section className="rounded-lg border border-[#D8B768]/35 bg-white shadow-sm">
+            <div className="border-b border-[#D8B768]/30 bg-[#F8F6F1] px-5 py-3">
               <h2 className="text-base font-extrabold text-[#07111E]">Campos da planilha</h2>
             </div>
-            <div className="grid gap-3 p-5 md:grid-cols-2">
+            <div className="grid gap-3 p-5 lg:grid-cols-2">
               <div>
                 <Label>Profissional / executante *</Label>
                 <Select value={professionalId} onValueChange={setProfessionalId}>
@@ -287,6 +289,16 @@ export default function ScheduleSimulator() {
                 <Input className="mt-1" type="number" min={0} max={quantity} value={groomingQuantity} onChange={(event) => setGroomingQuantity(Number(event.target.value))} />
               </div>
               <div>
+                <Label>Intervalo tosa/trimming</Label>
+                <Select value={String(groomingIntervalWeeks)} onValueChange={(value) => setGroomingIntervalWeeks(Number(value))}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">A cada 7 semanas</SelectItem>
+                    <SelectItem value="8">A cada 8 semanas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <Label>Data ativação/pagamento</Label>
                 <Input className="mt-1" type="date" value={paymentActivationDate} onChange={(event) => setPaymentActivationDate(event.target.value)} />
               </div>
@@ -328,17 +340,18 @@ export default function ScheduleSimulator() {
                 <Label>Fim do ciclo atual</Label>
                 <Input className="mt-1" type="date" value={endDate} onChange={(event) => setEndDate(event.target.value)} />
               </div>
-              <div className="md:col-span-2">
+              <div className="lg:col-span-2">
                 <Label>Serviço final padrão</Label>
                 <Input className="mt-1" value={finalServiceName} onChange={(event) => setFinalServiceName(event.target.value)} placeholder="Ex.: Combo Higiene" />
+                <p className="mt-1 text-xs font-medium text-muted-foreground">Na grade, ajuste o serviço final de cada data conforme o que será executado naquele atendimento.</p>
               </div>
-              <div className="md:col-span-2">
+              <div className="lg:col-span-2">
                 <Label>Observação</Label>
                 <Textarea className="mt-1 min-h-20" value={notes} onChange={(event) => setNotes(event.target.value)} />
               </div>
             </div>
             <div className="border-t p-5">
-              <Button className="w-full bg-gradient-to-r from-[#36B8D8] to-[#9B5DE5] font-extrabold text-white shadow-sm hover:opacity-95" disabled={simulateMutation.isPending} onClick={simulate}>
+              <Button className="w-full bg-[#113A7A] font-extrabold text-white shadow-sm hover:bg-[#07111E]" disabled={simulateMutation.isPending} onClick={simulate}>
                 <RefreshCw className="mr-2 h-4 w-4" />
                 {simulateMutation.isPending ? "Simulando..." : "Gerar pré-agenda"}
               </Button>
@@ -346,18 +359,18 @@ export default function ScheduleSimulator() {
           </section>
 
           <section className="min-w-0 space-y-5">
-            <div className="rounded-lg border bg-white p-5 shadow-sm">
+            <div className="rounded-lg border border-[#D8B768]/35 bg-white p-5 shadow-sm">
               <div className="grid gap-4 md:grid-cols-4">
                 <div><p className="text-xs font-bold uppercase text-muted-foreground">Tutor</p><p className="mt-1 font-extrabold text-[#07111E]">{selectedClient?.name?.split(/\s+/)[0] || "-"}</p></div>
                 <div><p className="text-xs font-bold uppercase text-muted-foreground">Pet / tipo</p><p className="mt-1 font-extrabold text-[#07111E]">{selectedPet ? `${selectedPet.name} / ${petType || selectedPet.breed || "-"}` : "-"}</p></div>
                 <div><p className="text-xs font-bold uppercase text-muted-foreground">Plano</p><p className="mt-1 font-extrabold text-[#07111E]">{selectedPackage?.plan_code || selectedPackage?.code || "Avulso"}</p></div>
-                <div><p className="text-xs font-bold uppercase text-muted-foreground">Alerta de conferência</p><p className="mt-1 font-extrabold text-emerald-700">{Number(standardWeekday) === new Date(`${referenceDate}T00:00:00-03:00`).getDay() ? "Data base confere" : "Ajustará para o dia padrão"}</p></div>
+                <div><p className="text-xs font-bold uppercase text-muted-foreground">Alerta de conferência</p><p className="mt-1 font-extrabold text-[#113A7A]">{Number(standardWeekday) === new Date(`${referenceDate}T00:00:00-03:00`).getDay() ? "Data base confere" : "Ajustará para o dia padrão"}</p></div>
               </div>
             </div>
 
             {!simulation ? (
               <div className="flex min-h-[420px] flex-col items-center justify-center rounded-lg border border-dashed bg-white p-8 text-center">
-                <CalendarRange className="mb-4 h-12 w-12 text-[#8A62D8]" />
+                <CalendarRange className="mb-4 h-12 w-12 text-[#C9A24E]" />
                 <h2 className="text-xl font-extrabold text-[#07111E]">A prévia aparecerá aqui</h2>
                 <p className="mt-2 max-w-md text-sm font-medium text-muted-foreground">Nenhum atendimento será criado até você revisar e confirmar.</p>
               </div>
@@ -365,18 +378,18 @@ export default function ScheduleSimulator() {
               <>
                 <div className="grid grid-cols-4 gap-3">
                   {[["Datas", summary.total], ["Válidas", summary.valid], ["Conflitos", summary.conflicts], ["Tosa/trim", summary.grooming]].map(([label, value]) => (
-                    <div key={String(label)} className="rounded-lg border bg-white p-4 shadow-sm">
+                    <div key={String(label)} className="rounded-lg border border-[#D8B768]/35 bg-white p-4 shadow-sm">
                       <p className="text-xs font-bold uppercase text-muted-foreground">{label}</p>
                       <p className="mt-1 text-2xl font-extrabold text-[#07111E]">{value}</p>
                     </div>
                   ))}
                 </div>
 
-                <div className="overflow-hidden rounded-lg border bg-white shadow-sm">
-                  <div className="border-b bg-[#86C442] px-4 py-3 text-sm font-extrabold text-white">
+                <div className="overflow-hidden rounded-lg border border-[#D8B768]/35 bg-white shadow-sm">
+                  <div className="border-b border-[#D8B768]/30 bg-[#07111E] px-4 py-3 text-sm font-extrabold text-white">
                     Resumo para enviar e incluir na agenda
                   </div>
-                  <div className="hidden grid-cols-[48px_1fr_1fr_1fr_1.1fr_1.2fr_1fr_auto] gap-3 border-b bg-[#F8F6F1] px-4 py-3 text-xs font-extrabold uppercase tracking-wide text-[#44516A] md:grid">
+                  <div className="hidden grid-cols-[48px_1fr_1fr_1fr_1.1fr_1.2fr_1fr_auto] gap-3 border-b border-[#D8B768]/25 bg-[#F8F6F1] px-4 py-3 text-xs font-extrabold uppercase tracking-wide text-[#44516A] md:grid">
                     <span>Nº</span><span>Data sugerida</span><span>Dia da semana</span><span>Horário</span><span>Serviço padrão</span><span>Agendar tosa/trimming?</span><span>Serviço final</span><span>Ação</span>
                   </div>
                   <div className="divide-y">
@@ -408,10 +421,10 @@ export default function ScheduleSimulator() {
                   </div>
                 </div>
 
-                <div className="rounded-lg border bg-white p-5 shadow-sm">
+                <div className="rounded-lg border border-[#D8B768]/35 bg-white p-5 shadow-sm">
                   <div className="mb-3 flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2"><MessageCircle className="h-5 w-5 text-emerald-600" /><h2 className="font-extrabold text-[#07111E]">Mensagem editável para WhatsApp</h2></div>
-                    {whatsappUrl && <a className="text-sm font-extrabold text-[#8A62D8] underline" href={whatsappUrl} target="_blank" rel="noreferrer">Gerar link para WhatsApp</a>}
+                    {whatsappUrl && <a className="text-sm font-extrabold text-[#113A7A] underline" href={whatsappUrl} target="_blank" rel="noreferrer">Gerar link para WhatsApp</a>}
                   </div>
                   <Textarea rows={12} value={message} onChange={(event) => setMessage(event.target.value)} />
                   <div className="mt-3 flex flex-wrap justify-end gap-2">

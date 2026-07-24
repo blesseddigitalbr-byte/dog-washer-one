@@ -1,5 +1,14 @@
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -13,7 +22,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { X, Plus, Search, AlertCircle } from "lucide-react";
+import { AlertTriangle, X, Plus, Search, AlertCircle } from "lucide-react";
 
 interface AppointmentFormProps {
   onClose: () => void;
@@ -62,6 +71,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
   const [recurrenceRule, setRecurrenceRule] = useState<"none" | "weekly" | "biweekly" | "monthly">("none");
   const [appointmentStatus, setAppointmentStatus] = useState("pending");
   const [statusReason, setStatusReason] = useState("");
+  const [confirmCompletionOpen, setConfirmCompletionOpen] = useState(false);
   const [notes, setNotes] = useState("");
   const { data: clientPackages = [] } = trpc.clientPackages.byClient.useQuery(
     { clientId: selectedClient },
@@ -77,15 +87,20 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
   useEffect(() => {
     if (!appointment) return;
     const date = new Date(appointment.appointmentDate || appointment.appointment_date);
+    const clientId = appointment.clientId || appointment.client_id || appointment.client?.id || "";
+    const petId = appointment.petId || appointment.pet_id || appointment.pet?.id || null;
+    const serviceId = appointment.serviceId || appointment.service_id || appointment.service?.id || "";
+    const professionalId = appointment.professionalId || appointment.professional_id || appointment.professional?.id || "";
     const localDate = [
       date.getFullYear(),
       String(date.getMonth() + 1).padStart(2, "0"),
       String(date.getDate()).padStart(2, "0"),
     ].join("-");
-    setSelectedClient(appointment.clientId || appointment.client_id || "");
-    setSelectedPet(appointment.petId || appointment.pet_id || null);
-    setSelectedService(appointment.serviceId || appointment.service_id || "");
-    setSelectedProfessional(appointment.professionalId || appointment.professional_id || "");
+    setSelectedClient(clientId);
+    setClientSearchTerm(appointment.client?.nome || appointment.client?.name || "");
+    setSelectedPet(petId);
+    setSelectedService(serviceId);
+    setSelectedProfessional(professionalId);
     setSelectedPackage(appointment.clientPackageId || appointment.client_package_id || "");
     setAppointmentDate(localDate);
     setStartTime(appointment.start_time?.slice(0, 5) || `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`);
@@ -126,9 +141,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
     );
   }, [clients, clientSearchTerm]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const performSubmit = async () => {
     // Validações
     if (!selectedClient) {
       toast.error("Selecione um cliente");
@@ -197,6 +210,10 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
           clientPackageId: appointmentPayload.clientPackageId || null,
         });
         if (appointmentStatus !== (appointment.status || "pending")) {
+          if (["cancelled", "no_show"].includes(appointmentStatus) && !statusReason.trim()) {
+            toast.error("Informe o motivo da alteração de status");
+            return;
+          }
           await setStatusMutation.mutateAsync({
             id: appointment.id,
             status: appointmentStatus as "confirmed" | "in_progress" | "completed" | "cancelled" | "no_show",
@@ -222,7 +239,17 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (appointment?.id && appointmentStatus === "completed" && appointment.status !== "completed") {
+      setConfirmCompletionOpen(true);
+      return;
+    }
+    await performSubmit();
+  };
+
   return (
+    <>
     <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6 md:grid-cols-2">
       {/* Cliente */}
       <div>
@@ -285,7 +312,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
           {selectedPet && (
             <div className="space-y-2 mb-3">
               <div
-                className="flex items-center justify-between bg-blue-50 p-3 rounded-lg border border-blue-200"
+                className="flex items-center justify-between rounded-lg border border-[#D8B768]/35 bg-[#F8F6F1] p-3"
               >
                 <span className="font-medium text-foreground">
                   {allPets.find((p) => p.id === selectedPet)?.displayName || 
@@ -366,7 +393,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
       </div>
 
       {/* Executado por */}
-      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+      <div className="rounded-lg border border-[#D8B768]/35 bg-[#F8F6F1] p-4">
         <Label className="text-base font-semibold mb-3 block">
           Executado por
         </Label>
@@ -553,7 +580,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
         </Button>
         <Button
           type="submit"
-          className="bg-green-600 hover:bg-green-700 text-white font-bold"
+          className="bg-[#113A7A] hover:bg-[#07111E] text-white font-bold"
           disabled={createMutation.isPending || updateMutation.isPending || (executedBy === "student" && validatePermissionsMutation.isLoading)}
         >
           {createMutation.isPending || updateMutation.isPending
@@ -562,5 +589,35 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
         </Button>
       </div>
     </form>
+    <AlertDialog open={confirmCompletionOpen} onOpenChange={setConfirmCompletionOpen}>
+      <AlertDialogContent className="max-w-md rounded-2xl border-0 p-0 shadow-2xl">
+        <div className="p-7 text-center">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#D8B768] text-[#07111E]">
+            <AlertTriangle className="h-7 w-7" />
+          </div>
+          <AlertDialogHeader className="mt-4">
+            <AlertDialogTitle className="text-center text-xl font-extrabold text-[#07111E]">
+              Confirmar finalização
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-sm font-medium leading-6 text-[#44516A]">
+              Ao marcar como Concluído/Check, este atendimento poderá consumir saldo do pacote vinculado e será registrado no histórico de visitas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="mt-6 flex justify-center gap-3">
+            <AlertDialogCancel className="mt-0 font-bold">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                setConfirmCompletionOpen(false);
+                await performSubmit();
+              }}
+              className="bg-[#113A7A] font-extrabold text-white hover:bg-[#07111E]"
+            >
+              Confirmar
+            </AlertDialogAction>
+          </div>
+        </div>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

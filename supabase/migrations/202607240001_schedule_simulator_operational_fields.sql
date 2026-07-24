@@ -2,6 +2,7 @@ alter table public.schedule_simulations
   add column if not exists pet_type text,
   add column if not exists service_mode text,
   add column if not exists grooming_quantity integer not null default 0,
+  add column if not exists grooming_interval_weeks integer not null default 8,
   add column if not exists payment_activation_date date,
   add column if not exists last_included_date date,
   add column if not exists next_renewal_date date,

@@ -570,6 +570,7 @@ export default function Appointments() {
           </DialogHeader>
           <div className="overflow-y-auto pr-2">
             <AppointmentForm
+              key={selectedAppointment?.id || "new-appointment"}
               onClose={() => setShowForm(false)}
               onSuccess={() => setShowForm(false)}
               appointment={selectedAppointment}
@@ -581,7 +582,7 @@ export default function Appointments() {
       <AlertDialog open={!!completionCandidate} onOpenChange={(open) => !open && setCompletionCandidate(null)}>
         <AlertDialogContent className="max-w-md rounded-2xl border-0 p-0 shadow-2xl">
           <div className="p-7 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#36B8D8] to-[#9B5DE5] text-white">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#D8B768] text-[#07111E]">
               <AlertTriangle className="h-7 w-7" />
             </div>
             <AlertDialogHeader className="mt-4">
@@ -596,7 +597,7 @@ export default function Appointments() {
               <AlertDialogCancel className="mt-0 font-bold">Cancelar</AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmCompletion}
-                className="bg-gradient-to-r from-[#36B8D8] to-[#9B5DE5] font-extrabold text-white hover:opacity-95"
+                className="bg-[#113A7A] font-extrabold text-white hover:bg-[#07111E]"
               >
                 Confirmar
               </AlertDialogAction>
