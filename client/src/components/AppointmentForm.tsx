@@ -50,7 +50,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
     return clients.flatMap((client: any) =>
       (client.pets || []).map((pet: any) => ({
         ...pet,
-        clientName: client.name,
+        clientName: client.name || client.nome,
         clientId: client.id,
       }))
     );
@@ -97,7 +97,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
       String(date.getDate()).padStart(2, "0"),
     ].join("-");
     setSelectedClient(clientId);
-    setClientSearchTerm(appointment.client?.nome || appointment.client?.name || "");
+    setClientSearchTerm(appointment.clientName || appointment.client?.nome || appointment.client?.name || "");
     setSelectedPet(petId);
     setSelectedService(serviceId);
     setSelectedProfessional(professionalId);
@@ -137,7 +137,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
   const filteredClients = useMemo(() => {
     if (!clientSearchTerm) return clients;
     return clients.filter((client: any) =>
-      (client?.name || "").toLowerCase().includes(clientSearchTerm.toLowerCase())
+      (client?.name || client?.nome || "").toLowerCase().includes(clientSearchTerm.toLowerCase())
     );
   }, [clients, clientSearchTerm]);
 
@@ -267,7 +267,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
             <div className="max-h-36 overflow-y-auto rounded-xl border border-[#D8B768]/60 bg-white p-1 shadow-sm">
               {filteredClients.length ? filteredClients.map((client: any) => (
                 <button key={client.id} type="button" onClick={() => { setSelectedClient(client.id); setSelectedPet(null); setClientSearchTerm(""); }} className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[#07111E] transition hover:bg-[#F8F6F1]">
-                  {client.name}
+                  {client.name || client.nome}
                 </button>
               )) : <p className="px-3 py-2 text-sm text-muted-foreground">Nenhum cliente encontrado.</p>}
             </div>
@@ -283,7 +283,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
             <SelectContent>
               {filteredClients.map((client: any) => (
                 <SelectItem key={client.id} value={client.id}>
-                  {client.name}
+                  {client.name || client.nome}
                 </SelectItem>
               ))}
             </SelectContent>

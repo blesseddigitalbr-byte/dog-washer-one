@@ -1017,10 +1017,10 @@ export const appRouter = router({
           .from("appointments")
           .select(`
             *,
-            client:client_id(nome, email, phone),
-            pet:pet_id(name, breed, sexo),
-            service:service_id(name, price, duration_minutes),
-            professional:professional_id(name, specialization)
+            client:client_id(id, nome, email, phone),
+            pet:pet_id(id, name, breed, sexo),
+            service:service_id(id, name, price, duration_minutes),
+            professional:professional_id(id, name, specialization)
           `)
           .order("appointment_date", { ascending: false });
 
@@ -1034,6 +1034,11 @@ export const appRouter = router({
           professionalId: appointment.professional_id,
           clientPackageId: appointment.client_package_id,
           durationMinutes: appointment.duration_minutes,
+          clientName: appointment.client?.nome || "Cliente não informado",
+          petName: appointment.pet?.name || "Pet não informado",
+          petBreed: appointment.pet?.breed || null,
+          serviceName: appointment.service?.name || "Serviço não informado",
+          professionalName: appointment.professional?.name || "Profissional não informado",
         }));
       } catch (error) {
         console.error("Error fetching appointments:", error);
@@ -1050,16 +1055,30 @@ export const appRouter = router({
             .from("appointments")
             .select(`
               *,
-              client:client_id(nome, email, phone),
-              pet:pet_id(name, breed, sexo),
-              service:service_id(name, price, duration_minutes),
-              professional:professional_id(name, specialization)
+              client:client_id(id, nome, email, phone),
+              pet:pet_id(id, name, breed, sexo),
+              service:service_id(id, name, price, duration_minutes),
+              professional:professional_id(id, name, specialization)
             `)
             .eq("id", input.id)
             .single();
 
           if (error) throw error;
-          return appointment;
+          return {
+            ...appointment,
+            appointmentDate: appointment.appointment_date,
+            clientId: appointment.client_id,
+            petId: appointment.pet_id,
+            serviceId: appointment.service_id,
+            professionalId: appointment.professional_id,
+            clientPackageId: appointment.client_package_id,
+            durationMinutes: appointment.duration_minutes,
+            clientName: appointment.client?.nome || "Cliente não informado",
+            petName: appointment.pet?.name || "Pet não informado",
+            petBreed: appointment.pet?.breed || null,
+            serviceName: appointment.service?.name || "Serviço não informado",
+            professionalName: appointment.professional?.name || "Profissional não informado",
+          };
         } catch (error) {
           console.error("Error fetching appointment:", error);
           return null;

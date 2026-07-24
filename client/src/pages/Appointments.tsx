@@ -132,11 +132,13 @@ export default function Appointments() {
         map.set(key, []);
       }
       const pet = petMap.get(apt.petId || apt.pet_id);
+      const service = services.find((s: any) => s.id === (apt.serviceId || apt.service_id));
       map.get(key)!.push({
         ...apt,
-        petName: pet?.name || apt.petId,
-        clientName: pet?.clientName || "Cliente",
-        serviceName: services.find((s: any) => s.id === (apt.serviceId || apt.service_id))?.name || "Serviço",
+        petName: apt.petName || apt.pet?.name || pet?.name || "Pet não informado",
+        clientName: apt.clientName || apt.client?.nome || apt.client?.name || pet?.clientName || "Cliente não informado",
+        serviceName: apt.serviceName || apt.service?.name || service?.name || "Serviço não informado",
+        professionalName: apt.professionalName || apt.professional?.name || "Profissional não informado",
       });
     });
     return map;
@@ -392,9 +394,9 @@ export default function Appointments() {
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <div className="font-semibold text-lg">{apt.petId}</div>
+                        <div className="font-semibold text-lg">{apt.petName}</div>
                         <div className="text-sm text-gray-600 mt-1">
-                          Banho & Tosa Higiênica • Prof. Letícia
+                          {apt.serviceName} • Prof. {apt.professionalName}
                         </div>
                       </div>
                       <Badge className={STATUS_COLORS[apt.status]?.badge}>
