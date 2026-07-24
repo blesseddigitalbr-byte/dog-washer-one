@@ -1920,6 +1920,17 @@ export const appRouter = router({
         endDate: z.string().date().optional(),
         defaultTime: z.string().regex(/^\d{2}:\d{2}$/),
         quantity: z.number().int().min(1).max(60),
+        petType: z.string().max(120).optional(),
+        serviceMode: z.string().max(80).optional(),
+        groomingQuantity: z.number().int().min(0).max(60).default(0),
+        paymentActivationDate: z.string().date().optional(),
+        lastIncludedDate: z.string().date().optional(),
+        nextRenewalDate: z.string().date().optional(),
+        standardWeekday: z.number().int().min(0).max(6).optional(),
+        recurrenceRuleMode: z.enum(["standard_weekday", "exact_interval"]).default("standard_weekday"),
+        referenceDate: z.string().date().optional(),
+        cycleStartDate: z.string().date().optional(),
+        finalServiceName: z.string().max(180).optional(),
         notes: z.string().max(2000).optional(),
       }))
       .mutation(async ({ input, ctx }) => {
@@ -1960,7 +1971,13 @@ export const appRouter = router({
 
         const intervalDays: Record<string, number> = { weekly: 7, biweekly: 14, every_21_days: 21, once: 0 };
         const dates: Date[] = [];
-        let cursor = new Date(`${input.startDate}T${input.defaultTime}:00-03:00`);
+        const baseDate = input.referenceDate || input.startDate;
+        let cursor = new Date(`${baseDate}T${input.defaultTime}:00-03:00`);
+        if (input.recurrenceRuleMode === "standard_weekday" && input.standardWeekday !== undefined) {
+          const distance = (input.standardWeekday - cursor.getDay() + 7) % 7;
+          cursor.setDate(cursor.getDate() + distance);
+        }
+        const resolvedStandardWeekday = input.standardWeekday ?? cursor.getDay();
         const limit = input.endDate ? new Date(`${input.endDate}T23:59:59-03:00`) : null;
         for (let index = 0; index < input.quantity; index += 1) {
           if (limit && cursor > limit) break;
@@ -2005,7 +2022,8 @@ export const appRouter = router({
           };
         });
 
-        const message = `Olá, ${clientRes.data.nome}! Organizamos a pré-agenda de ${petRes.data.name}.\n\n${items.map((item, index) => `${index + 1}. ${new Date(item.scheduled_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })} às ${input.defaultTime} — ${serviceRes.data.name}`).join("\n")}\n\nCaso precise de algum ajuste, verificaremos conforme a disponibilidade da agenda.\n\nLux Dog`;
+        const finalServiceName = input.finalServiceName || serviceRes.data.name;
+        const message = `Olá, ${clientRes.data.nome}! Confirmamos a assinatura do Termo de Adesão e a confirmação do pagamento.\nO plano do ${petRes.data.name} está ativo.\n\nPlano contratado: ${selectedPackage?.plan_name || selectedPackage?.plan_code || "Avulso"}\nFrequência: ${input.frequency === "weekly" ? "Semanal" : input.frequency === "biweekly" ? "Quinzenal" : input.frequency === "monthly" ? "Mensal" : input.frequency === "every_21_days" ? "A cada 21 dias" : "Atendimento único"}\nData de ativação/pagamento: ${new Date(`${input.paymentActivationDate || input.startDate}T00:00:00-03:00`).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}\nInício do ciclo de utilização: ${new Date(`${input.cycleStartDate || input.startDate}T00:00:00-03:00`).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}\nAtendimentos inclusos: ${items.length} atendimento(s)\n${input.nextRenewalDate ? `Próxima renovação/cobrança: ${new Date(`${input.nextRenewalDate}T00:00:00-03:00`).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}\n` : ""}\nPara facilitar a organização da agenda, deixamos abaixo a previsão de atendimentos do ciclo atual:\n\n${items.map((item, index) => `${index + 1}. ${new Date(item.scheduled_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })} às ${input.defaultTime} — ${index < input.groomingQuantity ? `${finalServiceName} + Tosa/Trimming` : finalServiceName}`).join("\n")}\n\nObrigada pela confiança na Lux Dog!`;
         const { data: simulation, error: simulationError } = await supabase.from("schedule_simulations").insert({
           organization_id: ctx.user.organizationId,
           unit_id: ctx.user.unitId,
@@ -2020,13 +2038,29 @@ export const appRouter = router({
           end_date: input.endDate || null,
           default_time: input.defaultTime,
           quantity: items.length,
+          pet_type: input.petType || petRes.data.breed || null,
+          service_mode: input.serviceMode || null,
+          grooming_quantity: input.groomingQuantity,
+          payment_activation_date: input.paymentActivationDate || input.startDate,
+          last_included_date: input.lastIncludedDate || null,
+          next_renewal_date: input.nextRenewalDate || null,
+          standard_weekday: resolvedStandardWeekday,
+          recurrence_rule_mode: input.recurrenceRuleMode,
+          reference_date: input.referenceDate || input.startDate,
+          cycle_start_date: input.cycleStartDate || input.startDate,
+          final_service_name: finalServiceName,
           notes: input.notes || null,
           message_text: message,
           created_by: ctx.user.id,
         }).select().single();
         if (simulationError) throw new Error(simulationError.message);
         const { data: savedItems, error: itemsError } = await supabase.from("schedule_simulation_items")
-          .insert(items.map((item) => ({ ...item, simulation_id: simulation.id })))
+          .insert(items.map((item, index) => ({
+            ...item,
+            simulation_id: simulation.id,
+            include_grooming: index < input.groomingQuantity,
+            final_service_name: index < input.groomingQuantity ? `${finalServiceName} + Tosa/Trimming` : finalServiceName,
+          })))
           .select();
         if (itemsError) {
           await supabase.from("schedule_simulations").delete().eq("id", simulation.id);
@@ -2036,7 +2070,13 @@ export const appRouter = router({
       }),
 
     updateItem: protectedProcedure
-      .input(z.object({ id: z.string().uuid(), scheduledAt: z.string().datetime(), ignored: z.boolean().optional() }))
+      .input(z.object({
+        id: z.string().uuid(),
+        scheduledAt: z.string().datetime().optional(),
+        ignored: z.boolean().optional(),
+        includeGrooming: z.boolean().optional(),
+        finalServiceName: z.string().max(180).optional(),
+      }))
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
         const { data: current, error: currentError } = await supabase
@@ -2052,7 +2092,7 @@ export const appRouter = router({
           return data;
         }
         const simulation = current.simulation;
-        const scheduledAt = new Date(input.scheduledAt);
+        const scheduledAt = new Date(input.scheduledAt || current.scheduled_at);
         const duration = Number(simulation.service?.duration_minutes || 60);
         const scheduledEnd = new Date(scheduledAt.getTime() + duration * 60_000);
         const alerts: string[] = [];
@@ -2077,9 +2117,11 @@ export const appRouter = router({
           ? "conflict"
           : alerts.length ? "warning" : "valid";
         const { data, error } = await supabase.from("schedule_simulation_items").update({
-          scheduled_at: input.scheduledAt,
+          scheduled_at: scheduledAt.toISOString(),
           status,
           alerts: Array.from(new Set(alerts)),
+          ...(input.includeGrooming !== undefined ? { include_grooming: input.includeGrooming } : {}),
+          ...(input.finalServiceName !== undefined ? { final_service_name: input.finalServiceName || null } : {}),
         }).eq("id", input.id).select().single();
         if (error) throw new Error(error.message);
         return data;

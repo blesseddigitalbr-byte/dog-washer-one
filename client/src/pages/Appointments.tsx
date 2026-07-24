@@ -1,6 +1,15 @@
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -10,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { AppointmentForm } from "@/components/AppointmentForm";
 import { trpc } from "@/lib/trpc";
-import { ChevronLeft, ChevronRight, Calendar, List } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, Calendar, List } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, addDays, isSameDay, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -40,6 +49,7 @@ export default function Appointments() {
   const [viewType, setViewType] = useState<ViewType>("calendar");
   const [showForm, setShowForm] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [completionCandidate, setCompletionCandidate] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState("all");
 
   // Fetch appointments
@@ -62,7 +72,17 @@ export default function Appointments() {
       in_progress: "completed",
     };
     const status = nextStatus[appointment.status];
+    if (status === "completed") {
+      setCompletionCandidate(appointment);
+      return;
+    }
     if (status) statusMutation.mutate({ id: appointment.id, status });
+  };
+
+  const confirmCompletion = () => {
+    if (!completionCandidate) return;
+    statusMutation.mutate({ id: completionCandidate.id, status: "completed" });
+    setCompletionCandidate(null);
   };
 
   // Create pet map for quick lookup
@@ -557,6 +577,33 @@ export default function Appointments() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!completionCandidate} onOpenChange={(open) => !open && setCompletionCandidate(null)}>
+        <AlertDialogContent className="max-w-md rounded-2xl border-0 p-0 shadow-2xl">
+          <div className="p-7 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-[#36B8D8] to-[#9B5DE5] text-white">
+              <AlertTriangle className="h-7 w-7" />
+            </div>
+            <AlertDialogHeader className="mt-4">
+              <AlertDialogTitle className="text-center text-xl font-extrabold text-[#07111E]">
+                Confirmar finalização
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-center text-sm font-medium leading-6 text-[#44516A]">
+                Ao marcar como Concluído/Check, este atendimento poderá consumir saldo do pacote vinculado e será registrado no histórico de visitas.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="mt-6 flex justify-center gap-3">
+              <AlertDialogCancel className="mt-0 font-bold">Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirmCompletion}
+                className="bg-gradient-to-r from-[#36B8D8] to-[#9B5DE5] font-extrabold text-white hover:opacity-95"
+              >
+                Confirmar
+              </AlertDialogAction>
+            </div>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
