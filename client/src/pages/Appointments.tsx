@@ -123,17 +123,21 @@ export default function Appointments() {
 
   const handlePrevious = () => {
     if (viewType === "calendar") {
-      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
+      setCurrentDate((date) => new Date(date.getFullYear(), date.getMonth() - 1));
+    } else if (viewType === "week") {
+      setCurrentDate((date) => addDays(date, -7));
     } else {
-      setCurrentDate(addDays(currentDate, -7));
+      setCurrentDate((date) => addDays(date, -1));
     }
   };
 
   const handleNext = () => {
     if (viewType === "calendar") {
-      setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
+      setCurrentDate((date) => new Date(date.getFullYear(), date.getMonth() + 1));
+    } else if (viewType === "week") {
+      setCurrentDate((date) => addDays(date, 7));
     } else {
-      setCurrentDate(addDays(currentDate, 7));
+      setCurrentDate((date) => addDays(date, 1));
     }
   };
 
