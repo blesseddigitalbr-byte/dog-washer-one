@@ -12,7 +12,7 @@ const publicProcedure = protectedProcedure;
 
 function buildPlanCode(audienceCode: string, durationMonths: number) {
   const durationCode: Record<number, string> = { 1: "M1", 3: "T3", 6: "S6", 12: "A12" };
-  return `PLN-${audienceCode}-${durationCode[durationMonths] || `M${durationMonths}`}`;
+  return `PLN-${audienceCode.trim().toUpperCase()}-${durationCode[durationMonths] || `M${durationMonths}`}`;
 }
 
 async function attachPetPhotoUrls(pets: any[]) {
@@ -2166,7 +2166,7 @@ export const appRouter = router({
       if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
       const { data, error } = await supabase
         .from("client_packages")
-        .select("*, client:client_id(nome, id_cliente), pet:pet_id(name, id_pet), plan:package_id(name)")
+        .select("*, client:client_id(nome, id_cliente), pet:pet_id(name, breed, id_pet), plan:package_id(name, code)")
         .eq("unit_id", ctx.user.unitId)
         .order("created_at", { ascending: false });
       if (error) throw new Error(error.message);
@@ -2174,10 +2174,12 @@ export const appRouter = router({
         ...item,
         id_package: item.code,
         pet_name: item.pet?.name,
+        pet_breed: item.pet?.breed,
         client_name: item.client?.nome,
         id_pet: item.pet?.id_pet,
         id_client: item.client?.id_cliente,
         plan_name: item.plan?.name || "Pacote personalizado",
+        plan_code: item.plan?.code || null,
         total_baths: item.contracted_baths,
         total_groomings: item.contracted_groomings,
         value: Number(item.price || 0),
@@ -2380,7 +2382,7 @@ export const appRouter = router({
       .input(z.object({
         name: z.string().min(1, "Nome do plano é obrigatório"),
         description: z.string().optional(),
-        audienceCode: z.enum(["RAC", "OUT", "MOD", "GER"]),
+        audienceCode: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,8}$/, "Use de 2 a 8 letras ou números no código da raça/categoria"),
         durationMonths: z.number().int().min(1).max(60),
         totalBaths: z.number().min(0, "Qtd de banhos deve ser >= 0"),
         totalGroomings: z.number().min(0, "Qtd de tosas deve ser >= 0"),
@@ -2427,7 +2429,7 @@ export const appRouter = router({
         id: z.string().uuid(),
         name: z.string().min(1).optional(),
         description: z.string().optional(),
-        audienceCode: z.enum(["RAC", "OUT", "MOD", "GER"]).optional(),
+        audienceCode: z.string().trim().toUpperCase().regex(/^[A-Z0-9]{2,8}$/).optional(),
         durationMonths: z.number().int().min(1).max(60).optional(),
         totalBaths: z.number().min(0).optional(),
         totalGroomings: z.number().min(0).optional(),

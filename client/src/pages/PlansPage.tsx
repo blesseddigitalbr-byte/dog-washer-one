@@ -27,6 +27,7 @@ import {
   Bath,
   CircleDollarSign,
   Edit2,
+  Eye,
   PackageCheck,
   Plus,
   Repeat2,
@@ -38,7 +39,7 @@ import { toast } from "sonner";
 interface Package {
   id: string;
   code: string;
-  audience_code: "RAC" | "OUT" | "MOD" | "GER";
+  audience_code: string;
   duration_months: number;
   name: string;
   description?: string;
@@ -55,10 +56,11 @@ export function PlansPage() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<Package | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    audienceCode: "RAC" as "RAC" | "OUT" | "MOD" | "GER",
+    audienceCode: "RAC",
     durationMonths: 3,
     totalBaths: 0,
     totalGroomings: 0,
@@ -132,8 +134,8 @@ export function PlansPage() {
 
       utils.packages.list.invalidate();
       setOpen(false);
-    } catch (error) {
-      toast.error("Erro ao salvar plano");
+    } catch (error: any) {
+      toast.error(error?.message || "Erro ao salvar plano");
       console.error(error);
     }
   };
@@ -245,12 +247,21 @@ export function PlansPage() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <Label htmlFor="audienceCode">Raça / Categoria *</Label>
-                  <select id="audienceCode" className="w-full rounded-md border border-input bg-background px-3 py-2" value={formData.audienceCode} onChange={(event) => setFormData({ ...formData, audienceCode: event.target.value as typeof formData.audienceCode })}>
+                  <Input
+                    id="audienceCode"
+                    list="plan-category-codes"
+                    maxLength={8}
+                    value={formData.audienceCode}
+                    onChange={(event) => setFormData({ ...formData, audienceCode: event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "") })}
+                    placeholder="Ex.: RAC, SPZ, GLD"
+                  />
+                  <datalist id="plan-category-codes">
                     <option value="RAC">RAC — Raças específicas</option>
                     <option value="OUT">OUT — Outras raças</option>
                     <option value="MOD">MOD — Cão modelo</option>
                     <option value="GER">GER — Categoria geral</option>
-                  </select>
+                  </datalist>
+                  <p className="mt-1 text-xs text-muted-foreground">Use um código próprio quando houver outro plano na mesma duração. Ex.: SPZ para Spitz.</p>
                 </div>
                 <div>
                   <Label htmlFor="durationMonths">Duração do plano *</Label>
@@ -462,7 +473,8 @@ export function PlansPage() {
           {packages.map((pkg: Package) => (
             <div
               key={pkg.id}
-              className="rounded-2xl border border-border border-l-4 border-l-chart-3 bg-card p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6"
+              className="cursor-pointer rounded-2xl border border-border border-l-4 border-l-chart-3 bg-card p-5 shadow-sm transition-shadow hover:shadow-md sm:p-6"
+              onClick={() => setSelectedPlan(pkg)}
             >
               <div className="grid grid-cols-2 items-start gap-5 lg:grid-cols-12 lg:items-center">
                 {/* Plan Name and Description */}
@@ -515,7 +527,15 @@ export function PlansPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleOpenDialog(pkg)}
+                    onClick={(event) => { event.stopPropagation(); setSelectedPlan(pkg); }}
+                    aria-label={`Ver detalhes de ${pkg.name}`}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(event) => { event.stopPropagation(); handleOpenDialog(pkg); }}
                     className="border-border text-foreground hover:bg-muted"
                   >
                     <Edit2 className="h-4 w-4" />
@@ -523,7 +543,7 @@ export function PlansPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setDeleteId(pkg.id)}
+                    onClick={(event) => { event.stopPropagation(); setDeleteId(pkg.id); }}
                     className="border-border text-foreground hover:bg-destructive/10 hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -534,6 +554,42 @@ export function PlansPage() {
           ))}
         </div>
       )}
+
+      <Dialog open={Boolean(selectedPlan)} onOpenChange={(dialogOpen) => !dialogOpen && setSelectedPlan(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{selectedPlan?.name}</DialogTitle>
+            <DialogDescription>Informações completas do plano de referência</DialogDescription>
+          </DialogHeader>
+          {selectedPlan && (
+            <div className="space-y-5">
+              <div className="flex flex-wrap items-center gap-3">
+                <Badge className="bg-[#D8B768] text-[#07111E]">{selectedPlan.code}</Badge>
+                <Badge className={getStatusColor(selectedPlan.status)}>{getStatusLabel(selectedPlan.status)}</Badge>
+                <span className="text-sm text-muted-foreground">{selectedPlan.duration_months} meses</span>
+              </div>
+              <p className="whitespace-pre-line text-sm leading-6 text-muted-foreground">
+                {selectedPlan.description || "Sem descrição cadastrada."}
+              </p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Banhos</p><p className="text-2xl font-bold">{selectedPlan.total_baths}</p></CardContent></Card>
+                <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Tosas</p><p className="text-2xl font-bold">{selectedPlan.total_groomings}</p></CardContent></Card>
+                <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Investimento</p><p className="text-lg font-bold">{formatCurrency(selectedPlan.total_price)}</p></CardContent></Card>
+                <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">Mensalidade</p><p className="text-lg font-bold">{formatCurrency(selectedPlan.monthly_price)}</p></CardContent></Card>
+              </div>
+              <div className="rounded-xl border bg-muted/30 p-4 text-sm">
+                <p><span className="font-semibold">Raça/categoria:</span> {selectedPlan.audience_code}</p>
+                <p><span className="font-semibold">Recorrência:</span> {selectedPlan.recurrence_type || "Não informada"}</p>
+              </div>
+              <div className="flex justify-end">
+                <Button onClick={() => { const plan = selectedPlan; setSelectedPlan(null); handleOpenDialog(plan); }} className="bg-[#113A7A] text-white hover:bg-[#0d2f64]">
+                  <Edit2 className="mr-2 h-4 w-4" /> Editar plano
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>

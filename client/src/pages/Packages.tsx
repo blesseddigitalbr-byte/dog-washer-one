@@ -201,7 +201,7 @@ export default function Packages() {
                     return (
                       <TableRow key={pkg.id} className="hover:bg-muted/50">
                         <TableCell className="font-mono text-sm font-bold text-secondary">{pkg.id_package}</TableCell>
-                        <TableCell>{pkg.pet_name} ({pkg.client_name})</TableCell>
+                        <TableCell>{pkg.pet_name}/{pkg.pet_breed || "Raça não informada"} — {pkg.client_name}</TableCell>
                         <TableCell className="font-mono text-sm">{pkg.id_pet}</TableCell>
                         <TableCell className="font-mono text-sm">{pkg.id_client}</TableCell>
                         <TableCell>{new Date(pkg.contract_date).toLocaleDateString("pt-BR")}</TableCell>

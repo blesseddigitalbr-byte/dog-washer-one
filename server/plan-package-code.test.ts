@@ -10,7 +10,7 @@ const migration = fs.readFileSync(path.join(root, "supabase/migrations/202607200
 describe("separação entre plano e pacote contratado", () => {
   it("gera planos no padrão PLN-categoria-duração", () => {
     expect(router).toContain("buildPlanCode");
-    expect(router).toContain("PLN-${audienceCode}");
+    expect(router).toContain("PLN-${audienceCode.trim().toUpperCase()}");
     expect(plans).toContain("PLN-{formData.audienceCode}");
   });
 
