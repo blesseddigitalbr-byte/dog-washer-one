@@ -35,17 +35,6 @@ export default function Packages() {
     onError: (error) => toast.error(error.message),
   });
 
-  // Calculate consumed services for each package
-  const getConsumedServices = (packageId: string) => {
-    const pkg: any = packages.find((item: any) => item.id === packageId);
-
-    const consumedBaths = (pkg?.contracted_baths || 0) - (pkg?.balance_baths || 0);
-
-    const consumedGroomings = (pkg?.contracted_groomings || 0) - (pkg?.balance_groomings || 0);
-
-    return { consumedBaths, consumedGroomings };
-  };
-
   // Filter packages by search term
   const filteredPackages = packages.filter((pkg: any) =>
     pkg.pet_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -63,12 +52,26 @@ export default function Packages() {
     return <Badge className="bg-[#D8B768] text-[#07111E]">Ativo</Badge>;
   };
 
+  const frequencyLabel: Record<string, string> = {
+    weekly: "Semanal",
+    biweekly: "Quinzenal",
+    every_21_days: "A cada 21 dias",
+    monthly: "Mensal",
+    custom: "Personalizada",
+  };
+  const realizedRevenue = packages
+    .filter((pkg: any) => pkg.payment_status === "paid" && pkg.status !== "cancelled")
+    .reduce((sum: number, pkg: any) => sum + Number(pkg.value || 0), 0);
+  const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", {
+    style: "currency", currency: "BRL",
+  }).format(value);
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-screen">Carregando pacotes...</div>;
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="mx-auto w-full max-w-[1480px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -125,7 +128,7 @@ export default function Packages() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              R$ {packages.reduce((sum: number, pkg: any) => sum + (pkg.value || 0), 0).toFixed(2)}
+              {formatCurrency(realizedRevenue)}
             </div>
           </CardContent>
         </Card>
@@ -161,68 +164,40 @@ export default function Packages() {
           <CardTitle>Relação de Pacotes</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
+          <div className="overflow-hidden rounded-xl border">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead className="font-bold">ID Pacote</TableHead>
-                  <TableHead className="font-bold">Pet e Tutor</TableHead>
-                  <TableHead className="font-bold">ID Pet</TableHead>
-                  <TableHead className="font-bold">ID Cliente</TableHead>
-                  <TableHead className="font-bold">Data Contratação</TableHead>
-                  <TableHead className="font-bold">Data Pagamento</TableHead>
-                  <TableHead className="font-bold">Valor</TableHead>
-                  <TableHead className="font-bold">Plano</TableHead>
-                  <TableHead className="font-bold">Frequência</TableHead>
-                  <TableHead className="font-bold">Banhos Contratados</TableHead>
-                  <TableHead className="font-bold">Tosas Contratadas</TableHead>
-                  <TableHead className="font-bold">Banhos Realizados</TableHead>
-                  <TableHead className="font-bold">Tosas Realizadas</TableHead>
-                  <TableHead className="font-bold">Saldo Banhos</TableHead>
-                  <TableHead className="font-bold">Saldo Tosas</TableHead>
-                  <TableHead className="font-bold">Vencimento</TableHead>
-                  <TableHead className="font-bold">Status</TableHead>
-                  <TableHead className="font-bold">Ações</TableHead>
+                <TableRow className="bg-[#07111E] hover:bg-[#07111E]">
+                  <TableHead className="font-semibold text-white">ID pacote</TableHead>
+                  <TableHead className="font-semibold text-white">Pet e tutor</TableHead>
+                  <TableHead className="font-semibold text-white">Data da contratação</TableHead>
+                  <TableHead className="font-semibold text-white">Plano</TableHead>
+                  <TableHead className="font-semibold text-white">Frequência</TableHead>
+                  <TableHead className="font-semibold text-white">Status</TableHead>
+                  <TableHead className="text-right font-semibold text-white">Detalhes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredPackages.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={18} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
                       Nenhum pacote encontrado
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredPackages.map((pkg: any) => {
-                    const consumed = getConsumedServices(pkg.id);
-                    const balanceBaths = (pkg.total_baths || 0) - consumed.consumedBaths;
-                    const balanceGroomings = (pkg.total_groomings || 0) - consumed.consumedGroomings;
-
                     return (
-                      <TableRow key={pkg.id} className="hover:bg-muted/50">
-                        <TableCell className="font-mono text-sm font-bold text-secondary">{pkg.id_package}</TableCell>
-                        <TableCell>{pkg.pet_name}/{pkg.pet_breed || "Raça não informada"} — {pkg.client_name}</TableCell>
-                        <TableCell className="font-mono text-sm">{pkg.id_pet}</TableCell>
-                        <TableCell className="font-mono text-sm">{pkg.id_client}</TableCell>
+                      <TableRow key={pkg.id} className="cursor-pointer bg-white transition hover:bg-[#F8F6F1]" onClick={() => setSelectedPackage(pkg)}>
+                        <TableCell className="font-mono text-sm font-bold text-[#113A7A]">{pkg.id_package}</TableCell>
+                        <TableCell className="font-medium">{pkg.pet_name} ({pkg.pet_breed || "Raça não informada"}) <span className="text-muted-foreground">| {pkg.client_name}</span></TableCell>
                         <TableCell>{new Date(pkg.contract_date).toLocaleDateString("pt-BR")}</TableCell>
-                        <TableCell>{pkg.payment_date ? new Date(pkg.payment_date).toLocaleDateString("pt-BR") : "-"}</TableCell>
-                        <TableCell>R$ {pkg.value?.toFixed(2) || "0.00"}</TableCell>
-                        <TableCell className="max-w-xs truncate">{pkg.plan_name}</TableCell>
-                        <TableCell>{pkg.frequency}</TableCell>
-                        <TableCell className="text-center">{pkg.total_baths || 0}</TableCell>
-                        <TableCell className="text-center">{pkg.total_groomings || 0}</TableCell>
-                        <TableCell className="text-center">{consumed.consumedBaths}</TableCell>
-                        <TableCell className="text-center">{consumed.consumedGroomings}</TableCell>
-                        <TableCell className="text-center font-bold">{balanceBaths}</TableCell>
-                        <TableCell className="text-center font-bold">{balanceGroomings}</TableCell>
-                        <TableCell>{new Date(pkg.expiry_date).toLocaleDateString("pt-BR")}</TableCell>
+                        <TableCell><span className="font-mono text-xs font-semibold text-[#113A7A]">{pkg.plan_code || pkg.plan_name}</span></TableCell>
+                        <TableCell>{frequencyLabel[pkg.frequency] || pkg.frequency || "Não informada"}</TableCell>
                         <TableCell>{getStatusBadge(pkg)}</TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" onClick={() => setSelectedPackage(pkg)}>
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </div>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm" onClick={(event) => { event.stopPropagation(); setSelectedPackage(pkg); }}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
@@ -252,17 +227,27 @@ export default function Packages() {
       </Dialog>
 
       <Dialog open={Boolean(selectedPackage)} onOpenChange={(open) => !open && setSelectedPackage(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl rounded-2xl">
           <DialogHeader>
             <DialogTitle>Detalhes do pacote {selectedPackage?.id_package}</DialogTitle>
           </DialogHeader>
           {selectedPackage && (
             <div className="space-y-5">
-              <div className="grid grid-cols-2 gap-4 rounded-xl bg-muted/40 p-4 md:grid-cols-4">
+              <div className="grid grid-cols-2 gap-4 rounded-xl bg-[#F8F6F1] p-5 md:grid-cols-4">
                 <div><p className="text-xs text-muted-foreground">Plano</p><p className="font-semibold">{selectedPackage.plan_name}</p></div>
-                <div><p className="text-xs text-muted-foreground">Pet</p><p className="font-semibold">{selectedPackage.pet_name}</p></div>
+                <div><p className="text-xs text-muted-foreground">Pet / raça</p><p className="font-semibold">{selectedPackage.pet_name} / {selectedPackage.pet_breed || "Não informada"}</p></div>
                 <div><p className="text-xs text-muted-foreground">Tutor</p><p className="font-semibold">{selectedPackage.client_name}</p></div>
                 <div><p className="text-xs text-muted-foreground">Situação</p>{getStatusBadge(selectedPackage)}</div>
+              </div>
+              <div className="grid grid-cols-2 gap-x-6 gap-y-4 rounded-xl border p-5 text-sm md:grid-cols-4">
+                <div><p className="text-xs text-muted-foreground">Código do plano</p><p className="font-mono font-semibold text-[#113A7A]">{selectedPackage.plan_code || "-"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Contratação</p><p className="font-semibold">{new Date(selectedPackage.contract_date).toLocaleDateString("pt-BR")}</p></div>
+                <div><p className="text-xs text-muted-foreground">Vencimento</p><p className="font-semibold">{selectedPackage.expiry_date ? new Date(selectedPackage.expiry_date).toLocaleDateString("pt-BR") : "-"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Frequência</p><p className="font-semibold">{frequencyLabel[selectedPackage.frequency] || selectedPackage.frequency || "-"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Valor contratado</p><p className="font-semibold">{formatCurrency(Number(selectedPackage.value || 0))}</p></div>
+                <div><p className="text-xs text-muted-foreground">Pagamento</p><p className="font-semibold">{selectedPackage.payment_status === "paid" ? "Pago" : selectedPackage.payment_status === "refunded" ? "Estornado" : selectedPackage.payment_status === "waived" ? "Isento" : "Pendente"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Data do pagamento</p><p className="font-semibold">{selectedPackage.payment_date ? new Date(selectedPackage.payment_date).toLocaleDateString("pt-BR") : "-"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Forma de recebimento</p><p className="font-semibold">{selectedPackage.payment_method || "-"}</p></div>
               </div>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 <Card><CardContent className="pt-5"><p className="text-xs text-muted-foreground">Banhos utilizados</p><p className="text-2xl font-bold">{selectedPackage.consumed_baths}/{selectedPackage.total_baths}</p></CardContent></Card>

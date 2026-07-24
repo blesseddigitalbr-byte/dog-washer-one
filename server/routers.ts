@@ -705,6 +705,7 @@ export const appRouter = router({
             .single();
 
           if (error) throw error;
+
           return data;
         } catch (error) {
           console.error("Error creating pet:", error);
@@ -1257,44 +1258,101 @@ export const appRouter = router({
       }),
 
     // Update an appointment
-    update: publicProcedure
+    update: protectedProcedure
       .input(z.object({
         id: z.string().uuid(),
-        clientId: z.string().uuid().optional(),
-        petId: z.string().uuid().optional(),
-        serviceId: z.string().uuid().optional(),
-        professionalId: z.string().uuid().optional(),
-        appointmentDate: z.string().datetime().optional(),
-        startTime: z.string().optional(),
-        durationMinutes: z.number().optional(),
-        status: z.string().optional(),
+        clientId: z.string().uuid(),
+        petId: z.string().uuid(),
+        serviceId: z.string().uuid(),
+        professionalId: z.string().uuid(),
+        clientPackageId: z.string().uuid().nullable().optional(),
+        appointmentDate: z.string().datetime(),
+        recurrenceRule: z.enum(["none", "weekly", "biweekly", "monthly"]).default("none"),
         notes: z.string().optional(),
       }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ input, ctx }) => {
         try {
-          const updateData: Record<string, any> = {};
-          if (input.clientId) updateData.client_id = input.clientId;
-          if (input.petId) updateData.pet_id = input.petId;
-          if (input.serviceId) updateData.service_id = input.serviceId;
-          if (input.professionalId) updateData.professional_id = input.professionalId;
-          if (input.appointmentDate) updateData.appointment_date = input.appointmentDate;
-          if (input.startTime) updateData.start_time = input.startTime;
-          if (input.durationMinutes) updateData.duration_minutes = input.durationMinutes;
-          if (input.status) updateData.status = input.status;
-          if (input.notes !== undefined) updateData.notes = input.notes || null;
+          if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
+          const [clientRes, petRes, serviceRes, professionalRes, packageRes] = await Promise.all([
+            supabase.from("clientes").select("id").eq("id", input.clientId).eq("unit_id", ctx.user.unitId).single(),
+            supabase.from("pets").select("id, client_id").eq("id", input.petId).eq("unit_id", ctx.user.unitId).single(),
+            supabase.from("services").select("id, price, duration_minutes").eq("id", input.serviceId).eq("unit_id", ctx.user.unitId).eq("status", "active").single(),
+            supabase.from("professionals").select("id").eq("id", input.professionalId).eq("unit_id", ctx.user.unitId).eq("is_active", true).single(),
+            input.clientPackageId
+              ? supabase.from("client_packages").select("id, client_id, pet_id, status").eq("id", input.clientPackageId).eq("unit_id", ctx.user.unitId).single()
+              : Promise.resolve({ data: null, error: null }),
+          ]);
+          if (!clientRes.data || !petRes.data || !serviceRes.data || !professionalRes.data) {
+            throw new Error("Cliente, pet, serviço ou profissional não está disponível nesta unidade");
+          }
+          if (petRes.data.client_id !== input.clientId) throw new Error("O pet não pertence ao tutor selecionado");
+          if (input.clientPackageId && (!packageRes.data || packageRes.data.status !== "active")) throw new Error("Pacote não está ativo");
+          if (packageRes.data && (packageRes.data.client_id !== input.clientId || packageRes.data.pet_id !== input.petId)) {
+            throw new Error("O pacote não pertence ao tutor e pet selecionados");
+          }
+
+          const startsAt = new Date(input.appointmentDate);
+          const durationMinutes = Number(serviceRes.data.duration_minutes || 60);
+          const endsAt = new Date(startsAt.getTime() + durationMinutes * 60_000);
+          const { data: possibleConflicts, error: conflictError } = await supabase
+            .from("appointments")
+            .select("id, appointment_date, duration_minutes")
+            .eq("professional_id", input.professionalId)
+            .eq("unit_id", ctx.user.unitId)
+            .neq("id", input.id)
+            .not("status", "in", '("completed","cancelled","no_show")')
+            .gte("appointment_date", new Date(startsAt.getTime() - 12 * 60 * 60_000).toISOString())
+            .lte("appointment_date", endsAt.toISOString());
+          if (conflictError) throw conflictError;
+          const hasConflict = (possibleConflicts ?? []).some((appointment) => {
+            const existingStart = new Date(appointment.appointment_date);
+            const existingEnd = new Date(existingStart.getTime() + Number(appointment.duration_minutes || 60) * 60_000);
+            return startsAt < existingEnd && endsAt > existingStart;
+          });
+          if (hasConflict) throw new Error("O profissional já possui atendimento nesse horário");
+          const formatTime = (date: Date) => date.toLocaleTimeString("pt-BR", {
+            hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Sao_Paulo",
+          });
+          const updateData = {
+            client_id: input.clientId,
+            pet_id: input.petId,
+            service_id: input.serviceId,
+            professional_id: input.professionalId,
+            client_package_id: input.clientPackageId || null,
+            appointment_date: input.appointmentDate,
+            start_time: formatTime(startsAt),
+            end_time: formatTime(endsAt),
+            duration_minutes: durationMinutes,
+            total_price: Number(serviceRes.data.price || 0),
+            recurrence_rule: input.recurrenceRule === "none" ? null : input.recurrenceRule,
+            notes: input.notes || null,
+            updated_at: new Date().toISOString(),
+          };
 
           const { data, error } = await supabase
             .from("appointments")
             .update(updateData)
             .eq("id", input.id)
+            .eq("unit_id", ctx.user.unitId)
             .select()
             .single();
 
           if (error) throw error;
+
+          const { error: appointmentServiceError } = await supabase
+            .from("appointment_services")
+            .update({
+              service_id: input.serviceId,
+              unit_price: Number(serviceRes.data.price || 0),
+              duration_minutes: durationMinutes,
+            })
+            .eq("appointment_id", input.id);
+          if (appointmentServiceError) throw appointmentServiceError;
+
           return data;
         } catch (error) {
           console.error("Error updating appointment:", error);
-          throw new Error("Erro ao atualizar agendamento");
+          throw new Error(error instanceof Error ? error.message : "Erro ao atualizar agendamento");
         }
       }),
 
@@ -2183,6 +2241,8 @@ export const appRouter = router({
         total_baths: item.contracted_baths,
         total_groomings: item.contracted_groomings,
         value: Number(item.price || 0),
+        frequency: item.frequency || "weekly",
+        payment_status: item.payment_status || "pending",
         consumed_baths: Math.max(0, Number(item.contracted_baths) - Number(item.balance_baths)),
         consumed_groomings: Math.max(0, Number(item.contracted_groomings) - Number(item.balance_groomings)),
         days_to_expiry: item.expiry_date
@@ -2223,6 +2283,10 @@ export const appRouter = router({
         price: z.number().min(0),
         contractDate: z.string().date().optional(),
         expiryDate: z.string().optional(),
+        frequency: z.enum(["weekly", "biweekly", "every_21_days", "monthly", "custom"]).default("weekly"),
+        paymentStatus: z.enum(["pending", "paid", "waived"]).default("pending"),
+        paymentDate: z.string().date().optional(),
+        paymentMethod: z.string().trim().max(80).optional(),
         notes: z.string().max(1000).optional(),
       }))
       .mutation(async ({ input, ctx }) => {
@@ -2260,6 +2324,10 @@ export const appRouter = router({
           price,
           contract_date: contractDate,
           expiry_date: expiryDate,
+          frequency: input.frequency,
+          payment_status: input.paymentStatus,
+          payment_date: input.paymentStatus === "paid" ? (input.paymentDate || contractDate) : null,
+          payment_method: input.paymentMethod || null,
           notes: input.notes || null,
         }).select().single();
         if (error) throw new Error(error.message);
@@ -2289,7 +2357,7 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
         const { data, error } = await supabase.from("client_packages")
-          .update({ status: "cancelled", updated_at: new Date().toISOString() })
+          .update({ status: "cancelled", payment_status: "refunded", updated_at: new Date().toISOString() })
           .eq("id", input.id).eq("unit_id", ctx.user.unitId).select().single();
         if (error) throw new Error(error.message);
         return data;
@@ -2328,6 +2396,10 @@ export const appRouter = router({
           contract_date: contractDate,
           expiry_date: expiryDate,
           status: "active",
+          frequency: current.frequency || "weekly",
+          payment_status: "pending",
+          payment_date: null,
+          payment_method: null,
           notes: current.notes,
         }).select().single();
         if (renewError) throw new Error(renewError.message);

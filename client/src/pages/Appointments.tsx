@@ -39,6 +39,7 @@ export default function Appointments() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<ViewType>("calendar");
   const [showForm, setShowForm] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState("all");
 
   // Fetch appointments
@@ -131,6 +132,11 @@ export default function Appointments() {
     }
   };
 
+  const openAppointment = (appointment: any) => {
+    setSelectedAppointment(appointment);
+    setShowForm(true);
+  };
+
   const handleNext = () => {
     if (viewType === "calendar") {
       setCurrentDate((date) => new Date(date.getFullYear(), date.getMonth() + 1));
@@ -171,7 +177,11 @@ export default function Appointments() {
                 {dayAppointments.slice(0, 2).map((apt: any) => (
                   <div
                     key={apt.id}
-                    className={`text-xs p-1 rounded truncate ${
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openAppointment(apt)}
+                    onKeyDown={(event) => event.key === "Enter" && openAppointment(apt)}
+                    className={`cursor-pointer text-xs p-1 rounded truncate transition hover:ring-2 hover:ring-[#D8B768] ${
                       STATUS_COLORS[apt.status]?.bg
                     }`}
                     title={`${apt.petName} (${apt.clientName})`}
@@ -224,7 +234,11 @@ export default function Appointments() {
                   {hourAppointments.map((apt: any) => (
                     <div
                       key={apt.id}
-                      className={`text-xs p-1 rounded mb-1 ${STATUS_COLORS[apt.status]?.bg}`}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openAppointment(apt)}
+                      onKeyDown={(event) => event.key === "Enter" && openAppointment(apt)}
+                      className={`cursor-pointer text-xs p-1 rounded mb-1 transition hover:ring-2 hover:ring-[#D8B768] ${STATUS_COLORS[apt.status]?.bg}`}
                       title={`${apt.petName} (${apt.clientName})`}
                     >
                       {apt.petName}
@@ -269,7 +283,11 @@ export default function Appointments() {
                     hourAppointments.map((apt: any) => (
                       <div
                         key={apt.id}
-                        className={`p-3 rounded-lg border-l-4 ${STATUS_COLORS[apt.status]?.bg}`}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openAppointment(apt)}
+                        onKeyDown={(event) => event.key === "Enter" && openAppointment(apt)}
+                        className={`cursor-pointer p-3 rounded-lg border-l-4 transition hover:ring-2 hover:ring-[#D8B768] ${STATUS_COLORS[apt.status]?.bg}`}
                         style={{ borderLeftColor: "#8e6e3e" }}
                       >
                         <div className="font-semibold">{apt.petName}</div>
@@ -345,7 +363,13 @@ export default function Appointments() {
                   </div>
 
                   {/* Card do agendamento */}
-                  <div className={`flex-1 p-4 rounded-lg border-l-4 ${STATUS_COLORS[apt.status]?.bg}`}>
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openAppointment(apt)}
+                    onKeyDown={(event) => event.key === "Enter" && openAppointment(apt)}
+                    className={`flex-1 cursor-pointer p-4 rounded-lg border-l-4 transition hover:ring-2 hover:ring-[#D8B768] ${STATUS_COLORS[apt.status]?.bg}`}
+                  >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="font-semibold text-lg">{apt.petId}</div>
@@ -366,7 +390,7 @@ export default function Appointments() {
                           size="sm"
                           className="bg-[#113A7A] hover:bg-[#07111E] text-white"
                           disabled={statusMutation.isPending}
-                          onClick={() => advanceStatus(apt)}
+                          onClick={(event) => { event.stopPropagation(); advanceStatus(apt); }}
                         >
                           {apt.status === "pending"
                             ? "Confirmar"
@@ -395,7 +419,7 @@ export default function Appointments() {
           <p className="text-gray-600 mt-1">Gerenciamento completo de agendamentos</p>
         </div>
         <Button
-          onClick={() => setShowForm(true)}
+          onClick={() => { setSelectedAppointment(null); setShowForm(true); }}
           className="bg-[#113A7A] text-white hover:bg-[#07111E] font-bold"
         >
           + Novo Agendamento
@@ -513,10 +537,13 @@ export default function Appointments() {
       </div>
 
       {/* Form Dialog */}
-      <Dialog open={showForm} onOpenChange={setShowForm}>
+      <Dialog open={showForm} onOpenChange={(open) => {
+        setShowForm(open);
+        if (!open) setSelectedAppointment(null);
+      }}>
         <DialogContent className="flex max-h-[92vh] w-[calc(100vw-2rem)] max-w-5xl flex-col overflow-hidden">
           <DialogHeader>
-            <DialogTitle>Novo Agendamento</DialogTitle>
+            <DialogTitle>{selectedAppointment ? "Editar Agendamento" : "Novo Agendamento"}</DialogTitle>
             <DialogDescription>
               Preencha os dados para criar um novo agendamento
             </DialogDescription>
@@ -525,6 +552,7 @@ export default function Appointments() {
             <AppointmentForm
               onClose={() => setShowForm(false)}
               onSuccess={() => setShowForm(false)}
+              appointment={selectedAppointment}
             />
           </div>
         </DialogContent>

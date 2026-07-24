@@ -21,6 +21,10 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
     price: 0,
     contractDate: new Date().toISOString().slice(0, 10),
     expiryDate: "",
+    frequency: "weekly" as "weekly" | "biweekly" | "every_21_days" | "monthly" | "custom",
+    paymentStatus: "paid" as "pending" | "paid" | "waived",
+    paymentDate: new Date().toISOString().slice(0, 10),
+    paymentMethod: "",
   });
 
   const { data: clients = [] } = trpc.clients.list.useQuery();
@@ -61,6 +65,10 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
       price: formData.price,
       contractDate: formData.contractDate,
       expiryDate: formData.expiryDate || undefined,
+      frequency: formData.frequency,
+      paymentStatus: formData.paymentStatus,
+      paymentDate: formData.paymentStatus === "paid" ? formData.paymentDate : undefined,
+      paymentMethod: formData.paymentMethod || undefined,
     });
   };
 
@@ -178,6 +186,46 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
           onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
         />
       </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <Label htmlFor="frequency">Frequência</Label>
+          <Select value={formData.frequency} onValueChange={(value: typeof formData.frequency) => setFormData({ ...formData, frequency: value })}>
+            <SelectTrigger id="frequency"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="weekly">Semanal</SelectItem>
+              <SelectItem value="biweekly">Quinzenal</SelectItem>
+              <SelectItem value="every_21_days">A cada 21 dias</SelectItem>
+              <SelectItem value="monthly">Mensal</SelectItem>
+              <SelectItem value="custom">Personalizada</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="paymentStatus">Situação do pagamento</Label>
+          <Select value={formData.paymentStatus} onValueChange={(value: typeof formData.paymentStatus) => setFormData({ ...formData, paymentStatus: value })}>
+            <SelectTrigger id="paymentStatus"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="paid">Pago</SelectItem>
+              <SelectItem value="pending">Pendente</SelectItem>
+              <SelectItem value="waived">Cortesia/Isento</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {formData.paymentStatus === "paid" && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <Label htmlFor="paymentDate">Data do pagamento</Label>
+            <Input id="paymentDate" type="date" value={formData.paymentDate} onChange={(e) => setFormData({ ...formData, paymentDate: e.target.value })} />
+          </div>
+          <div>
+            <Label htmlFor="paymentMethod">Forma de recebimento</Label>
+            <Input id="paymentMethod" value={formData.paymentMethod} onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })} placeholder="Pix, cartão, dinheiro..." />
+          </div>
+        </div>
+      )}
 
       <Button type="submit" className="w-full" disabled={createMutation.isPending}>
         {createMutation.isPending ? "Criando..." : "Criar Pacote"}

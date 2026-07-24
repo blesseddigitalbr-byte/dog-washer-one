@@ -18,9 +18,10 @@ import { X, Plus, Search, AlertCircle } from "lucide-react";
 interface AppointmentFormProps {
   onClose: () => void;
   onSuccess?: () => void;
+  appointment?: any;
 }
 
-export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
+export function AppointmentForm({ onClose, onSuccess, appointment }: AppointmentFormProps) {
   // Fetch data
   const { data: clients = [] } = trpc.clients.list.useQuery();
   const { data: professionals = [] } = trpc.professionals.list.useQuery();
@@ -59,7 +60,27 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
 
   // Mutations
   const createMutation = trpc.appointments.create.useMutation();
+  const updateMutation = trpc.appointments.update.useMutation();
   const utils = trpc.useUtils();
+
+  useEffect(() => {
+    if (!appointment) return;
+    const date = new Date(appointment.appointmentDate || appointment.appointment_date);
+    const localDate = [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+    setSelectedClient(appointment.clientId || appointment.client_id || "");
+    setSelectedPet(appointment.petId || appointment.pet_id || null);
+    setSelectedService(appointment.serviceId || appointment.service_id || "");
+    setSelectedProfessional(appointment.professionalId || appointment.professional_id || "");
+    setSelectedPackage(appointment.clientPackageId || appointment.client_package_id || "");
+    setAppointmentDate(localDate);
+    setStartTime(appointment.start_time?.slice(0, 5) || `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`);
+    setRecurrenceRule(appointment.recurrence_rule || "none");
+    setNotes(appointment.notes || "");
+  }, [appointment]);
 
   // Validate student permissions
   const validatePermissionsMutation = trpc.students.validatePermissions.useQuery(
@@ -156,14 +177,22 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
         sendEmail: true,
       };
 
-      await createMutation.mutateAsync(appointmentPayload);
+      if (appointment?.id) {
+        await updateMutation.mutateAsync({
+          id: appointment.id,
+          ...appointmentPayload,
+          clientPackageId: appointmentPayload.clientPackageId || null,
+        });
+      } else {
+        await createMutation.mutateAsync(appointmentPayload);
+      }
 
       // Se foi um aluno, registrar na tabela appointment_students
       if (executedBy === "student" && selectedStudent) {
         console.log("Aluno vinculado ao agendamento:", selectedStudent);
       }
 
-      toast.success("Agendamento criado com sucesso!");
+      toast.success(appointment?.id ? "Agendamento atualizado com sucesso!" : "Agendamento criado com sucesso!");
       await utils.appointments.list.invalidate();
       onSuccess?.();
       onClose();
@@ -484,9 +513,11 @@ export function AppointmentForm({ onClose, onSuccess }: AppointmentFormProps) {
         <Button
           type="submit"
           className="bg-green-600 hover:bg-green-700 text-white font-bold"
-          disabled={createMutation.isPending || (executedBy === "student" && validatePermissionsMutation.isLoading)}
+          disabled={createMutation.isPending || updateMutation.isPending || (executedBy === "student" && validatePermissionsMutation.isLoading)}
         >
-          {createMutation.isPending ? "Criando..." : "Criar Agendamento"}
+          {createMutation.isPending || updateMutation.isPending
+            ? "Salvando..."
+            : appointment?.id ? "Salvar Alterações" : "Criar Agendamento"}
         </Button>
       </div>
     </form>
