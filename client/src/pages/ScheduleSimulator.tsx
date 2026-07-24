@@ -404,8 +404,13 @@ export default function ScheduleSimulator() {
             ) : (
               <section className="overflow-hidden rounded-xl border border-[#E7DEC8] bg-white shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E7DEC8] px-7 py-5">
-                  <h2 className="text-xl font-black tracking-tight text-[#07111E]">Agenda Sugerida (Ciclo Atual)</h2>
-                  <div className="flex gap-2 text-xs font-black uppercase">
+                  <div>
+                    <h2 className="text-xl font-black tracking-tight text-[#07111E]">Agenda Sugerida (Ciclo Atual)</h2>
+                    <p className="mt-1 text-xs font-bold text-[#44516A]">
+                      Edite data/hora, marque tosa/trimming e ajuste o serviço final antes de incluir na agenda oficial.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-xs font-black uppercase">
                     <span className="rounded-full bg-[#F8F6F1] px-3 py-1 text-[#07111E]">{summary.total} datas</span>
                     <span className="rounded-full bg-[#EAF7EF] px-3 py-1 text-emerald-700">{summary.valid} válidas</span>
                     <span className="rounded-full bg-[#FFF7E8] px-3 py-1 text-[#8A640D]">{summary.grooming} tosa/trim</span>
@@ -460,13 +465,15 @@ export default function ScheduleSimulator() {
 
             <section className="rounded-xl border border-[#E7DEC8] bg-[#E6E1D8] p-5 shadow-sm">
               <h2 className="text-lg font-black text-[#07111E]">Resumo para Envio</h2>
-              <div className="mt-4 rounded-lg bg-white p-4 text-xs font-semibold leading-relaxed text-[#44516A] shadow-sm">
-                {message ? (
-                  <pre className="max-h-[420px] whitespace-pre-wrap font-sans">{message}</pre>
-                ) : (
-                  <p>Gere a pré-agenda para visualizar o texto de confirmação do ciclo.</p>
-                )}
-              </div>
+              <p className="mt-1 text-xs font-bold text-[#44516A]">
+                Texto editável antes de copiar, enviar pelo WhatsApp ou registrar no histórico.
+              </p>
+              <Textarea
+                className="mt-4 min-h-[420px] resize-y border-0 bg-white text-xs font-semibold leading-relaxed text-[#44516A] shadow-sm focus-visible:ring-[#C9A24E]"
+                placeholder="Gere a pré-agenda para visualizar e editar o texto de confirmação do ciclo."
+                value={message}
+                onChange={(event) => setMessage(event.target.value)}
+              />
               <div className="mt-4 space-y-3">
                 <Button className="w-full bg-emerald-600 font-black text-white hover:bg-emerald-700" disabled={!message} onClick={copyMessage}>
                   <Copy className="mr-2 h-4 w-4" />
