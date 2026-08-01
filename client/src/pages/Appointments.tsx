@@ -137,7 +137,7 @@ export default function Appointments() {
         ...apt,
         petName: apt.petName || apt.pet?.name || pet?.name || "Pet não informado",
         clientName: apt.clientName || apt.client?.nome || apt.client?.name || pet?.clientName || "Cliente não informado",
-        serviceName: apt.serviceName || apt.service?.name || service?.name || "Serviço não informado",
+        serviceName: apt.planned_service_name || apt.plannedServiceName || apt.serviceName || apt.service?.name || service?.name || "Serviço não informado",
         professionalName: apt.professionalName || apt.professional?.name || "Profissional não informado",
       });
     });

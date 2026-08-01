@@ -1037,7 +1037,9 @@ export const appRouter = router({
           clientName: appointment.client?.nome || "Cliente não informado",
           petName: appointment.pet?.name || "Pet não informado",
           petBreed: appointment.pet?.breed || null,
-          serviceName: appointment.service?.name || "Serviço não informado",
+          serviceName: appointment.planned_service_name || appointment.service?.name || "Serviço não informado",
+          plannedServiceName: appointment.planned_service_name || null,
+          includeGrooming: Boolean(appointment.include_grooming),
           professionalName: appointment.professional?.name || "Profissional não informado",
         }));
       } catch (error) {
@@ -1076,7 +1078,9 @@ export const appRouter = router({
             clientName: appointment.client?.nome || "Cliente não informado",
             petName: appointment.pet?.name || "Pet não informado",
             petBreed: appointment.pet?.breed || null,
-            serviceName: appointment.service?.name || "Serviço não informado",
+            serviceName: appointment.planned_service_name || appointment.service?.name || "Serviço não informado",
+            plannedServiceName: appointment.planned_service_name || null,
+            includeGrooming: Boolean(appointment.include_grooming),
             professionalName: appointment.professional?.name || "Profissional não informado",
           };
         } catch (error) {
@@ -2228,6 +2232,8 @@ export const appRouter = router({
             total_price: Number(service?.price || 0),
             recurrence_rule: simulation.frequency,
             status: "pending",
+            include_grooming: Boolean(item.include_grooming),
+            planned_service_name: item.final_service_name || null,
             notes: simulation.notes,
             created_by: ctx.user!.id,
           };
