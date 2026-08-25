@@ -22,6 +22,7 @@ import {
   ArrowLeft,
   ArrowRight,
   CalendarRange,
+  MessagesSquare,
 } from "lucide-react";
 
 interface MenuSection {
@@ -46,6 +47,7 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedSections, setExpandedSections] = useState<string[]>([
     "OPERACIONAL",
+    "RELACIONAMENTO",
   ]);
 
   const menuSections: MenuSection[] = [
@@ -58,6 +60,12 @@ export default function DashboardLayout({
         { icon: <Users className="w-5 h-5" />, label: "Clientes", path: "/clients" },
         { icon: <Users2 className="w-5 h-5" />, label: "Alunos", path: "/students" },
         { icon: <Package className="w-5 h-5" />, label: "Pacotes", path: "/packages" },
+      ],
+    },
+    {
+      title: "RELACIONAMENTO",
+      items: [
+        { icon: <MessagesSquare className="w-5 h-5" />, label: "CRM e Agentes", path: "/crm" },
       ],
     },
     {
