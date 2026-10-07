@@ -355,7 +355,7 @@ export function PetForm({
                     className="hidden"
                   />
                   <label htmlFor="photoFile" className="cursor-pointer flex flex-col items-center gap-2">
-                    <Upload className="w-5 h-5 text-accent" />
+                    <Upload className="w-5 h-5 text-primary" />
                     <span className="text-sm text-muted-foreground">Clique para fazer upload</span>
                   </label>
                 </div>

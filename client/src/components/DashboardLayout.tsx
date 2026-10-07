@@ -49,6 +49,7 @@ export default function DashboardLayout({
   const branding = trpc.branding.current.useQuery(undefined, { retry: false });
   const brand = branding.data ?? neutralBrand;
   const brandStyle = { "--primary": brand.primary_color, "--primary-foreground": "#ffffff", "--secondary": brand.secondary_color,
+    "--chart-1": brand.primary_color, "--chart-2": brand.secondary_color, "--chart-3": brand.secondary_color,
     "--background": brand.background_color, "--ring": brand.primary_color, "--accent": "#EDE4FA", "--accent-foreground": "#17213B", "--muted": "#F1ECF7", "--border": "#DDD6ED", "--foreground": "#17213B", "--sidebar": "#ffffff", "--sidebar-foreground": "#17213B",
     "--sidebar-accent": brand.primary_color, "--sidebar-primary-foreground": "#ffffff", "--sidebar-border": "#E5DCF2",
   } as CSSProperties;
@@ -261,7 +262,7 @@ export default function DashboardLayout({
           <div className="flex items-center gap-2 bg-transparent rounded-lg p-1">
             <button
               onClick={() => window.history.back()}
-              className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-accent transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group"
+              className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-primary transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group"
               title="Voltar para página anterior"
             >
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
@@ -270,7 +271,7 @@ export default function DashboardLayout({
             <div className="w-px h-6 bg-border" />
             <button
               onClick={() => window.history.forward()}
-              className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-accent transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group"
+              className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-primary transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group"
               title="Avançar para próxima página"
             >
               <span className="hidden sm:inline">Avançar</span>

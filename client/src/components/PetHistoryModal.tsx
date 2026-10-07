@@ -76,7 +76,7 @@ export function PetHistoryModal({
                   className="w-24 h-24 rounded-lg object-cover"
                 />
               ) : (
-                <div className="w-24 h-24 rounded-lg bg-accent/10 flex items-center justify-center text-3xl font-bold text-accent">
+                <div className="w-24 h-24 rounded-lg bg-accent/10 flex items-center justify-center text-3xl font-bold text-primary">
                   {petName?.charAt(0).toUpperCase() || "?"}
                 </div>
               )}
@@ -104,14 +104,14 @@ export function PetHistoryModal({
               {/* Stats */}
               <div className="grid grid-cols-3 gap-4 mt-4">
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-accent" />
+                  <Calendar className="w-4 h-4 text-primary" />
                   <div>
                     <p className="text-xs text-muted-foreground">Total de Visitas</p>
                     <p className="text-lg font-bold text-foreground">{totalVisits}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Calendar className="w-4 h-4 text-accent" />
+                  <Calendar className="w-4 h-4 text-primary" />
                   <div>
                     <p className="text-xs text-muted-foreground">Última Visita</p>
                     <p className="text-sm font-medium text-foreground">
@@ -120,7 +120,7 @@ export function PetHistoryModal({
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Package className="w-4 h-4 text-accent" />
+                  <Package className="w-4 h-4 text-primary" />
                   <div>
                     <p className="text-xs text-muted-foreground">Pacote</p>
                     <Badge className="mt-1" variant="outline">

@@ -166,7 +166,7 @@ export default function ClientsPage() {
                 <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${
                   filter === f.id
                     ? "bg-foreground/20 text-foreground"
-                    : "bg-accent/10 text-accent"
+                    : "bg-accent/10 text-primary"
                 }`}>
                   {f.icon}
                 </span>
@@ -260,13 +260,13 @@ export default function ClientsPage() {
 
                 {/* Client Header - Avatar + Name + Email + Phone */}
                 <div className="flex items-start gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center text-lg font-bold text-accent flex-shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center text-lg font-bold text-primary flex-shrink-0">
                     {getInitial(client.name)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-bold text-foreground text-sm truncate">{client.name}</h3>
-                      <span className="text-xs font-bold text-accent bg-accent/10 px-2 py-1 rounded whitespace-nowrap">CLI-{String(clients.findIndex((c: any) => c.id === client.id) + 1).padStart(4, '0')}</span>
+                      <span className="text-xs font-bold text-primary bg-accent/10 px-2 py-1 rounded whitespace-nowrap">CLI-{String(clients.findIndex((c: any) => c.id === client.id) + 1).padStart(4, '0')}</span>
                     </div>
                     <p className="text-xs text-muted-foreground truncate">{client.email}</p>
                     <p className="text-xs text-muted-foreground truncate mt-1 flex items-center gap-1">
@@ -278,7 +278,7 @@ export default function ClientsPage() {
                 {/* Badges - VIP / Modelo */}
                 <div className="flex gap-2 mb-4 flex-wrap">
                   {client.pets?.some((pet: any) => pet.is_vip) && (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent/10 rounded-full text-xs font-semibold text-accent">
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-accent/10 rounded-full text-xs font-semibold text-primary">
                       ⭐ VIP
                     </span>
                   )}
@@ -314,13 +314,13 @@ export default function ClientsPage() {
                                 className="w-8 h-8 rounded-full object-cover flex-shrink-0"
                               />
                             ) : (
-                              <span className="w-8 h-8 rounded-full bg-accent/30 flex items-center justify-center text-xs font-bold text-accent flex-shrink-0">
+                              <span className="w-8 h-8 rounded-full bg-accent/30 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">
                                 {pet.name.charAt(0).toUpperCase()}
                               </span>
                             )}
                             <div className="flex flex-col items-center text-center">
-                              <span className="text-xs font-semibold text-accent truncate w-full leading-tight">{pet.name}</span>
-                              <span className="text-xs font-bold text-accent/60 mt-0.5">PET-{String(globalPetIndex).padStart(4, '0')}</span>
+                              <span className="text-xs font-semibold text-primary truncate w-full leading-tight">{pet.name}</span>
+                              <span className="text-xs font-bold text-primary/60 mt-0.5">PET-{String(globalPetIndex).padStart(4, '0')}</span>
                             </div>
                           </div>
                         );
@@ -340,7 +340,7 @@ export default function ClientsPage() {
                     </div>
                     <button
                       onClick={() => handleOpenModal(client.id)}
-                      className="text-xs text-accent hover:text-accent/80 font-bold transition-colors inline-flex items-center gap-1 whitespace-nowrap"
+                      className="text-xs text-primary hover:text-primary/80 font-bold transition-colors inline-flex items-center gap-1 whitespace-nowrap"
                     >
                       Ver Detalhes →
                     </button>
@@ -381,7 +381,7 @@ export default function ClientsPage() {
                 <button
                   onClick={handlePreviousPage}
                   disabled={currentPage === 1}
-                  className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-accent transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-primary transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Página anterior"
                 >
                   <ChevronLeft className="w-5 h-5" />
@@ -389,7 +389,7 @@ export default function ClientsPage() {
                 <button
                   onClick={handleNextPage}
                   disabled={currentPage === totalPages}
-                  className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-accent transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 rounded-md hover:bg-accent/20 text-foreground hover:text-primary transition-all duration-200 flex items-center gap-1.5 text-sm font-medium group disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Próxima página"
                 >
                   <ChevronRight className="w-5 h-5" />

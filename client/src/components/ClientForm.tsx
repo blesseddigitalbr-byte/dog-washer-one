@@ -367,7 +367,7 @@ export function ClientForm({
           {/* Endereço Completo */}
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <MapPin className="w-4 h-4 text-accent" />
+              <MapPin className="w-4 h-4 text-primary" />
               <h3 className="font-semibold text-sm text-foreground">Endereço Completo</h3>
             </div>
 

@@ -80,7 +80,7 @@ export function PetDetailsModal({
                   className="w-32 h-32 rounded-lg object-cover"
                 />
               ) : (
-                <div className="w-32 h-32 rounded-lg bg-accent/10 flex items-center justify-center text-5xl font-bold text-accent">
+                <div className="w-32 h-32 rounded-lg bg-accent/10 flex items-center justify-center text-5xl font-bold text-primary">
                   {pet.name?.charAt(0).toUpperCase() || "?"}
                 </div>
               )}
@@ -90,7 +90,7 @@ export function PetDetailsModal({
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <h3 className="text-2xl font-bold text-foreground">{pet.name}</h3>
-                <Badge variant="outline" className="bg-accent/10 text-accent">
+                <Badge variant="outline" className="bg-accent/10 text-primary">
                   {pet.status || "Ativo"}
                 </Badge>
               </div>
@@ -180,7 +180,7 @@ export function PetDetailsModal({
               {/* Vacinas */}
               <Card className="p-4">
                 <div className="flex items-center gap-2 mb-4">
-                  <Syringe className="w-5 h-5 text-accent" />
+                  <Syringe className="w-5 h-5 text-primary" />
                   <h4 className="font-semibold text-foreground">Vacinas</h4>
                 </div>
                 <div className="space-y-2">
@@ -201,7 +201,7 @@ export function PetDetailsModal({
               {/* Vermífugo */}
               <Card className="p-4">
                 <div className="flex items-center gap-2 mb-4">
-                  <Bug className="w-5 h-5 text-accent" />
+                  <Bug className="w-5 h-5 text-primary" />
                   <h4 className="font-semibold text-foreground">Vermífugo</h4>
                 </div>
                 <div className="flex items-center gap-2">
@@ -222,7 +222,7 @@ export function PetDetailsModal({
               {/* Doenças/Alergias */}
               <Card className="p-4">
                 <div className="flex items-center gap-2 mb-4">
-                  <AlertCircle className="w-5 h-5 text-accent" />
+                  <AlertCircle className="w-5 h-5 text-primary" />
                   <h4 className="font-semibold text-foreground">Doenças/Alergias</h4>
                 </div>
                 {pet.hasDiseasesOrAllergies ? (
@@ -247,7 +247,7 @@ export function PetDetailsModal({
             <TabsContent value="notes" className="space-y-4">
               <Card className="p-4">
                 <div className="flex items-center gap-2 mb-4">
-                  <FileText className="w-5 h-5 text-accent" />
+                  <FileText className="w-5 h-5 text-primary" />
                   <h4 className="font-semibold text-foreground">Observações Gerais</h4>
                 </div>
                 {pet.notes ? (

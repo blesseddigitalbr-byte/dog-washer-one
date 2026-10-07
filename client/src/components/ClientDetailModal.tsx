@@ -202,14 +202,14 @@ export function ClientDetailModal({
               {/* Client Info */}
               <div className="flex items-start justify-between pb-4 border-b border-accent/10">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center text-2xl font-bold text-accent flex-shrink-0">
+                  <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center text-2xl font-bold text-primary flex-shrink-0">
                     {safeClientNameChar}
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="text-xl font-bold text-foreground">{clientName}</h3>
                       {client.pets?.some((pet: any) => pet.is_vip) && (
-                        <span className="px-3 py-1 bg-accent/10 rounded-full text-xs font-bold text-accent">
+                        <span className="px-3 py-1 bg-accent/10 rounded-full text-xs font-bold text-primary">
                           ⭐ VIP
                         </span>
                       )}
@@ -285,7 +285,7 @@ export function ClientDetailModal({
                                 className="w-32 h-32 rounded-lg object-cover"
                               />
                             ) : (
-                              <div className="w-32 h-32 rounded-lg bg-accent/10 flex items-center justify-center text-4xl font-bold text-accent">
+                              <div className="w-32 h-32 rounded-lg bg-accent/10 flex items-center justify-center text-4xl font-bold text-primary">
                                 {safePetNameChar}
                               </div>
                             )}

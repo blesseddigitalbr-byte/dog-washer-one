@@ -481,7 +481,7 @@ export function PlansPage() {
                 <div className="col-span-2 lg:col-span-4">
                   <div className="mb-2 flex flex-wrap items-center gap-2">
                     <h3 className="text-lg font-bold leading-snug text-foreground">{pkg.name}</h3>
-                    <span className="whitespace-nowrap rounded bg-accent/10 px-2 py-1 text-xs font-bold text-accent">{pkg.code}</span>
+                    <span className="whitespace-nowrap rounded bg-accent/10 px-2 py-1 text-xs font-bold text-primary">{pkg.code}</span>
                   </div>
                   {pkg.description && (
                     <p className="mt-1 max-w-2xl whitespace-pre-line text-sm leading-6 text-muted-foreground">{pkg.description}</p>
