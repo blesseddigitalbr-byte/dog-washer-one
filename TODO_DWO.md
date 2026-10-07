@@ -16,7 +16,7 @@ Legenda: `[x]` etapa verificada; `[ ]` trabalho pendente. **Recuperar** = identi
 
 ## 1. Cobranças — recuperar / prioridade P0
 
-- [ ] Etapa preparatória: formulário único e rascunhos persistidos, acessíveis pelo Financeiro, Agendamento e Pacotes (código implementado; falta homologar migração e navegação).
+- [x] Etapa preparatória: formulário único e rascunhos persistidos, acessíveis pelo Financeiro, Agendamento e Pacotes (migração aplicada, gravação via plataforma e entrada contextual de pacote verificadas; publicação 6151c2c).
 
 - [ ] Serviço único de criação de cobranças no servidor, usado por todas as telas.
 - [ ] Tela Financeiro: nova cobrança, listagem, filtros e detalhes.
@@ -202,7 +202,8 @@ Legenda: `[x]` etapa verificada; `[ ]` trabalho pendente. **Recuperar** = identi
 - Migração `202610070003_billing_drafts.sql` aplicada no Supabase.
 - Gravação/leitura autenticada homologada em transação com rollback; sem emissão no Asaas.
 - 42 testes selecionados aprovados; verificação de tipos e build aprovados.
-- Formulário e rotas implementados. Publicação e navegação no navegador em validação.
+- Formulário e rotas publicados em `https://dog-washer-one.vercel.app/financial`; Vercel Ready (6151c2c).
+- Gravação pelo formulário e preenchimento contextual de pacote verificados no navegador. Rascunho temporário de homologação removido, sem cobrança no Asaas.
 - Emissão de cobrança, QR Pix, recorrência e repasse automático continuam pendentes; nenhum desses itens foi marcado como pronto.
 
 ## Ordem das entregas
