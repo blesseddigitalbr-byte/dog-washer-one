@@ -165,7 +165,7 @@ Legenda: `[x]` etapa verificada; `[ ]` trabalho pendente. **Recuperar** = identi
 
 ## 12. Design e qualidade — transversal
 
-- [ ] Base white-label: marca e cores por organização, assinatura by/rede e tela de personalização (em validação).
+- [x] Base white-label: marca e cores por organização, assinatura by/rede e tela de personalização (429c919 publicado; leitura, tema e gravação pela tela verificados).
 - [ ] Licenciamento comercial de módulos com validação no servidor; esconder menus não é suficiente.
 - [ ] Onboarding de empresas, contas financeiras próprias e carteiras de parceiros por CNPJ.
 - [ ] Definir contrato comercial, preços por módulo, cobrança SaaS, domínio e política de suporte.
