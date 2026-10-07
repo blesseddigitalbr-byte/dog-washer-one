@@ -2,25 +2,37 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
 
 const money = (v: unknown) => Number(v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const labels: Record<string,string> = { DONE:"Crédito confirmado", PENDING:"Pendente", AWAITING_CREDIT:"Aguardando crédito", CANCELLED:"Cancelado", REFUSED:"Recusado", REFUNDED:"Estornado" };
 export default function Splits() {
+  const [tab, setTab] = useState("reconciliation");
+  const [search, setSearch] = useState("");
+  const [status, setStatus] = useState("all");
   const query = trpc.asaas.splits.useQuery(undefined, { retry:false });
   const accounts = trpc.asaas.overview.useQuery(undefined, { retry:false });
-  return <div className="space-y-6">
+  const filtered = query.data?.filter(s => (status === "all" || s.status === status) && [s.partner_name,s.payment_id,s.split_id].some(v => String(v).toLowerCase().includes(search.toLowerCase())));
+  return <div className="mx-auto max-w-[1440px] space-y-6 px-4 py-6 sm:px-6">
     <div className="flex flex-wrap items-center justify-between gap-4"><div><h1 className="text-2xl font-semibold">Splits e Repasses</h1><p className="text-muted-foreground">Conciliação dos créditos aos parceiros.</p></div><Button variant="outline" disabled={query.isFetching} onClick={() => { query.refetch(); accounts.refetch(); }}>Atualizar registros</Button></div>
     <Card><CardContent className="pt-6 text-sm">Pagamento recebido não comprova repasse. Os dados abaixo são verificações registradas do Asaas, com data e origem da evidência. Atualizar recarrega o banco; não consulta o saldo atual no Asaas. Taxas mensais de condomínio e marketing ainda não estão incluídas.</CardContent></Card>
+    <div className="grid gap-4 sm:grid-cols-3">{[["Registros verificados",query.data?.length],["Créditos confirmados",query.data?.filter(s=>s.status === "DONE").length],["Aguardando crédito",query.data?.filter(s=>["PENDING","AWAITING_CREDIT"].includes(s.status)).length]].map(([label,value])=><Card key={String(label)} className="border-t-4 border-t-[#C9A24E]"><CardContent className="p-5"><p className="text-sm text-muted-foreground">{label}</p><p className="mt-2 text-3xl font-semibold text-[#10233f]">{query.data ? value : "—"}</p></CardContent></Card>)}</div>
+    <div className="flex flex-wrap gap-2 border-b pb-3">{[["reconciliation","Conciliação"],["closing","Fechamento mensal"],["rules","Regras de pacotes"]].map(([key,label])=><Button key={key} variant={tab === key ? "default" : "outline"} onClick={()=>setTab(key)}>{label}</Button>)}</div>
+    {tab === "closing" && <Card><CardHeader><CardTitle>Fechamento por profissional</CardTitle></CardHeader><CardContent className="space-y-4"><Badge variant="outline">Estrutura planejada · ainda não operacional</Badge><p>O fechamento deverá reunir serviços realizados e validados, cobrança de origem, executor, regra de participação e descontos mensais.</p><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-3">Profissional</th><th>Serviços realizados</th><th>Participação</th><th>Taxas mensais</th><th>Repasse líquido</th><th>Crédito</th></tr></thead><tbody><tr><td colSpan={6} className="py-10 text-center text-muted-foreground">Nenhum fechamento apurado. Os dados do teste de split não comprovam um fechamento mensal.</td></tr></tbody></table></div><p className="text-sm text-muted-foreground">Transferências permanecem indisponíveis até validar as permissões do Asaas e implementar aprovação, conciliação e proteção contra duplicidades.</p></CardContent></Card>}
+    {tab === "rules" && <Card><CardHeader><CardTitle>Regras definidas para os pacotes</CardTitle></CardHeader><CardContent className="space-y-4"><Badge variant="outline">Definições acordadas · implementação pendente</Badge><dl className="grid gap-5 sm:grid-cols-2">{[["Validade dos créditos acumulados","60 dias após o fim do ciclo de origem"],["Origem do direito ao repasse","Serviço realizado e validado, associado ao executor"],["Pagamento ao profissional","Fechamento mensal, inicialmente com aprovação"],["Cancelamento / reagendamento","Não gera repasse nem consumo de sessão"],["Ordem de consumo","Créditos com vencimento mais próximo primeiro"],["Condomínio e marketing","Descontos mensais da parte do profissional"]].map(([label,value])=><div key={label} className="rounded-xl border p-4"><dt className="text-sm text-muted-foreground">{label}</dt><dd className="mt-2 font-medium">{value}</dd></div>)}</dl><p className="text-sm text-muted-foreground">Pesos de banho/tosa, inadimplência, restituições e vínculo financeiro por sessão ainda precisam ser implementados. Esta aba não altera contratos nem créditos existentes.</p></CardContent></Card>}
+    {tab === "reconciliation" && <><div className="flex flex-wrap gap-3"><Input className="max-w-md" aria-label="Buscar repasse" placeholder="Buscar profissional, cobrança ou split..." value={search} onChange={e=>setSearch(e.target.value)}/><select className="rounded-md border bg-background px-3 py-2 text-sm" aria-label="Situação do repasse" value={status} onChange={e=>setStatus(e.target.value)}><option value="all">Todas as situações</option>{Object.entries(labels).map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></div>
     {query.isLoading && <p>Carregando repasses...</p>}
     {query.error && <p role="alert">{query.error.message}</p>}
     {query.data?.length === 0 && <p>Nenhum repasse verificado. Não é possível inferir crédito a partir de cobranças recebidas.</p>}
-    {query.data?.map(split => {
+    {filtered?.length === 0 && !!query.data?.length && <p>Nenhum registro corresponde aos filtros.</p>}
+    {filtered?.map(split => {
       const account = accounts.data?.accounts.find(a => a.id === split.account_id);
       return <Card key={split.id}><CardHeader><div className="flex flex-wrap items-center gap-3"><CardTitle>{split.partner_name}</CardTitle><Badge variant="outline">{account ? account.environment === "sandbox" ? "Teste · sem dinheiro real" : "Produção" : "Ambiente não identificado"}</Badge><Badge variant="outline">{labels[split.status] ?? split.status}</Badge></div></CardHeader><CardContent className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-4">{[["Cobrança", split.gross_value],["Taxa Asaas", Number(split.gross_value)-Number(split.net_value)],["Líquido da cobrança",split.net_value],["Valor do parceiro",split.partner_value]].map(([label,value]) => <div key={String(label)} className="rounded-lg border p-4"><p className="text-sm text-muted-foreground">{label}</p><p className="text-xl font-semibold">{money(value)}</p></div>)}</div>
         <p className="text-sm">O líquido da cobrança é anterior aos repasses; não representa o saldo disponível do salão.</p>
         <dl className="grid gap-3 text-sm sm:grid-cols-2"><div><dt className="text-muted-foreground">Cobrança</dt><dd className="break-all">{split.payment_id}</dd></div><div><dt className="text-muted-foreground">Split</dt><dd className="break-all">{split.split_id}</dd></div><div><dt className="text-muted-foreground">Carteira do parceiro</dt><dd className="break-all">{split.wallet_id}</dd></div><div><dt className="text-muted-foreground">Verificado em</dt><dd>{new Date(split.verified_at).toLocaleString("pt-BR")}</dd></div></dl><p className="text-sm text-muted-foreground">Evidência: {split.evidence_source}</p>
       </CardContent></Card>;
-    })}
+    })}</>}
   </div>;
 }
