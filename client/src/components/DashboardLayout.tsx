@@ -146,7 +146,7 @@ export default function DashboardLayout({
               {branding.data && "logo_path" in branding.data && branding.data.logo_path ? <div className="relative h-24 w-24 overflow-hidden rounded-full bg-white"><img src={branding.data.logo_path} alt={brand.display_name} className="absolute left-1/2 top-1/2 w-[450px] max-w-none" style={{ transform: "translate(-50%, -32.5%)" }} /></div> : <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 bg-white text-center text-lg font-extrabold" style={{ borderColor: brand.primary_color, color: brand.secondary_color }}>{brand.display_name}</div>}
             </div>
           )}
-          {sidebarOpen && <><p className="text-lg font-semibold">{brand.display_name}</p><p className="text-xs font-semibold" style={{ color: brand.primary_color }}>{brandSignature(brand.signature)}</p></>}
+          {sidebarOpen && <p className="text-xs font-medium" style={{ color: brand.primary_color }}>{brandSignature(brand.signature)}</p>}
           {!sidebarOpen && (
             <button
               onClick={() => setSidebarOpen(true)}

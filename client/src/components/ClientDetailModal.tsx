@@ -207,7 +207,7 @@ export function ClientDetailModal({
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-xl font-bold text-foreground">{clientName}</h3>
+                      <h3 className="text-xl font-medium text-foreground">{clientName}</h3>
                       {client.pets?.some((pet: any) => pet.is_vip) && (
                         <span className="px-3 py-1 bg-accent/10 rounded-full text-xs font-bold text-primary">
                           ⭐ VIP
@@ -295,7 +295,7 @@ export function ClientDetailModal({
                           <div className="flex-1">
                             {/* Name and Gender */}
                             <div className="flex items-center gap-2 mb-2">
-                              <h4 className="text-2xl font-bold text-foreground tracking-tight">{petName}</h4>
+                              <h4 className="text-xl font-medium text-foreground tracking-tight">{petName}</h4>
                               {(pet as any).gender && (
                                 <span className="text-2xl">
                                   {(pet as any).gender === 'M' ? '♂️' : '♀️'}
@@ -308,30 +308,30 @@ export function ClientDetailModal({
                             {/* First Grid: Raça, Porte, Data de Nascimento, Idade */}
                             <div className="grid grid-cols-2 gap-6 mb-6">
                               <div>
-                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
                                   🐕 Raça
                                 </p>
-                                <p className="text-sm font-semibold text-foreground">{pet.breed}</p>
+                                <p className="text-sm font-normal text-foreground">{pet.breed}</p>
                               </div>
                               <div>
-                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
                                   📏 Porte
                                 </p>
-                                <p className="text-sm font-semibold text-foreground">{(pet as any).size || 'Não informado'}</p>
+                                <p className="text-sm font-normal text-foreground">{(pet as any).size || 'Não informado'}</p>
                               </div>
                               <div>
-                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
                                   💫 Data de Nascimento
                                 </p>
-                                <p className="text-sm font-semibold text-foreground">
+                                <p className="text-sm font-normal text-foreground">
                                   {formatPetBirthDate(pet)}
                                 </p>
                               </div>
                               <div>
-                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
                                   🎂 Idade
                                 </p>
-                                <p className="text-sm font-semibold text-foreground">
+                                <p className="text-sm font-normal text-foreground">
                                   {formatPetAge(pet)}
                                 </p>
                               </div>
@@ -341,27 +341,27 @@ export function ClientDetailModal({
                             <div className="grid grid-cols-2 gap-6 mb-6">
                               {(pet as any).gender && (
                                 <div>
-                                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
                                     ♂️ Sexo
                                   </p>
-                                  <p className="text-sm font-semibold text-foreground">
+                                  <p className="text-sm font-normal text-foreground">
                                     {(pet as any).gender === 'M' ? 'Macho' : 'Fêmea'}
                                   </p>
                                 </div>
                               )}
                               {(pet as any).coat && (
                                 <div>
-                                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
                                     🧶 Pelagem
                                   </p>
-                                  <p className="text-sm font-semibold text-foreground">{(pet as any).coat}</p>
+                                  <p className="text-sm font-normal text-foreground">{(pet as any).coat}</p>
                                 </div>
                               )}
                               <div>
-                                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
                                   💫 Última Visita
                                 </p>
-                                <p className="text-sm font-semibold text-foreground">02/05/2024</p>
+                                <p className="text-sm font-normal text-foreground">02/05/2024</p>
                               </div>
                             </div>
                           </div>

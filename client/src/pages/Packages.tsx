@@ -140,7 +140,7 @@ export default function Packages() {
         <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-foreground">
           <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-700" />
           <div>
-            <p className="font-semibold">Radar de pacotes exige atenção</p>
+            <p className="font-normal">Radar de pacotes exige atenção</p>
             <p className="text-sm">
               {packages.filter((pkg: any) => pkg.operational_status === "expiring").length} vencendo em até 7 dias,
               {" "}{packages.filter((pkg: any) => pkg.operational_status === "expired").length} vencidos e
@@ -237,20 +237,20 @@ export default function Packages() {
             <div className="space-y-5">
               <Button variant="outline" asChild><a href={`/financial?package=${encodeURIComponent(selectedPackage.id)}`}>Preparar cobrança deste pacote</a></Button>
               <div className="grid grid-cols-2 gap-4 rounded-xl bg-background p-5 md:grid-cols-4">
-                <div><p className="text-xs text-muted-foreground">Plano</p><p className="font-semibold">{selectedPackage.plan_name}</p></div>
-                <div><p className="text-xs text-muted-foreground">Pet / raça</p><p className="font-semibold">{selectedPackage.pet_name} / {selectedPackage.pet_breed || "Não informada"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Tutor</p><p className="font-semibold">{tutorFirstName(selectedPackage.client_name)}</p></div>
+                <div><p className="text-xs text-muted-foreground">Plano</p><p className="font-normal">{selectedPackage.plan_name}</p></div>
+                <div><p className="text-xs text-muted-foreground">Pet / raça</p><p className="font-normal">{selectedPackage.pet_name} / {selectedPackage.pet_breed || "Não informada"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Tutor</p><p className="font-normal">{tutorFirstName(selectedPackage.client_name)}</p></div>
                 <div><p className="text-xs text-muted-foreground">Situação</p>{getStatusBadge(selectedPackage)}</div>
               </div>
               <div className="grid grid-cols-2 gap-x-6 gap-y-4 rounded-xl border p-5 text-sm md:grid-cols-4">
                 <div><p className="text-xs text-muted-foreground">Código do plano</p><p className="font-mono font-semibold text-primary">{selectedPackage.plan_code || "-"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Contratação</p><p className="font-semibold">{new Date(selectedPackage.contract_date).toLocaleDateString("pt-BR")}</p></div>
-                <div><p className="text-xs text-muted-foreground">Vencimento</p><p className="font-semibold">{selectedPackage.expiry_date ? new Date(selectedPackage.expiry_date).toLocaleDateString("pt-BR") : "-"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Frequência</p><p className="font-semibold">{frequencyLabel[selectedPackage.frequency] || selectedPackage.frequency || "-"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Valor contratado</p><p className="font-semibold">{formatCurrency(Number(selectedPackage.value || 0))}</p></div>
-                <div><p className="text-xs text-muted-foreground">Pagamento</p><p className="font-semibold">{selectedPackage.payment_status === "paid" ? "Pago" : selectedPackage.payment_status === "refunded" ? "Estornado" : selectedPackage.payment_status === "waived" ? "Isento" : "Pendente"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Data do pagamento</p><p className="font-semibold">{selectedPackage.payment_date ? new Date(selectedPackage.payment_date).toLocaleDateString("pt-BR") : "-"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Forma de recebimento</p><p className="font-semibold">{selectedPackage.payment_method || "-"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Contratação</p><p className="font-normal">{new Date(selectedPackage.contract_date).toLocaleDateString("pt-BR")}</p></div>
+                <div><p className="text-xs text-muted-foreground">Vencimento</p><p className="font-normal">{selectedPackage.expiry_date ? new Date(selectedPackage.expiry_date).toLocaleDateString("pt-BR") : "-"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Frequência</p><p className="font-normal">{frequencyLabel[selectedPackage.frequency] || selectedPackage.frequency || "-"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Valor contratado</p><p className="font-normal">{formatCurrency(Number(selectedPackage.value || 0))}</p></div>
+                <div><p className="text-xs text-muted-foreground">Pagamento</p><p className="font-normal">{selectedPackage.payment_status === "paid" ? "Pago" : selectedPackage.payment_status === "refunded" ? "Estornado" : selectedPackage.payment_status === "waived" ? "Isento" : "Pendente"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Data do pagamento</p><p className="font-normal">{selectedPackage.payment_date ? new Date(selectedPackage.payment_date).toLocaleDateString("pt-BR") : "-"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Forma de recebimento</p><p className="font-normal">{selectedPackage.payment_method || "-"}</p></div>
               </div>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 <Card><CardContent className="pt-5"><p className="text-xs text-muted-foreground">Banhos utilizados</p><p className="text-2xl font-bold">{selectedPackage.consumed_baths}/{selectedPackage.total_baths}</p></CardContent></Card>

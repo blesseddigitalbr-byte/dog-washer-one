@@ -8,10 +8,10 @@
 .tenant-ui h1 { font-weight: 600; letter-spacing: -0.025em; line-height: 1.25; }
 .tenant-ui h2, .tenant-ui h3 { font-weight: 600; letter-spacing: -0.015em; }
 .tenant-ui th { font-weight: 500; letter-spacing: 0.025em; }
-.tenant-ui td { font-variant-numeric: tabular-nums; }
+.tenant-ui td { font-variant-numeric: tabular-nums; font-weight: 400; }
 .tenant-ui label { font-weight: 500; }
 .tenant-ui button { letter-spacing: 0; }
-.tenant-ui input, .tenant-ui textarea, .tenant-ui select { line-height: 1.5; }
+.tenant-ui input, .tenant-ui textarea, .tenant-ui select { line-height: 1.5; font-weight: 400; }
 .tenant-ui :focus-visible { outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) {
   .tenant-ui *, .tenant-ui *::before, .tenant-ui *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
