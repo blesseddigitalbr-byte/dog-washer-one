@@ -165,6 +165,12 @@ Legenda: `[x]` etapa verificada; `[ ]` trabalho pendente. **Recuperar** = identi
 
 ## 12. Design e qualidade — transversal
 
+- [ ] Base white-label: marca e cores por organização, assinatura by/rede e tela de personalização (em validação).
+- [ ] Licenciamento comercial de módulos com validação no servidor; esconder menus não é suficiente.
+- [ ] Onboarding de empresas, contas financeiras próprias e carteiras de parceiros por CNPJ.
+- [ ] Definir contrato comercial, preços por módulo, cobrança SaaS, domínio e política de suporte.
+- [ ] Revisar cores fixas das telas antigas para aderirem ao tema configurável.
+
 - [ ] Padronizar identidade DWO — Dog Washer One, cores e tipografia.
 - [ ] Preservar a estrutura de dados e ações úteis do Emergent.
 - [ ] Melhorar organização visual, tabelas, modais e responsividade.

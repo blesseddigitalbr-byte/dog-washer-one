@@ -3,6 +3,9 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 import UnitSwitcher from "@/components/UnitSwitcher";
+import { trpc } from "@/lib/trpc";
+import { neutralBrand, brandSignature } from "../../../shared/branding";
+import type { CSSProperties } from "react";
 import {
   LayoutDashboard,
   Calendar,
@@ -43,6 +46,12 @@ export default function DashboardLayout({
 }) {
   const [location, setLocation] = useLocation();
   const { user, logout } = useAuth();
+  const branding = trpc.branding.current.useQuery(undefined, { retry: false });
+  const brand = branding.data ?? neutralBrand;
+  const brandStyle = { "--primary": brand.primary_color, "--primary-foreground": "#ffffff", "--secondary": brand.secondary_color,
+    "--background": brand.background_color, "--ring": brand.primary_color, "--sidebar": "#ffffff", "--sidebar-foreground": "#17213B",
+    "--sidebar-accent": brand.primary_color, "--sidebar-primary-foreground": "#ffffff", "--sidebar-border": "#E5DCF2",
+  } as CSSProperties;
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedSections, setExpandedSections] = useState<string[]>([
     "OPERACIONAL",
@@ -84,6 +93,7 @@ export default function DashboardLayout({
         { icon: <Zap className="w-5 h-5" />, label: "Integrações", path: "/integrations" },
         { icon: <Zap className="w-5 h-5" />, label: "Splits e Repasses", path: "/splits" },
         { icon: <Settings className="w-5 h-5" />, label: "Configurações", path: "/settings", comingSoon: true },
+        { icon: <Settings className="w-5 h-5" />, label: "Marca e módulos", path: "/branding" },
       ],
     },
   ];
@@ -113,7 +123,7 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background" style={brandStyle}>
       {/* Sidebar */}
       <div
         className={`fixed md:relative z-40 h-screen bg-sidebar text-sidebar-foreground transition-all duration-300 ${
@@ -124,14 +134,10 @@ export default function DashboardLayout({
         <div className="p-6 border-b border-sidebar-border flex flex-col items-center justify-center text-center">
           {sidebarOpen && (
             <div className="flex w-full items-center justify-center py-2">
-              <img
-                src="/brand/dwo-icon.png"
-                alt="DWO"
-                className="h-24 w-24 object-contain"
-              />
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 bg-white text-center text-lg font-extrabold" style={{ borderColor: brand.primary_color, color: brand.secondary_color }}>{brand.display_name}</div>
             </div>
           )}
-          {sidebarOpen && <p className="text-xs font-semibold text-sidebar-foreground">DWO · Dog Washer One</p>}
+          {sidebarOpen && <><p className="text-lg font-semibold">{brand.display_name}</p><p className="text-xs font-semibold" style={{ color: brand.primary_color }}>{brandSignature(brand.signature)}</p></>}
           {!sidebarOpen && (
             <button
               onClick={() => setSidebarOpen(true)}

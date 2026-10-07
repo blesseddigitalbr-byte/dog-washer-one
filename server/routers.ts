@@ -6,6 +6,7 @@ import { supabase, supabaseAdmin } from "./_core/supabase.js";
 import { generateClientCode, generatePetCode } from "./codeGenerator.js";
 import { sendAppointmentConfirmationEmail } from "./_core/emailService.js";
 import { asaasRouter } from "./asaas/router.js";
+import { brandingRouter } from "./branding.js";
 
 // Business routes are authenticated by default. Database RLS applies the
 // organization and unit boundaries to each request.
@@ -35,6 +36,7 @@ async function attachPetPhotoUrls(pets: any[]) {
 
 export const appRouter = router({
   asaas: asaasRouter,
+  branding: brandingRouter,
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
