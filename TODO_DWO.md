@@ -6,6 +6,19 @@ Legenda: `[x]` etapa verificada; `[ ]` trabalho pendente. **Recuperar** = identi
 
 ## 0. Auditoria e preservação
 
+### Backlog novo — Portal do Tutor
+
+Solicitado em 07/10/2026. Apenas planejamento; implementação futura, sem alterar a prioridade atual do salão nem a orientação de deixar o item 10 por último.
+
+- [ ] Criar portal do tutor com identidade visual da empresa (white-label).
+- [ ] Autenticação e acesso restrito aos próprios dados e pets, com isolamento entre empresas.
+- [ ] Consultar próximos agendamentos e respectivas situações.
+- [ ] Consultar histórico de atendimentos por pet.
+- [ ] Consultar pagamentos, cobranças pendentes e links de pagamento disponíveis.
+- [ ] Calendário de disponibilidade para solicitar/criar novos agendamentos, respeitando horários, serviços e profissionais.
+- [ ] Definir regras de confirmação e permissões de reagendamento/cancelamento antes de implementar essas ações.
+- [ ] Validar experiência responsiva em celular e segurança de acesso.
+
 - [x] Inventário inicial de telas e rotas do Emergent (`RESGATE_EMERGENT.md`).
 - [ ] Comparar cada ação, campo, regra e permissão entre os projetos.
 - [ ] Confrontar testes e relatórios antigos com o comportamento atual.
