@@ -261,7 +261,7 @@ export default function ClientsPage() {
                 {/* Client Header - Avatar + Name + Email + Phone */}
                 <div className="flex items-start gap-3 mb-4">
                   <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center text-lg font-bold text-primary flex-shrink-0">
-                    {getInitial(client.name)}
+                    {client.photoUrl ? <img src={client.photoUrl} alt={`Foto de ${client.name}`} className="h-full w-full rounded-full object-cover" /> : getInitial(client.name)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">

@@ -203,7 +203,7 @@ export function ClientDetailModal({
               <div className="flex items-start justify-between pb-4 border-b border-accent/10">
                 <div className="flex items-center gap-4">
                   <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center text-2xl font-bold text-primary flex-shrink-0">
-                    {safeClientNameChar}
+                    {client?.photoUrl ? <img src={client.photoUrl} alt={`Foto de ${clientName}`} className="h-full w-full rounded-full object-cover" /> : safeClientNameChar}
                   </div>
                   <div>
                     <div className="flex items-center gap-2 mb-2">

@@ -35,8 +35,8 @@ export function ClientForm({
     neighborhood: clientData?.bairro || "",
     city: clientData?.cidade || "",
     state: clientData?.uf || "",
-    isVip: clientData?.is_vip || false,
-    isModelDog: clientData?.is_model_dog || false,
+    isVip: clientData?.is_vip ?? clientData?.isVip ?? false,
+    isModelDog: clientData?.is_model_dog ?? clientData?.isModelDog ?? false,
     petName: "",
     petBreed: "",
     petWeight: "",
@@ -46,13 +46,15 @@ export function ClientForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loadingCep, setLoadingCep] = useState(false);
+  const [photo, setPhoto] = useState<{ base64: string; mimeType: "image/jpeg" | "image/png" | "image/webp" } | null>(null);
+  const uploadPhoto = trpc.clients.uploadPhoto.useMutation();
 
   const createMutation = trpc.clients.create.useMutation();
   const updateMutation = trpc.clients.update.useMutation();
   const utils = trpc.useUtils();
 
   const isEditing = !!clientId;
-  const isLoading = createMutation.isPending || updateMutation.isPending || loadingCep;
+  const isLoading = isSubmitting || createMutation.isPending || updateMutation.isPending || uploadPhoto.isPending || loadingCep;
 
   // Atualizar formData quando clientData mudar (para pré-preenchimento ao editar)
   useEffect(() => {
@@ -69,8 +71,8 @@ export function ClientForm({
         neighborhood: clientData.bairro || "",
         city: clientData.cidade || "",
         state: clientData.uf || "",
-        isVip: clientData.is_vip || false,
-        isModelDog: clientData.is_model_dog || false,
+        isVip: clientData.is_vip ?? clientData.isVip ?? false,
+        isModelDog: clientData.is_model_dog ?? clientData.isModelDog ?? false,
         petName: "",
         petBreed: "",
         petWeight: "",
@@ -183,14 +185,22 @@ export function ClientForm({
           : {}),
       };
 
+      let savedClientId = clientId;
       if (isEditing && clientId) {
         await updateMutation.mutateAsync({
           id: clientId,
           ...submitData,
         });
       } else {
-        await createMutation.mutateAsync(submitData);
+        const created = await createMutation.mutateAsync(submitData);
+        savedClientId = created.id;
       }
+      if (photo && savedClientId) {
+        try { await uploadPhoto.mutateAsync({ clientId: savedClientId, ...photo }); }
+        catch { toast.error("Dados do cliente salvos, mas a foto não foi enviada. Abra Editar para tentar novamente."); }
+      }
+      setPhoto(null);
+      if (savedClientId) await utils.clients.getById.invalidate({ id: savedClientId });
 
       // Invalidate clients list to refetch
       await utils.clients.list.invalidate();
@@ -236,6 +246,8 @@ export function ClientForm({
   };
 
   const handleClose = () => {
+    if (isSubmitting) return;
+    setPhoto(null);
     setFormData({
       name: "",
       email: "",
@@ -267,6 +279,17 @@ export function ClientForm({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="rounded-xl border border-border bg-white p-4">
+            <Label htmlFor="tutor-photo">Foto do tutor</Label>
+            <div className="mt-3 flex items-center gap-4">
+              {(photo?.base64 || clientData?.photoUrl) && <img src={photo?.base64 || clientData?.photoUrl} alt="Foto do tutor" className="h-20 w-20 rounded-full object-cover" />}
+              <div className="flex-1"><Input id="tutor-photo" type="file" accept="image/jpeg,image/png,image/webp" disabled={isSubmitting} onChange={event => {
+                const file = event.target.files?.[0]; if (!file) return;
+                if (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024) { toast.error('Escolha JPG, PNG ou WebP com até 5 MB'); event.target.value = ''; return; }
+                const reader = new FileReader(); reader.onload = () => setPhoto({ base64: String(reader.result), mimeType: file.type as "image/jpeg" | "image/png" | "image/webp" }); reader.readAsDataURL(file);
+              }} /><p className="mt-2 text-xs text-muted-foreground">JPG, PNG ou WebP, até 5 MB. A foto só é enviada ao salvar.</p></div>
+            </div>
+          </div>
           {/* Submit Error */}
           {errors.submit && (
             <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center gap-2">
@@ -555,7 +578,7 @@ export function ClientForm({
 
           {/* Checkboxes VIP e Modelo lado a lado */}
           <div className="grid grid-cols-2 gap-6 pt-4 bg-accent/5 p-4 rounded-lg">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 rounded-lg border border-border bg-white p-3">
               <Checkbox
                 id="isVip"
                 checked={formData.isVip}
@@ -568,7 +591,7 @@ export function ClientForm({
               </Label>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 rounded-lg border border-border bg-white p-3">
               <Checkbox
                 id="isModelDog"
                 checked={formData.isModelDog}
@@ -583,7 +606,7 @@ export function ClientForm({
           </div>
 
           {/* Buttons */}
-          <div className="flex gap-3 pt-6 border-t">
+          <div className="sticky bottom-0 flex gap-3 border-t bg-white py-4">
             <Button
               type="button"
               variant="outline"
@@ -596,10 +619,10 @@ export function ClientForm({
             <Button
               type="submit"
               disabled={isLoading}
-              className="flex-1 bg-accent hover:bg-accent/90"
+              className="flex-1 bg-primary text-white hover:bg-primary/90"
             >
               {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {isEditing ? "Atualizar Cliente" : "Criar Cliente"}
+              {isSubmitting ? "Salvando..." : isEditing ? "Salvar alterações" : "Salvar cliente"}
             </Button>
           </div>
         </form>

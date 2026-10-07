@@ -34,6 +34,12 @@ async function attachPetPhotoUrls(pets: any[]) {
   );
 }
 
+async function clientPhotoUrl(client: any) {
+  if (!client.photo_storage_key || !client.photo_storage_key.startsWith(`${client.organization_id}/clients/${client.id}/`)) return null;
+  const { data } = await supabaseAdmin.storage.from("client-photos").createSignedUrl(client.photo_storage_key, 3600);
+  return data?.signedUrl ?? null;
+}
+
 export const appRouter = router({
   asaas: asaasRouter,
   branding: brandingRouter,
@@ -357,6 +363,19 @@ export const appRouter = router({
 
   // Clients & Pets routers
   clients: router({
+    uploadPhoto: protectedProcedure.input(z.object({ clientId: z.string().uuid(), base64: z.string().max(7_000_000), mimeType: z.enum(["image/jpeg", "image/png", "image/webp"]) })).mutation(async ({ ctx, input }) => {
+      const { data: client, error } = await supabase.from("clientes").select("id, organization_id").eq("id", input.clientId).maybeSingle();
+      if (error || !client || client.organization_id !== ctx.user?.organizationId) throw new Error("Cliente não encontrado nesta empresa");
+      const buffer = Buffer.from(input.base64.split(",").pop() ?? "", "base64");
+      const valid = input.mimeType === "image/png" ? buffer.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10])) : input.mimeType === "image/jpeg" ? buffer[0] === 255 && buffer[1] === 216 && buffer[2] === 255 : buffer.subarray(0,4).toString() === "RIFF" && buffer.subarray(8,12).toString() === "WEBP";
+      if (!valid || buffer.length > 5242880) throw new Error("Imagem inválida. Use JPG, PNG ou WebP até 5 MB");
+      const key = `${client.organization_id}/clients/${client.id}/${crypto.randomUUID()}`;
+      const { error: uploaded } = await supabaseAdmin.storage.from("client-photos").upload(key, buffer, { contentType: input.mimeType });
+      if (uploaded) throw new Error("Não foi possível enviar a foto");
+      const { data: saved, error: saveError } = await supabase.from("clientes").update({ photo_storage_key: key }).eq("id", client.id).select("id").maybeSingle();
+      if (saveError || !saved) { await supabaseAdmin.storage.from("client-photos").remove([key]); throw new Error("Não foi possível vincular a foto ao cliente"); }
+      return { success: true };
+    }),
     // List all clients with their associated pets
     list: publicProcedure.query(async () => {
       try {
@@ -378,6 +397,7 @@ export const appRouter = router({
           const pets = await attachPetPhotoUrls(cliente.pets || []);
           return {
             id: cliente.id,
+            photoUrl: await clientPhotoUrl(cliente),
             name: cliente.nome,
             email: cliente.email,
             phone: cliente.phone,
@@ -428,6 +448,7 @@ export const appRouter = router({
           const pets = await attachPetPhotoUrls(cliente.pets || []);
           return {
             id: cliente.id,
+            photoUrl: await clientPhotoUrl(cliente),
             name: cliente.nome,
             email: cliente.email,
             phone: cliente.phone,
