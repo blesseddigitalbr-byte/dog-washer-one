@@ -221,6 +221,14 @@ Legenda: `[x]` etapa verificada; `[ ]` trabalho pendente. **Recuperar** = identi
 
 ## Ordem das entregas
 
+### Ajustes de cadastro do tutor — 07/10/2026
+
+- [x] Campo de foto do tutor (JPG/PNG/WebP até 5 MB), armazenamento privado e exibição no cadastro.
+- [x] Botões Cancelar e Salvar explícitos, com contraste e rodapé fixo.
+- [x] Checkboxes VIP/Escola e campos com bordas visíveis; preservação das marcações existentes.
+- [x] Nove testes selecionados aprovados; formulário publicado conferido no navegador sem alterar dados reais.
+- [ ] Homologar envio e leitura de uma foto em cadastro de teste ponta a ponta.
+
 1. Cobranças integradas às três telas e persistência segura.
 2. Conciliação e baixa de serviço com créditos de pacote.
 3. Fechamento, extrato e transferência conciliada.

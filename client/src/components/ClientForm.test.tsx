@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ClientForm } from "./ClientForm";
+vi.stubGlobal("ResizeObserver", class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+});
 const mocks = vi.hoisted(() => ({ save: vi.fn(), close: vi.fn() }));
 vi.mock("@/lib/trpc", () => ({ trpc: {
   clients: {
