@@ -38,7 +38,7 @@ const serviceModeLabels: Record<string, string> = {
 };
 
 const fieldClass = "mt-1 rounded-none border-0 border-b border-[#C9D0DA] bg-transparent px-0 shadow-none focus:ring-0 focus-visible:ring-0";
-const labelClass = "text-[11px] font-black uppercase tracking-wide text-[#44516A]";
+const labelClass = "text-[11px] font-black uppercase tracking-wide text-muted-foreground";
 
 function todayDate() {
   return new Date().toISOString().slice(0, 10);
@@ -281,25 +281,25 @@ export default function ScheduleSimulator() {
   const whatsappUrl = phone ? `https://wa.me/${phone.startsWith("55") ? phone : `55${phone}`}?text=${encodeURIComponent(message)}` : null;
 
   return (
-    <div className="min-h-screen bg-[#F8F6F1] p-4 sm:p-6">
+    <div className="min-h-screen bg-background p-4 sm:p-6">
       <div className="mx-auto max-w-[1480px] space-y-6">
         <header className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#C9A24E]">Simulador de Agenda</p>
-            <h1 className="mt-1 text-3xl font-black tracking-tight text-[#07111E]">Agenda sugerida por pet/pacote</h1>
-            <p className="mt-1 max-w-3xl text-sm font-semibold text-[#44516A]">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-primary">Simulador de Agenda</p>
+            <h1 className="mt-1 text-3xl font-black tracking-tight text-foreground">Agenda sugerida por pet/pacote</h1>
+            <p className="mt-1 max-w-3xl text-sm font-semibold text-muted-foreground">
               Monte o ciclo sugerido antes de criar os atendimentos oficiais. O saldo do pacote só baixa quando o atendimento é finalizado.
             </p>
           </div>
-          <Button className="bg-[#07111E] text-white hover:bg-[#113A7A]">Novo pet</Button>
+          <Button className="bg-primary text-white hover:bg-primary">Novo pet</Button>
         </header>
 
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <main className="space-y-6">
-            <section className="overflow-hidden rounded-xl border border-[#E7DEC8] bg-white shadow-sm">
-              <div className="border-b border-[#E7DEC8] px-7 py-5">
-                <h2 className="flex items-center gap-2 text-xl font-black tracking-tight text-[#07111E]">
-                  <span className="text-[#C9A24E]">☷</span>
+            <section className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+              <div className="border-b border-border px-7 py-5">
+                <h2 className="flex items-center gap-2 text-xl font-black tracking-tight text-foreground">
+                  <span className="text-primary">☷</span>
                   Configuração do Plano
                 </h2>
               </div>
@@ -396,10 +396,10 @@ export default function ScheduleSimulator() {
               </div>
             </section>
 
-            <section className="overflow-hidden rounded-xl border border-[#E7DEC8] bg-white shadow-sm">
-              <div className="border-b border-[#E7DEC8] px-7 py-5">
-                <h2 className="flex items-center gap-2 text-xl font-black tracking-tight text-[#07111E]">
-                  <CalendarRange className="h-5 w-5 text-[#C9A24E]" />
+            <section className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+              <div className="border-b border-border px-7 py-5">
+                <h2 className="flex items-center gap-2 text-xl font-black tracking-tight text-foreground">
+                  <CalendarRange className="h-5 w-5 text-primary" />
                   Regras de Recorrência
                 </h2>
               </div>
@@ -455,47 +455,47 @@ export default function ScheduleSimulator() {
                 </div>
                 <div className="md:col-span-3">
                   <Label className={labelClass}>Observação</Label>
-                  <Textarea className="mt-1 min-h-20 border-[#E7DEC8] bg-[#FFFEFB]" value={notes} onChange={(event) => setNotes(event.target.value)} />
+                  <Textarea className="mt-1 min-h-20 border-border bg-[#FFFEFB]" value={notes} onChange={(event) => setNotes(event.target.value)} />
                 </div>
               </div>
             </section>
 
             {!simulation ? (
-              <section className="flex min-h-[330px] flex-col items-center justify-center rounded-xl border border-dashed border-[#D8B768] bg-white p-8 text-center shadow-sm">
-                <CalendarRange className="mb-4 h-12 w-12 text-[#C9A24E]" />
-                <h2 className="text-xl font-black text-[#07111E]">A prévia aparecerá aqui</h2>
-                <p className="mt-2 max-w-md text-sm font-semibold text-[#44516A]">Nenhum atendimento será criado até você revisar e confirmar.</p>
-                <Button className="mt-6 bg-[#113A7A] font-black text-white hover:bg-[#07111E]" disabled={simulateMutation.isPending} onClick={simulate}>
+              <section className="flex min-h-[330px] flex-col items-center justify-center rounded-xl border border-dashed border-primary bg-white p-8 text-center shadow-sm">
+                <CalendarRange className="mb-4 h-12 w-12 text-primary" />
+                <h2 className="text-xl font-black text-foreground">A prévia aparecerá aqui</h2>
+                <p className="mt-2 max-w-md text-sm font-semibold text-muted-foreground">Nenhum atendimento será criado até você revisar e confirmar.</p>
+                <Button className="mt-6 bg-primary font-black text-white hover:bg-primary" disabled={simulateMutation.isPending} onClick={simulate}>
                   <RefreshCw className="mr-2 h-4 w-4" />
                   {simulateMutation.isPending ? "Simulando..." : "Gerar pré-agenda"}
                 </Button>
               </section>
             ) : (
-              <section className="overflow-hidden rounded-xl border border-[#E7DEC8] bg-white shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E7DEC8] px-7 py-5">
+              <section className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-7 py-5">
                   <div>
-                    <h2 className="text-xl font-black tracking-tight text-[#07111E]">Agenda Sugerida (Ciclo Atual)</h2>
-                    <p className="mt-1 text-xs font-bold text-[#44516A]">
+                    <h2 className="text-xl font-black tracking-tight text-foreground">Agenda Sugerida (Ciclo Atual)</h2>
+                    <p className="mt-1 text-xs font-bold text-muted-foreground">
                       Edite data/hora, marque tosa/trimming e ajuste o serviço final antes de incluir na agenda oficial.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2 text-xs font-black uppercase">
-                    <span className="rounded-full bg-[#F8F6F1] px-3 py-1 text-[#07111E]">{summary.total} datas</span>
+                    <span className="rounded-full bg-background px-3 py-1 text-foreground">{summary.total} datas</span>
                     <span className="rounded-full bg-[#EAF7EF] px-3 py-1 text-emerald-700">{summary.valid} válidas</span>
                     <span className="rounded-full bg-[#FFF7E8] px-3 py-1 text-[#8A640D]">{summary.grooming} tosa/trim</span>
                   </div>
                 </div>
-                <div className="hidden grid-cols-[70px_1.2fr_1fr_0.8fr_1.1fr_1.2fr_1.2fr_auto] gap-3 border-b border-[#E7DEC8] bg-[#F2EFE7] px-7 py-3 text-[11px] font-black uppercase tracking-wide text-[#44516A] md:grid">
+                <div className="hidden grid-cols-[70px_1.2fr_1fr_0.8fr_1.1fr_1.2fr_1.2fr_auto] gap-3 border-b border-border bg-[#F2EFE7] px-7 py-3 text-[11px] font-black uppercase tracking-wide text-muted-foreground md:grid">
                   <span>Sessão</span><span>Data sugerida</span><span>Dia</span><span>Horário</span><span>Serviço padrão</span><span>Tosa/trimming?</span><span>Serviço final</span><span>Ação</span>
                 </div>
                 <div className="divide-y">
                   {(simulation.items ?? []).sort((a: any, b: any) => a.scheduled_at.localeCompare(b.scheduled_at)).map((item: any, index: number) => (
                     <div key={item.id} className="grid gap-3 px-7 py-4 md:grid-cols-[70px_1.2fr_1fr_0.8fr_1.1fr_1.2fr_1.2fr_auto] md:items-center">
-                      <span className="text-sm font-black text-[#07111E]">{String(index + 1).padStart(2, "0")}</span>
-                      <Input aria-label={`Alterar data ${index + 1}`} type="datetime-local" className="h-9 border-[#E7DEC8] text-xs font-bold" value={toLocalDateTimeInput(item.scheduled_at)} onChange={(event) => updateItemMutation.mutate({ id: item.id, scheduledAt: new Date(event.target.value).toISOString() })} />
-                      <span className="text-sm font-bold capitalize text-[#44516A]">{format(new Date(item.scheduled_at), "EEEE", { locale: ptBR })}</span>
-                      <span className="text-sm font-black text-[#07111E]">{format(new Date(item.scheduled_at), "HH:mm")}</span>
-                      <span className="rounded-full bg-[#EEF1F4] px-3 py-1 text-center text-[11px] font-black uppercase text-[#44516A]">{selectedService?.name || finalServiceName}</span>
+                      <span className="text-sm font-black text-foreground">{String(index + 1).padStart(2, "0")}</span>
+                      <Input aria-label={`Alterar data ${index + 1}`} type="datetime-local" className="h-9 border-border text-xs font-bold" value={toLocalDateTimeInput(item.scheduled_at)} onChange={(event) => updateItemMutation.mutate({ id: item.id, scheduledAt: new Date(event.target.value).toISOString() })} />
+                      <span className="text-sm font-bold capitalize text-muted-foreground">{format(new Date(item.scheduled_at), "EEEE", { locale: ptBR })}</span>
+                      <span className="text-sm font-black text-foreground">{format(new Date(item.scheduled_at), "HH:mm")}</span>
+                      <span className="rounded-full bg-[#EEF1F4] px-3 py-1 text-center text-[11px] font-black uppercase text-muted-foreground">{selectedService?.name || finalServiceName}</span>
                       <label className="flex items-center gap-2 text-sm font-bold">
                         <Checkbox
                           checked={!!item.include_grooming}
@@ -503,7 +503,7 @@ export default function ScheduleSimulator() {
                         />
                         {item.include_grooming ? "Sim" : "Não"}
                       </label>
-                      <Input className="h-9 border-[#E7DEC8] text-xs font-bold" value={item.final_service_name || finalServiceName} onChange={(event) => updateItemMutation.mutate({ id: item.id, finalServiceName: event.target.value })} />
+                      <Input className="h-9 border-border text-xs font-bold" value={item.final_service_name || finalServiceName} onChange={(event) => updateItemMutation.mutate({ id: item.id, finalServiceName: event.target.value })} />
                       <div className="flex items-center justify-end gap-2">
                         {(item.alerts ?? []).length ? <AlertTriangle className="h-4 w-4 text-amber-700" /> : <CheckCircle2 className="h-4 w-4 text-emerald-700" />}
                         <Button variant="outline" size="sm" disabled={item.status === "created"} onClick={() => updateItemMutation.mutate({ id: item.id, ignored: item.status !== "ignored" })}>{item.status === "ignored" ? "Incluir" : "Não incluir"}</Button>
@@ -513,32 +513,32 @@ export default function ScheduleSimulator() {
                 </div>
                 <div className="flex flex-wrap justify-end gap-3 border-t p-5">
                   <Button variant="outline" onClick={() => { setSimulation(null); setMessage(""); }}>Limpar</Button>
-                  <Button className="bg-[#07111E] font-black text-white hover:bg-[#113A7A]" disabled={confirmMutation.isPending || simulation.status === "confirmed"} onClick={() => confirmMutation.mutate({ id: simulation.id, includeWarnings: true })}>{simulation.status === "confirmed" ? "Incluído na Agenda" : "Incluir na Agenda Oficial"}</Button>
+                  <Button className="bg-primary font-black text-white hover:bg-primary" disabled={confirmMutation.isPending || simulation.status === "confirmed"} onClick={() => confirmMutation.mutate({ id: simulation.id, includeWarnings: true })}>{simulation.status === "confirmed" ? "Incluído na Agenda" : "Incluir na Agenda Oficial"}</Button>
                 </div>
               </section>
             )}
           </main>
 
           <aside className="space-y-5 xl:sticky xl:top-5 xl:self-start">
-            <section className="rounded-xl bg-[#07111E] p-6 text-white shadow-sm">
-              <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-[#D8B768]">
+            <section className="rounded-xl bg-primary p-6 text-white shadow-sm">
+              <h2 className="flex items-center gap-2 text-sm font-black uppercase tracking-wide text-primary">
                 <AlertTriangle className="h-4 w-4" />
                 Regras de lógica
               </h2>
               <div className="mt-5 space-y-4 border-t border-white/10 pt-5 text-xs font-semibold leading-relaxed text-white/80">
-                <p><span className="font-black text-[#D8B768]">Regra:</span> usar data de referência. O cronograma começa exatamente na data informada e soma a frequência contratada.</p>
-                <p><span className="font-black text-[#D8B768]">Regra:</span> usar dia padrão da semana. O cronograma encontra a próxima data daquele dia, a partir da referência base.</p>
-                <p><span className="font-black text-[#D8B768]">Tosa/Trimming:</span> quando existir no pacote, o serviço entra no ciclo conforme intervalo configurado de 7 ou 8 semanas.</p>
+                <p><span className="font-black text-primary">Regra:</span> usar data de referência. O cronograma começa exatamente na data informada e soma a frequência contratada.</p>
+                <p><span className="font-black text-primary">Regra:</span> usar dia padrão da semana. O cronograma encontra a próxima data daquele dia, a partir da referência base.</p>
+                <p><span className="font-black text-primary">Tosa/Trimming:</span> quando existir no pacote, o serviço entra no ciclo conforme intervalo configurado de 7 ou 8 semanas.</p>
               </div>
             </section>
 
-            <section className="rounded-xl border border-[#E7DEC8] bg-[#E6E1D8] p-5 shadow-sm">
-              <h2 className="text-lg font-black text-[#07111E]">Resumo para Envio</h2>
-              <p className="mt-1 text-xs font-bold text-[#44516A]">
+            <section className="rounded-xl border border-border bg-[#E6E1D8] p-5 shadow-sm">
+              <h2 className="text-lg font-black text-foreground">Resumo para Envio</h2>
+              <p className="mt-1 text-xs font-bold text-muted-foreground">
                 Texto editável antes de copiar, enviar pelo WhatsApp ou registrar no histórico.
               </p>
               <Textarea
-                className="mt-4 min-h-[420px] resize-y border-0 bg-white text-xs font-semibold leading-relaxed text-[#44516A] shadow-sm focus-visible:ring-[#C9A24E]"
+                className="mt-4 min-h-[420px] resize-y border-0 bg-white text-xs font-semibold leading-relaxed text-muted-foreground shadow-sm focus-visible:ring-primary"
                 placeholder="Gere a pré-agenda para visualizar e editar o texto de confirmação do ciclo."
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
@@ -553,7 +553,7 @@ export default function ScheduleSimulator() {
                     <a href={whatsappUrl} target="_blank" rel="noreferrer"><MessageCircle className="mr-2 h-4 w-4" />Enviar via WhatsApp</a>
                   </Button>
                 )}
-                <Button className="w-full bg-[#07111E] font-black text-white hover:bg-[#113A7A]" disabled={!simulation || confirmMutation.isPending || simulation?.status === "confirmed"} onClick={() => simulation && confirmMutation.mutate({ id: simulation.id, includeWarnings: true })}>
+                <Button className="w-full bg-primary font-black text-white hover:bg-primary" disabled={!simulation || confirmMutation.isPending || simulation?.status === "confirmed"} onClick={() => simulation && confirmMutation.mutate({ id: simulation.id, includeWarnings: true })}>
                   {simulation?.status === "confirmed" ? "Agenda já incluída" : "Incluir na agenda oficial"}
                 </Button>
                 {simulation && (
@@ -562,7 +562,7 @@ export default function ScheduleSimulator() {
                   </Button>
                 )}
                 {!simulation && (
-                  <Button className="w-full bg-[#113A7A] font-black text-white hover:bg-[#07111E]" disabled={simulateMutation.isPending} onClick={simulate}>
+                  <Button className="w-full bg-primary font-black text-white hover:bg-primary" disabled={simulateMutation.isPending} onClick={simulate}>
                     <RefreshCw className="mr-2 h-4 w-4" />
                     {simulateMutation.isPending ? "Simulando..." : "Gerar pré-agenda"}
                   </Button>
@@ -570,10 +570,10 @@ export default function ScheduleSimulator() {
               </div>
             </section>
 
-            <section className="overflow-hidden rounded-xl bg-[#07111E] shadow-sm">
-              <div className="h-32 bg-gradient-to-br from-[#113A7A] via-[#07111E] to-[#C9A24E]" />
+            <section className="overflow-hidden rounded-xl bg-primary shadow-sm">
+              <div className="h-32 bg-gradient-to-br from-secondary via-primary to-primary" />
               <div className="p-4">
-                <p className="text-[11px] font-black uppercase tracking-wide text-[#D8B768]">Dica da especialista</p>
+                <p className="text-[11px] font-black uppercase tracking-wide text-primary">Dica da especialista</p>
                 <p className="mt-1 text-sm font-semibold text-white">Sessões quinzenais ajudam a manter o ciclo e facilitam a previsão da agenda.</p>
               </div>
             </section>

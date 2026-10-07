@@ -43,8 +43,8 @@ const STATUS_META: Record<string, { label: string; badge: string; option: string
   },
   in_progress: {
     label: "Em Andamento",
-    badge: "bg-[#C9A24E] text-[#07111E]",
-    option: "bg-[#F3E4B8] text-[#07111E]",
+    badge: "bg-accent text-foreground",
+    option: "bg-[#F3E4B8] text-foreground",
   },
   completed: {
     label: "Concluído",
@@ -311,9 +311,9 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
             className="mt-2"
           />
           {clientSearchTerm.trim() && (
-            <div className="max-h-36 overflow-y-auto rounded-xl border border-[#D8B768]/60 bg-white p-1 shadow-sm">
+            <div className="max-h-36 overflow-y-auto rounded-xl border border-primary/60 bg-white p-1 shadow-sm">
               {filteredClients.length ? filteredClients.map((client: any) => (
-                <button key={client.id} type="button" onClick={() => { setSelectedClient(client.id); setSelectedPet(null); setClientSearchTerm(""); }} className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-[#07111E] transition hover:bg-[#F8F6F1]">
+                <button key={client.id} type="button" onClick={() => { setSelectedClient(client.id); setSelectedPet(null); setClientSearchTerm(""); }} className="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm font-semibold text-foreground transition hover:bg-background">
                   {client.name || client.nome}
                 </button>
               )) : <p className="px-3 py-2 text-sm text-muted-foreground">Nenhum cliente encontrado.</p>}
@@ -339,7 +339,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
       </div>
 
       {appointment?.id && (
-        <div className="rounded-xl border border-[#D8B768]/50 bg-[#F8F6F1] p-4">
+        <div className="rounded-xl border border-primary/50 bg-background p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <Label htmlFor="appointment-status" className="text-base font-semibold">Status do atendimento</Label>
             <span className={`rounded-md px-3 py-1 text-xs font-extrabold ${STATUS_META[appointmentStatus]?.badge}`}>
@@ -372,7 +372,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
           {selectedPet && (
             <div className="space-y-2 mb-3">
               <div
-                className="flex items-center justify-between rounded-lg border border-[#D8B768]/35 bg-[#F8F6F1] p-3"
+                className="flex items-center justify-between rounded-lg border border-primary/35 bg-background p-3"
               >
                 <span className="font-medium text-foreground">
                   {allPets.find((p) => p.id === selectedPet)?.displayName || 
@@ -453,7 +453,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
       </div>
 
       {/* Executado por */}
-      <div className="rounded-lg border border-[#D8B768]/35 bg-[#F8F6F1] p-4">
+      <div className="rounded-lg border border-primary/35 bg-background p-4">
         <Label className="text-base font-semibold mb-3 block">
           Executado por
         </Label>
@@ -640,7 +640,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
         </Button>
         <Button
           type="submit"
-          className="bg-[#113A7A] hover:bg-[#07111E] text-white font-bold"
+          className="bg-primary hover:bg-primary text-white font-bold"
           disabled={createMutation.isPending || updateMutation.isPending || (executedBy === "student" && validatePermissionsMutation.isLoading)}
         >
           {createMutation.isPending || updateMutation.isPending
@@ -652,14 +652,14 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
     <AlertDialog open={confirmCompletionOpen} onOpenChange={setConfirmCompletionOpen}>
       <AlertDialogContent className="max-w-md rounded-2xl border-0 p-0 shadow-2xl">
         <div className="p-7 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#D8B768] text-[#07111E]">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent text-foreground">
             <AlertTriangle className="h-7 w-7" />
           </div>
           <AlertDialogHeader className="mt-4">
-            <AlertDialogTitle className="text-center text-xl font-extrabold text-[#07111E]">
+            <AlertDialogTitle className="text-center text-xl font-extrabold text-foreground">
               Confirmar finalização
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-center text-sm font-medium leading-6 text-[#44516A]">
+            <AlertDialogDescription className="text-center text-sm font-medium leading-6 text-muted-foreground">
               Ao marcar como Concluído/Check, este atendimento poderá consumir saldo do pacote vinculado e será registrado no histórico de visitas.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -670,7 +670,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
                 setConfirmCompletionOpen(false);
                 await performSubmit();
               }}
-              className="bg-[#113A7A] font-extrabold text-white hover:bg-[#07111E]"
+              className="bg-primary font-extrabold text-white hover:bg-primary"
             >
               Confirmar
             </AlertDialogAction>

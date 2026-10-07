@@ -5,9 +5,9 @@ import { brandingSchema, neutralBrand } from "../shared/branding.js";
 export const brandingRouter = router({
   current: protectedProcedure.query(async ({ ctx }) => {
     if (!ctx.user?.organizationId) return neutralBrand;
-    const { data, error } = await supabase.from("organization_branding").select("display_name, signature, primary_color, secondary_color, background_color").eq("organization_id", ctx.user.organizationId).maybeSingle();
+    const { data, error } = await supabase.from("organization_branding").select("display_name, signature, primary_color, secondary_color, background_color, logo_path").eq("organization_id", ctx.user.organizationId).maybeSingle();
     if (error) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Configuração de marca indisponível" });
-    return data ? brandingSchema.parse(data) : neutralBrand;
+    return data ? { ...brandingSchema.parse(data), logo_path: data.logo_path === "/brand/lux-dog.png" ? data.logo_path as string : null } : { ...neutralBrand, logo_path: null };
   }),
   save: protectedProcedure.input(brandingSchema).mutation(async ({ ctx, input }) => {
     if (!ctx.user?.organizationId || !["owner", "admin"].includes(ctx.user.role)) throw new TRPCError({ code: "FORBIDDEN", message: "Somente administradores podem alterar a marca" });

@@ -44,7 +44,7 @@ export default function UnitSwitcher() {
 
   return (
     <div className="flex min-w-0 items-center gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-sm">
-      <div className="hidden rounded-lg bg-[#D8B768]/20 p-2 text-[#113A7A] sm:block">
+      <div className="hidden rounded-lg bg-accent/20 p-2 text-primary sm:block">
         <Building2 className="h-5 w-5" />
       </div>
       <div className="min-w-0 flex-1">
@@ -61,7 +61,7 @@ export default function UnitSwitcher() {
                 switchUnit.mutate({ unitId: event.target.value });
               }
             }}
-            className="max-w-52 appearance-none truncate bg-transparent pr-7 text-sm font-bold text-[#07111E] outline-none disabled:cursor-default"
+            className="max-w-52 appearance-none truncate bg-transparent pr-7 text-sm font-bold text-foreground outline-none disabled:cursor-default"
           >
             {units.map((unit: any) => (
               <option key={unit.id} value={unit.id}>

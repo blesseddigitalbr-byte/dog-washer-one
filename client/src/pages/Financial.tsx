@@ -43,7 +43,7 @@ export default function Financial() {
     save.mutate({ id: requestId, origin, originId: origin === "standalone" ? undefined : originId, clientId: actualClient, amountCents, billingType, dueDate, description });
   };
   return <div className="space-y-6">
-    <div><h1 className="text-3xl font-semibold">Financeiro do salão</h1><p className="text-muted-foreground">Preparação de cobranças vinculadas a clientes, atendimentos e pacotes.</p></div>
+    <div><h1 className="text-2xl font-semibold">Financeiro do salão</h1><p className="text-muted-foreground">Preparação de cobranças vinculadas a clientes, atendimentos e pacotes.</p></div>
     <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">Nesta etapa, o formulário salva rascunhos no DWO. A emissão no Asaas ainda não está habilitada. Salvar não confirma pagamento, não consome sessões e não gera repasse.</div>
     {options.error && <p role="alert">{options.error.message}</p>}
     <Card><CardHeader><CardTitle>Preparar cobrança</CardTitle></CardHeader><CardContent>

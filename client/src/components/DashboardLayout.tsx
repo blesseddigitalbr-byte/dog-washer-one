@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
@@ -49,9 +49,17 @@ export default function DashboardLayout({
   const branding = trpc.branding.current.useQuery(undefined, { retry: false });
   const brand = branding.data ?? neutralBrand;
   const brandStyle = { "--primary": brand.primary_color, "--primary-foreground": "#ffffff", "--secondary": brand.secondary_color,
-    "--background": brand.background_color, "--ring": brand.primary_color, "--sidebar": "#ffffff", "--sidebar-foreground": "#17213B",
+    "--background": brand.background_color, "--ring": brand.primary_color, "--accent": "#EDE4FA", "--accent-foreground": "#17213B", "--muted": "#F1ECF7", "--border": "#DDD6ED", "--foreground": "#17213B", "--sidebar": "#ffffff", "--sidebar-foreground": "#17213B",
     "--sidebar-accent": brand.primary_color, "--sidebar-primary-foreground": "#ffffff", "--sidebar-border": "#E5DCF2",
   } as CSSProperties;
+  // Portalled dialogs must share the tenant theme. Restore defaults on logout.
+  useEffect(() => {
+    const root = document.documentElement;
+    const previous = Object.keys(brandStyle).map(key => [key, root.style.getPropertyValue(key)]);
+    Object.entries(brandStyle).forEach(([key, value]) => root.style.setProperty(key, String(value)));
+    root.classList.add("tenant-ui");
+    return () => { previous.forEach(([key, value]) => value ? root.style.setProperty(key, value) : root.style.removeProperty(key)); root.classList.remove("tenant-ui"); };
+  }, [brand.primary_color, brand.secondary_color, brand.background_color]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [expandedSections, setExpandedSections] = useState<string[]>([
     "OPERACIONAL",
@@ -134,7 +142,7 @@ export default function DashboardLayout({
         <div className="p-6 border-b border-sidebar-border flex flex-col items-center justify-center text-center">
           {sidebarOpen && (
             <div className="flex w-full items-center justify-center py-2">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 bg-white text-center text-lg font-extrabold" style={{ borderColor: brand.primary_color, color: brand.secondary_color }}>{brand.display_name}</div>
+              {branding.data && "logo_path" in branding.data && branding.data.logo_path ? <div className="relative h-24 w-24 overflow-hidden rounded-full bg-white"><img src={branding.data.logo_path} alt={brand.display_name} className="absolute left-1/2 top-1/2 w-[450px] max-w-none" style={{ transform: "translate(-50%, -32.5%)" }} /></div> : <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 bg-white text-center text-lg font-extrabold" style={{ borderColor: brand.primary_color, color: brand.secondary_color }}>{brand.display_name}</div>}
             </div>
           )}
           {sidebarOpen && <><p className="text-lg font-semibold">{brand.display_name}</p><p className="text-xs font-semibold" style={{ color: brand.primary_color }}>{brandSignature(brand.signature)}</p></>}

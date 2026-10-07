@@ -48,7 +48,7 @@ export default function Packages() {
     if (pkg.operational_status === "inactive") return <Badge variant="outline">Ciclo encerrado</Badge>;
     if (pkg.operational_status === "expired") return <Badge variant="outline">Vencido</Badge>;
     if (pkg.operational_status === "consumed") return <Badge variant="outline">Sem saldo</Badge>;
-    if (pkg.operational_status === "expiring") return <Badge className="bg-amber-500 text-[#07111E]">Vence em breve</Badge>;
+    if (pkg.operational_status === "expiring") return <Badge className="bg-amber-500 text-foreground">Vence em breve</Badge>;
     return <Badge className="bg-emerald-600 text-white hover:bg-emerald-600">Ativo</Badge>;
   };
 
@@ -77,11 +77,11 @@ export default function Packages() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground">Pacotes Contratados</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Pacotes Contratados</h1>
           <p className="text-muted-foreground mt-2">Gerencie os pacotes e saldos dos clientes</p>
         </div>
         <Button 
-          className="bg-[#113A7A] text-white hover:bg-[#0d2f64]"
+          className="bg-primary text-white hover:bg-[#0d2f64]"
           onClick={() => setIsNewPackageOpen(true)}
         >
           <Plus className="mr-2 h-4 w-4" />
@@ -137,7 +137,7 @@ export default function Packages() {
       </div>
 
       {packages.some((pkg: any) => ["expiring", "expired", "consumed"].includes(pkg.operational_status)) && (
-        <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-[#07111E]">
+        <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-foreground">
           <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-700" />
           <div>
             <p className="font-semibold">Radar de pacotes exige atenção</p>
@@ -169,7 +169,7 @@ export default function Packages() {
           <div className="overflow-hidden rounded-xl border">
             <Table>
               <TableHeader>
-                <TableRow className="bg-[#07111E] hover:bg-[#07111E]">
+                <TableRow className="bg-primary hover:bg-primary">
                   <TableHead className="font-semibold text-white">ID pacote</TableHead>
                   <TableHead className="font-semibold text-white">Pet e tutor</TableHead>
                   <TableHead className="font-semibold text-white">Data da contratação</TableHead>
@@ -189,11 +189,11 @@ export default function Packages() {
                 ) : (
                   filteredPackages.map((pkg: any) => {
                     return (
-                      <TableRow key={pkg.id} className="cursor-pointer bg-white transition hover:bg-[#F8F6F1]" onClick={() => setSelectedPackage(pkg)}>
-                        <TableCell className="font-mono text-sm font-bold text-[#113A7A]">{pkg.id_package}</TableCell>
+                      <TableRow key={pkg.id} className="cursor-pointer bg-white transition hover:bg-background" onClick={() => setSelectedPackage(pkg)}>
+                        <TableCell className="font-mono text-sm font-bold text-primary">{pkg.id_package}</TableCell>
                         <TableCell className="font-semibold">{pkg.pet_name} ({pkg.pet_breed || "Raça não informada"}) <span className="text-muted-foreground">| {tutorFirstName(pkg.client_name)}</span></TableCell>
                         <TableCell>{new Date(pkg.contract_date).toLocaleDateString("pt-BR")}</TableCell>
-                        <TableCell><span className="font-mono text-xs font-semibold text-[#113A7A]">{pkg.plan_code || pkg.plan_name}</span></TableCell>
+                        <TableCell><span className="font-mono text-xs font-semibold text-primary">{pkg.plan_code || pkg.plan_name}</span></TableCell>
                         <TableCell>{frequencyLabel[pkg.frequency] || pkg.frequency || "Não informada"}</TableCell>
                         <TableCell>{getStatusBadge(pkg)}</TableCell>
                         <TableCell className="text-right">
@@ -236,14 +236,14 @@ export default function Packages() {
           {selectedPackage && (
             <div className="space-y-5">
               <Button variant="outline" asChild><a href={`/financial?package=${encodeURIComponent(selectedPackage.id)}`}>Preparar cobrança deste pacote</a></Button>
-              <div className="grid grid-cols-2 gap-4 rounded-xl bg-[#F8F6F1] p-5 md:grid-cols-4">
+              <div className="grid grid-cols-2 gap-4 rounded-xl bg-background p-5 md:grid-cols-4">
                 <div><p className="text-xs text-muted-foreground">Plano</p><p className="font-semibold">{selectedPackage.plan_name}</p></div>
                 <div><p className="text-xs text-muted-foreground">Pet / raça</p><p className="font-semibold">{selectedPackage.pet_name} / {selectedPackage.pet_breed || "Não informada"}</p></div>
                 <div><p className="text-xs text-muted-foreground">Tutor</p><p className="font-semibold">{tutorFirstName(selectedPackage.client_name)}</p></div>
                 <div><p className="text-xs text-muted-foreground">Situação</p>{getStatusBadge(selectedPackage)}</div>
               </div>
               <div className="grid grid-cols-2 gap-x-6 gap-y-4 rounded-xl border p-5 text-sm md:grid-cols-4">
-                <div><p className="text-xs text-muted-foreground">Código do plano</p><p className="font-mono font-semibold text-[#113A7A]">{selectedPackage.plan_code || "-"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Código do plano</p><p className="font-mono font-semibold text-primary">{selectedPackage.plan_code || "-"}</p></div>
                 <div><p className="text-xs text-muted-foreground">Contratação</p><p className="font-semibold">{new Date(selectedPackage.contract_date).toLocaleDateString("pt-BR")}</p></div>
                 <div><p className="text-xs text-muted-foreground">Vencimento</p><p className="font-semibold">{selectedPackage.expiry_date ? new Date(selectedPackage.expiry_date).toLocaleDateString("pt-BR") : "-"}</p></div>
                 <div><p className="text-xs text-muted-foreground">Frequência</p><p className="font-semibold">{frequencyLabel[selectedPackage.frequency] || selectedPackage.frequency || "-"}</p></div>
@@ -270,7 +270,7 @@ export default function Packages() {
                   </Button>
                 )}
                 <Button
-                  className="bg-[#D8B768] text-[#07111E] hover:bg-[#c9a652]"
+                  className="bg-accent text-foreground hover:bg-[#c9a652]"
                   disabled={renewMutation.isPending}
                   onClick={() => renewMutation.mutate({ id: selectedPackage.id })}
                 >

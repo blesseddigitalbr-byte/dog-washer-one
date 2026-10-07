@@ -112,8 +112,8 @@ export default function Team() {
     <div className="mx-auto w-full max-w-[1440px] space-y-6 px-4 py-6 sm:px-6 lg:px-8">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[.18em] text-[#C9A24E]">Gestão de pessoas</p>
-          <h1 className="mt-2 text-3xl font-bold">Equipe</h1>
+          <p className="text-xs font-semibold uppercase tracking-[.18em] text-primary">Gestão de pessoas</p>
+          <h1 className="mt-2 text-2xl font-semibold">Equipe</h1>
           <p className="mt-2 text-muted-foreground">Profissionais disponíveis para atendimento na unidade atual.</p>
         </div>
         <Button onClick={() => showForm()}><Plus className="mr-2 h-4 w-4" />Novo profissional</Button>
@@ -125,10 +125,10 @@ export default function Team() {
           ["Ativos", professionals.filter((p: any) => p.is_active).length],
           ["Ausentes/Inativos", professionals.filter((p: any) => !p.is_active).length],
         ].map(([label, value]) => (
-          <Card key={String(label)} className="border-l-4 border-l-[#C9A24E]">
+          <Card key={String(label)} className="border-l-4 border-l-secondary">
             <CardContent className="flex items-center justify-between p-5">
               <div><p className="text-xs font-semibold uppercase text-muted-foreground">{label}</p><p className="mt-1 text-2xl font-bold">{value}</p></div>
-              <Users2 className="h-7 w-7 text-[#C9A24E]/45" />
+              <Users2 className="h-7 w-7 text-primary/45" />
             </CardContent>
           </Card>
         ))}
@@ -186,7 +186,7 @@ export default function Team() {
           </form>
         </DialogContent>
       </Dialog>
-      <Dialog open={!!statement} onOpenChange={value => !value && setStatement(null)}><DialogContent className="max-h-[90vh] sm:max-w-5xl overflow-y-auto"><DialogHeader><DialogTitle className="text-xl text-[#10233f]">{statement?.name} · Extratos</DialogTitle></DialogHeader>{statement && <ProfessionalStatement professional={statement} />}</DialogContent></Dialog>
+      <Dialog open={!!statement} onOpenChange={value => !value && setStatement(null)}><DialogContent className="max-h-[90vh] sm:max-w-5xl overflow-y-auto"><DialogHeader><DialogTitle className="text-xl text-foreground">{statement?.name} · Extratos</DialogTitle></DialogHeader>{statement && <ProfessionalStatement professional={statement} />}</DialogContent></Dialog>
 
       <AlertDialog open={!!deleteId} onOpenChange={(value) => !value && setDeleteId(null)}>
         <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Inativar profissional?</AlertDialogTitle><AlertDialogDescription>O profissional deixará de aparecer em novos agendamentos, mas todo o histórico será preservado.</AlertDialogDescription></AlertDialogHeader><div className="flex justify-end gap-3"><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={deactivate}>Inativar</AlertDialogAction></div></AlertDialogContent>

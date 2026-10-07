@@ -192,7 +192,7 @@ export function PlansPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Planos</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Planos</h1>
           <p className="text-muted-foreground mt-2">
             Gerencie os planos e pacotes de serviços
           </p>
@@ -406,7 +406,7 @@ export function PlansPage() {
                 <p className="text-xs text-muted-foreground uppercase font-semibold">Total de Planos</p>
                 <p className="text-2xl font-bold text-foreground mt-1">{packages.length}</p>
               </div>
-              <PackageCheck className="h-7 w-7 text-[#C9A24E]/45" />
+              <PackageCheck className="h-7 w-7 text-primary/45" />
             </div>
           </CardContent>
         </Card>
@@ -564,7 +564,7 @@ export function PlansPage() {
           {selectedPlan && (
             <div className="space-y-5">
               <div className="flex flex-wrap items-center gap-3">
-                <Badge className="bg-[#D8B768] text-[#07111E]">{selectedPlan.code}</Badge>
+                <Badge className="bg-accent text-foreground">{selectedPlan.code}</Badge>
                 <Badge className={getStatusColor(selectedPlan.status)}>{getStatusLabel(selectedPlan.status)}</Badge>
                 <span className="text-sm text-muted-foreground">{selectedPlan.duration_months} meses</span>
               </div>
@@ -582,7 +582,7 @@ export function PlansPage() {
                 <p><span className="font-semibold">Recorrência:</span> {selectedPlan.recurrence_type || "Não informada"}</p>
               </div>
               <div className="flex justify-end">
-                <Button onClick={() => { const plan = selectedPlan; setSelectedPlan(null); handleOpenDialog(plan); }} className="bg-[#113A7A] text-white hover:bg-[#0d2f64]">
+                <Button onClick={() => { const plan = selectedPlan; setSelectedPlan(null); handleOpenDialog(plan); }} className="bg-primary text-white hover:bg-[#0d2f64]">
                   <Edit2 className="mr-2 h-4 w-4" /> Editar plano
                 </Button>
               </div>

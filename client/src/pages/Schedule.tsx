@@ -109,7 +109,7 @@ export default function SchedulePage() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Agenda</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Agenda</h1>
           <p className="text-gray-600 mt-1">Visualize e gerencie seus agendamentos</p>
         </div>
         <Button

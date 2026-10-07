@@ -203,10 +203,10 @@ export default function Dashboard() {
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#C9A24E]">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
               Visão operacional
             </p>
-            <h1 className="text-3xl font-bold text-foreground sm:text-4xl">
+            <h1 className="text-2xl font-semibold text-foreground sm:text-4xl">
               Painel de controle
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -217,14 +217,14 @@ export default function Dashboard() {
             <button
               type="button"
               onClick={() => setLocation("/clients")}
-              className="rounded-lg border border-[#113A7A] px-4 py-2 text-sm font-semibold text-[#113A7A] transition hover:bg-[#113A7A]/5"
+              className="rounded-lg border border-primary px-4 py-2 text-sm font-semibold text-primary transition hover:bg-primary/5"
             >
               Cadastrar cliente
             </button>
             <button
               type="button"
               onClick={() => setLocation("/appointments")}
-              className="rounded-lg bg-[#113A7A] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#07111E]"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary"
             >
               Novo agendamento
             </button>
@@ -251,11 +251,11 @@ export default function Dashboard() {
                   <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
                     {card.title}
                   </p>
-                  <div className="rounded-lg bg-[#D8B768]/20 p-2 text-[#113A7A]">
+                  <div className="rounded-lg bg-accent/20 p-2 text-primary">
                     <Icon className="h-5 w-5" />
                   </div>
                 </div>
-                <p className="text-2xl font-bold text-[#07111E]">
+                <p className="text-2xl font-bold text-foreground">
                   {loading ? "—" : card.value}
                 </p>
                 <p className="mt-1 text-xs text-slate-500">{card.detail}</p>
@@ -268,14 +268,14 @@ export default function Dashboard() {
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm xl:col-span-2">
             <div className="mb-5 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-bold text-[#07111E]">
+                <h2 className="text-lg font-bold text-foreground">
                   Agenda de hoje
                 </h2>
                 <p className="text-sm text-slate-500">
                   Ordem cronológica dos atendimentos
                 </p>
               </div>
-              <Clock3 className="h-5 w-5 text-[#C9A24E]" />
+              <Clock3 className="h-5 w-5 text-primary" />
             </div>
 
             {dashboard.todayAppointments.length === 0 ? (
@@ -300,11 +300,11 @@ export default function Dashboard() {
                         key={appointment.id}
                         className="border-b border-slate-100 last:border-0"
                       >
-                        <td className="px-2 py-3 font-bold text-[#113A7A]">
+                        <td className="px-2 py-3 font-bold text-primary">
                           {formatTime(appointment)}
                         </td>
                         <td className="px-2 py-3">
-                          <p className="font-semibold text-[#07111E]">
+                          <p className="font-semibold text-foreground">
                             {appointment.pet?.name ?? "Pet não informado"}
                           </p>
                           <p className="text-xs text-slate-500">
@@ -339,12 +339,12 @@ export default function Dashboard() {
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="mb-5 flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-bold text-[#07111E]">
+                <h2 className="text-lg font-bold text-foreground">
                   Próximos aniversários
                 </h2>
                 <p className="text-sm text-slate-500">Pets nos próximos 30 dias</p>
               </div>
-              <Cake className="h-5 w-5 text-[#C9A24E]" />
+              <Cake className="h-5 w-5 text-primary" />
             </div>
 
             {dashboard.birthdays.length === 0 ? (
@@ -359,12 +359,12 @@ export default function Dashboard() {
                     className="flex items-center justify-between rounded-xl bg-slate-50 p-3"
                   >
                     <div>
-                      <p className="font-semibold text-[#07111E]">{pet.name}</p>
+                      <p className="font-semibold text-foreground">{pet.name}</p>
                       <p className="text-xs text-slate-500">
                         Tutor: {pet.tutorName}
                       </p>
                     </div>
-                    <span className="rounded-full bg-[#D8B768]/20 px-2.5 py-1 text-xs font-semibold text-[#113A7A]">
+                    <span className="rounded-full bg-accent/20 px-2.5 py-1 text-xs font-semibold text-primary">
                       {pet.daysUntil === 0
                         ? "Hoje"
                         : pet.daysUntil === 1
@@ -381,14 +381,14 @@ export default function Dashboard() {
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-5 flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-[#07111E]">
+              <h2 className="text-lg font-bold text-foreground">
                 Cadastros que precisam de atenção
               </h2>
               <p className="text-sm text-slate-500">
                 Clientes sem dados essenciais ou sem pet vinculado
               </p>
             </div>
-            <AlertCircle className="h-5 w-5 text-[#C9A24E]" />
+            <AlertCircle className="h-5 w-5 text-primary" />
           </div>
 
           {dashboard.incompleteClients.length === 0 ? (
@@ -402,9 +402,9 @@ export default function Dashboard() {
                   key={client.id}
                   type="button"
                   onClick={() => setLocation("/clients")}
-                  className="rounded-xl border border-slate-200 p-4 text-left transition hover:border-[#C9A24E] hover:bg-[#F8F6F1]"
+                  className="rounded-xl border border-slate-200 p-4 text-left transition hover:border-primary hover:bg-background"
                 >
-                  <p className="font-semibold text-[#07111E]">{client.name}</p>
+                  <p className="font-semibold text-foreground">{client.name}</p>
                   <p className="mt-1 text-xs text-slate-500">
                     Falta: {client.missing.join(", ")}
                   </p>

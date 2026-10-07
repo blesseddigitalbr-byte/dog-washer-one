@@ -56,10 +56,10 @@ export default function Units() {
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-[#C9A24E]">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
               Estrutura empresarial
             </p>
-            <h1 className="text-3xl font-bold text-foreground">
+            <h1 className="text-2xl font-semibold text-foreground">
               Empresas e unidades
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -75,7 +75,7 @@ export default function Units() {
         </div>
 
         <section className="mb-8">
-          <h2 className="mb-4 text-lg font-bold text-[#07111E]">
+          <h2 className="mb-4 text-lg font-bold text-foreground">
             Pessoas jurídicas
           </h2>
           <div className="grid gap-4 lg:grid-cols-2">
@@ -93,16 +93,16 @@ export default function Units() {
                           ? "Operação híbrida"
                           : "Salão"}
                     </p>
-                    <h3 className="mt-1 text-xl font-bold text-[#07111E]">
+                    <h3 className="mt-1 text-xl font-bold text-foreground">
                       {entity.trading_name ?? entity.company_name}
                     </h3>
                     <p className="mt-1 text-sm text-slate-500">
                       {entity.company_name}
                     </p>
                   </div>
-                  <Building2 className="h-6 w-6 text-[#C9A24E]" />
+                  <Building2 className="h-6 w-6 text-primary" />
                 </div>
-                <p className="font-mono text-sm font-semibold text-[#113A7A]">
+                <p className="font-mono text-sm font-semibold text-primary">
                   {formatTaxId(entity.tax_id)}
                 </p>
                 {(entity.city || entity.state) && (
@@ -117,7 +117,7 @@ export default function Units() {
         </section>
 
         <section>
-          <h2 className="mb-4 text-lg font-bold text-[#07111E]">
+          <h2 className="mb-4 text-lg font-bold text-foreground">
             Unidades disponíveis
           </h2>
           <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
@@ -128,18 +128,18 @@ export default function Units() {
                   key={unit.id}
                   className={`rounded-2xl border bg-white p-5 shadow-sm ${
                     isCurrent
-                      ? "border-[#C9A24E] ring-2 ring-[#C9A24E]/20"
+                      ? "border-primary ring-2 ring-primary/20"
                       : "border-slate-200"
                   }`}
                 >
                   <div className="mb-4 flex items-start justify-between gap-3">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-lg font-bold text-[#07111E]">
+                        <h3 className="text-lg font-bold text-foreground">
                           {unit.name}
                         </h3>
                         {isCurrent && (
-                          <span className="rounded-full bg-[#D8B768]/25 px-2 py-0.5 text-xs font-bold text-[#113A7A]">
+                          <span className="rounded-full bg-accent/25 px-2 py-0.5 text-xs font-bold text-primary">
                             Unidade ativa
                           </span>
                         )}
@@ -151,12 +151,12 @@ export default function Units() {
                       </p>
                     </div>
                     {unit.operation_mode === "school" ? (
-                      <GraduationCap className="h-6 w-6 text-[#C9A24E]" />
+                      <GraduationCap className="h-6 w-6 text-primary" />
                     ) : (
-                      <Scissors className="h-6 w-6 text-[#C9A24E]" />
+                      <Scissors className="h-6 w-6 text-primary" />
                     )}
                   </div>
-                  <p className="text-sm font-semibold text-[#113A7A]">
+                  <p className="text-sm font-semibold text-primary">
                     {MODE_LABELS[unit.operation_mode] ?? unit.operation_mode}
                   </p>
                   <p className="mt-1 text-sm text-slate-500">

@@ -12,7 +12,7 @@ export default function Branding() {
   useEffect(() => { if (query.data) setForm(query.data); }, [query.data]);
   const utils = trpc.useUtils();
   const save = trpc.branding.save.useMutation({ onSuccess: () => { utils.branding.current.invalidate(); toast.success("Marca atualizada para sua empresa"); }, onError: error => toast.error(error.message) });
-  return <div className="space-y-6"><div><h1 className="text-3xl font-semibold">Marca e módulos</h1><p className="text-muted-foreground">Identidade da sua empresa, com tecnologia Dog Washer One.</p></div>
+  return <div className="space-y-6"><div><h1 className="text-2xl font-semibold">Marca e módulos</h1><p className="text-muted-foreground">Identidade da sua empresa, com tecnologia Dog Washer One.</p></div>
     {query.error && <p role="alert">{query.error.message}</p>}
     <Card><CardHeader><CardTitle>Personalização por empresa</CardTitle></CardHeader><CardContent>
       <form className="grid gap-4 md:grid-cols-2" onSubmit={event => { event.preventDefault(); const parsed = brandingSchema.safeParse(form); if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; } save.mutate(parsed.data); }}>

@@ -29,7 +29,7 @@ type ViewType = "calendar" | "week" | "day" | "agenda";
 const STATUS_COLORS: Record<string, { bg: string; text: string; badge: string }> = {
   pending: { bg: "bg-gray-100", text: "text-gray-800", badge: "bg-gray-600 text-white" },
   confirmed: { bg: "bg-blue-100", text: "text-blue-800", badge: "bg-blue-700 text-white" },
-  in_progress: { bg: "bg-yellow-100", text: "text-yellow-800", badge: "bg-[#C9A24E] text-[#07111E]" },
+  in_progress: { bg: "bg-yellow-100", text: "text-yellow-800", badge: "bg-accent text-foreground" },
   completed: { bg: "bg-green-100", text: "text-green-800", badge: "bg-green-700 text-white" },
   cancelled: { bg: "bg-red-100", text: "text-red-800", badge: "bg-red-700 text-white" },
   no_show: { bg: "bg-red-200", text: "text-red-900", badge: "bg-red-800 text-white" },
@@ -203,7 +203,7 @@ export default function Appointments() {
                     tabIndex={0}
                     onClick={() => openAppointment(apt)}
                     onKeyDown={(event) => event.key === "Enter" && openAppointment(apt)}
-                    className={`cursor-pointer text-xs p-1 rounded truncate transition hover:ring-2 hover:ring-[#D8B768] ${
+                    className={`cursor-pointer text-xs p-1 rounded truncate transition hover:ring-2 hover:ring-primary ${
                       STATUS_COLORS[apt.status]?.bg
                     }`}
                     title={`${apt.petName} (${apt.clientName})`}
@@ -260,7 +260,7 @@ export default function Appointments() {
                       tabIndex={0}
                       onClick={() => openAppointment(apt)}
                       onKeyDown={(event) => event.key === "Enter" && openAppointment(apt)}
-                      className={`cursor-pointer text-xs p-1 rounded mb-1 transition hover:ring-2 hover:ring-[#D8B768] ${STATUS_COLORS[apt.status]?.bg}`}
+                      className={`cursor-pointer text-xs p-1 rounded mb-1 transition hover:ring-2 hover:ring-primary ${STATUS_COLORS[apt.status]?.bg}`}
                       title={`${apt.petName} (${apt.clientName})`}
                     >
                       {apt.petName}
@@ -309,7 +309,7 @@ export default function Appointments() {
                         tabIndex={0}
                         onClick={() => openAppointment(apt)}
                         onKeyDown={(event) => event.key === "Enter" && openAppointment(apt)}
-                        className={`cursor-pointer p-3 rounded-lg border-l-4 transition hover:ring-2 hover:ring-[#D8B768] ${STATUS_COLORS[apt.status]?.bg}`}
+                        className={`cursor-pointer p-3 rounded-lg border-l-4 transition hover:ring-2 hover:ring-primary ${STATUS_COLORS[apt.status]?.bg}`}
                         style={{ borderLeftColor: "#8e6e3e" }}
                       >
                         <div className="font-semibold">{apt.petName}</div>
@@ -390,7 +390,7 @@ export default function Appointments() {
                     tabIndex={0}
                     onClick={() => openAppointment(apt)}
                     onKeyDown={(event) => event.key === "Enter" && openAppointment(apt)}
-                    className={`flex-1 cursor-pointer p-4 rounded-lg border-l-4 transition hover:ring-2 hover:ring-[#D8B768] ${STATUS_COLORS[apt.status]?.bg}`}
+                    className={`flex-1 cursor-pointer p-4 rounded-lg border-l-4 transition hover:ring-2 hover:ring-primary ${STATUS_COLORS[apt.status]?.bg}`}
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -410,7 +410,7 @@ export default function Appointments() {
                       {["pending", "confirmed", "in_progress"].includes(apt.status) && (
                         <Button
                           size="sm"
-                          className="bg-[#113A7A] hover:bg-[#07111E] text-white"
+                          className="bg-primary hover:bg-primary text-white"
                           disabled={statusMutation.isPending}
                           onClick={(event) => { event.stopPropagation(); advanceStatus(apt); }}
                         >
@@ -437,12 +437,12 @@ export default function Appointments() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Agendamento</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Agendamento</h1>
           <p className="text-gray-600 mt-1">Gerenciamento completo de agendamentos</p>
         </div>
         <Button
           onClick={() => { setSelectedAppointment(null); setShowForm(true); }}
-          className="bg-[#113A7A] text-white hover:bg-[#07111E] font-bold"
+          className="bg-primary text-white hover:bg-primary font-bold"
         >
           + Novo Agendamento
         </Button>
@@ -463,14 +463,14 @@ export default function Appointments() {
             onClick={() => setStatusFilter(f.id)}
             className={`px-4 py-2 rounded-full font-medium text-sm transition-all flex items-center gap-2 border ${
               statusFilter === f.id
-                ? "bg-[#D8B768] text-[#07111E] border-[#C9A24E] shadow-sm"
-                : "bg-white text-foreground border-border hover:border-[#C9A24E] hover:shadow-sm"
+                ? "bg-accent text-foreground border-primary shadow-sm"
+                : "bg-white text-foreground border-border hover:border-primary hover:shadow-sm"
             }`}
           >
             <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold ${
               statusFilter === f.id
-                ? "bg-[#07111E]/10 text-[#07111E]"
-                : "bg-[#D8B768]/20 text-[#113A7A]"
+                ? "bg-primary/10 text-foreground"
+                : "bg-accent/20 text-primary"
             }`}>
               {f.icon}
             </span>
@@ -494,7 +494,7 @@ export default function Appointments() {
         <div className="flex gap-2">
           <Button
             variant="outline"
-            className={viewType === "calendar" ? "bg-[#D8B768] text-[#07111E] border-[#C9A24E]" : ""}
+            className={viewType === "calendar" ? "bg-accent text-foreground border-primary" : ""}
             onClick={() => setViewType("calendar")}
             size="sm"
           >
@@ -503,7 +503,7 @@ export default function Appointments() {
           </Button>
           <Button
             variant="outline"
-            className={viewType === "week" ? "bg-[#D8B768] text-[#07111E] border-[#C9A24E]" : ""}
+            className={viewType === "week" ? "bg-accent text-foreground border-primary" : ""}
             onClick={() => setViewType("week")}
             size="sm"
           >
@@ -511,7 +511,7 @@ export default function Appointments() {
           </Button>
           <Button
             variant="outline"
-            className={viewType === "day" ? "bg-[#D8B768] text-[#07111E] border-[#C9A24E]" : ""}
+            className={viewType === "day" ? "bg-accent text-foreground border-primary" : ""}
             onClick={() => setViewType("day")}
             size="sm"
           >
@@ -519,7 +519,7 @@ export default function Appointments() {
           </Button>
           <Button
             variant="outline"
-            className={viewType === "agenda" ? "bg-[#D8B768] text-[#07111E] border-[#C9A24E]" : ""}
+            className={viewType === "agenda" ? "bg-accent text-foreground border-primary" : ""}
             onClick={() => setViewType("agenda")}
             size="sm"
           >
@@ -585,14 +585,14 @@ export default function Appointments() {
       <AlertDialog open={!!completionCandidate} onOpenChange={(open) => !open && setCompletionCandidate(null)}>
         <AlertDialogContent className="max-w-md rounded-2xl border-0 p-0 shadow-2xl">
           <div className="p-7 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#D8B768] text-[#07111E]">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent text-foreground">
               <AlertTriangle className="h-7 w-7" />
             </div>
             <AlertDialogHeader className="mt-4">
-              <AlertDialogTitle className="text-center text-xl font-extrabold text-[#07111E]">
+              <AlertDialogTitle className="text-center text-xl font-semibold text-foreground">
                 Confirmar finalização
               </AlertDialogTitle>
-              <AlertDialogDescription className="text-center text-sm font-medium leading-6 text-[#44516A]">
+              <AlertDialogDescription className="text-center text-sm font-medium leading-6 text-muted-foreground">
                 Ao marcar como Concluído/Check, este atendimento poderá consumir saldo do pacote vinculado e será registrado no histórico de visitas.
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -600,7 +600,7 @@ export default function Appointments() {
               <AlertDialogCancel className="mt-0 font-bold">Cancelar</AlertDialogCancel>
               <AlertDialogAction
                 onClick={confirmCompletion}
-                className="bg-[#113A7A] font-extrabold text-white hover:bg-[#07111E]"
+                className="bg-primary font-semibold text-white hover:bg-primary"
               >
                 Confirmar
               </AlertDialogAction>
