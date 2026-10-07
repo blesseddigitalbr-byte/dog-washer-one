@@ -33,8 +33,9 @@ describe("package balance and visit history", () => {
     expect(router).toContain("client_package_id: input.clientPackageId || null");
     expect(router).toContain("appointmentDate: appointment.appointment_date");
   });
-  it("uses DWO gold selection and a wide appointment dialog", () => {
-    expect(appointments).toContain("bg-[#D8B768]");
+  it("uses tenant theme selection and a wide appointment dialog", () => {
+    expect(appointments).toContain("bg-accent");
+    expect(appointments).toContain("bg-amber-200 text-amber-950");
     expect(appointments).toContain("w-[min(96vw,1120px)]");
     expect(appointments).toContain("text-white");
   });
