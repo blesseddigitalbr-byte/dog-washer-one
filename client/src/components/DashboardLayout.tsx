@@ -82,6 +82,7 @@ export default function DashboardLayout({
       items: [
         { icon: <UserCircle className="w-5 h-5" />, label: "Meu Perfil", path: "/profile" },
         { icon: <Zap className="w-5 h-5" />, label: "Integrações", path: "/integrations" },
+        { icon: <Zap className="w-5 h-5" />, label: "Splits e Repasses", path: "/splits" },
         { icon: <Settings className="w-5 h-5" />, label: "Configurações", path: "/settings", comingSoon: true },
       ],
     },

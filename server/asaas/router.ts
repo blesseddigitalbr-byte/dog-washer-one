@@ -10,6 +10,13 @@ const financialProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 export const asaasRouter = router({
+  splits: financialProcedure.query(async () => {
+    const { data, error } = await supabase.from("asaas_split_reconciliation")
+      .select("id, account_id, payment_id, split_id, partner_name, wallet_id, status, gross_value, net_value, partner_value, verified_at, evidence_source")
+      .order("verified_at", { ascending: false }).limit(100);
+    if (error) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "A conciliação precisa da migração de splits aplicada no banco." });
+    return data ?? [];
+  }),
   overview: financialProcedure.query(async () => {
     const [accounts, events, payments] = await Promise.all([
       supabase.from("payment_provider_accounts").select("id, environment, status, legal_entity_id").eq("provider", "asaas"),
