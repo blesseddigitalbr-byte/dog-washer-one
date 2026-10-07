@@ -8,7 +8,7 @@ import { describe, it, expect } from "vitest";
 describe("Sistema de Pacotes (Nutri Pró Maxxi)", () => {
   describe("1. Estrutura de Pacote", () => {
     it("pacote deve ter nome obrigatório", () => {
-      const isValid = (name: string) => name && name.length > 0;
+      const isValid = (name: string) => name.trim().length > 0;
       expect(isValid("Nutri Pró Maxxi Trimestral Spitz")).toBe(true);
       expect(isValid("")).toBe(false);
     });
@@ -234,7 +234,7 @@ describe("Sistema de Pacotes (Nutri Pró Maxxi)", () => {
         style: "currency",
         currency: "BRL",
       }).format(price);
-      expect(formatted).toBe("R$ 400,00");
+      expect(formatted.replace(/\u00a0/g, " ")).toBe("R$ 400,00");
     });
 
     it("deve formatar preço com decimais", () => {
@@ -243,7 +243,7 @@ describe("Sistema de Pacotes (Nutri Pró Maxxi)", () => {
         style: "currency",
         currency: "BRL",
       }).format(price);
-      expect(formatted).toBe("R$ 150,50");
+      expect(formatted.replace(/\u00a0/g, " ")).toBe("R$ 150,50");
     });
   });
 

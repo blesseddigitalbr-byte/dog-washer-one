@@ -235,6 +235,7 @@ export default function Packages() {
           </DialogHeader>
           {selectedPackage && (
             <div className="space-y-5">
+              <Button variant="outline" asChild><a href={`/financial?package=${encodeURIComponent(selectedPackage.id)}`}>Preparar cobrança deste pacote</a></Button>
               <div className="grid grid-cols-2 gap-4 rounded-xl bg-[#F8F6F1] p-5 md:grid-cols-4">
                 <div><p className="text-xs text-muted-foreground">Plano</p><p className="font-semibold">{selectedPackage.plan_name}</p></div>
                 <div><p className="text-xs text-muted-foreground">Pet / raça</p><p className="font-semibold">{selectedPackage.pet_name} / {selectedPackage.pet_breed || "Não informada"}</p></div>

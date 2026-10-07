@@ -173,6 +173,7 @@ export function ClientDetailModal({
           <DialogHeader className="flex items-center justify-between">
             <DialogTitle className="text-2xl font-bold">Detalhes do Cliente</DialogTitle>
             <button
+              aria-label="Fechar detalhes do cliente"
               onClick={onClose}
               className="p-1 hover:bg-accent/10 rounded-lg transition-colors"
             >

@@ -21,6 +21,7 @@ import Team from "./pages/Team";
 import ScheduleSimulator from "./pages/ScheduleSimulator";
 import Integrations from "./pages/Integrations";
 import Splits from "./pages/Splits";
+import Financial from "./pages/Financial";
 
 function Router() {
   const { user, loading } = useAuth();
@@ -50,6 +51,7 @@ function Router() {
             <Route path="/team" component={Team} />
             <Route path="/integrations" component={Integrations} />
             <Route path="/splits" component={Splits} />
+            <Route path="/financial" component={Financial} />
             <Route path="/404" component={NotFound} />
             <Route component={NotFound} />
           </Switch>

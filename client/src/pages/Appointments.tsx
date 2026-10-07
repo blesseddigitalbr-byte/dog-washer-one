@@ -571,6 +571,7 @@ export default function Appointments() {
             </DialogDescription>
           </DialogHeader>
           <div className="overflow-y-auto pr-2">
+            {selectedAppointment?.id && <Button variant="outline" className="mb-4" asChild><a href={`/financial?appointment=${encodeURIComponent(selectedAppointment.id)}`}>Preparar cobrança deste atendimento</a></Button>}
             <AppointmentForm
               key={selectedAppointment?.id || "new-appointment"}
               onClose={() => setShowForm(false)}

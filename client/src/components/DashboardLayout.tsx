@@ -71,7 +71,7 @@ export default function DashboardLayout({
     {
       title: "GESTÃO",
       items: [
-        { icon: <TrendingUp className="w-5 h-5" />, label: "Financeiro", path: "/financial", comingSoon: true },
+        { icon: <TrendingUp className="w-5 h-5" />, label: "Financeiro", path: "/financial" },
         { icon: <Users2 className="w-5 h-5" />, label: "Equipe", path: "/team" },
         { icon: <LayoutDashboard className="w-5 h-5" />, label: "Unidades", path: "/units" },
         { icon: <BarChart3 className="w-5 h-5" />, label: "Relatórios", path: "/reports", comingSoon: true },
