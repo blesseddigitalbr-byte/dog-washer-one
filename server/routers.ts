@@ -856,6 +856,17 @@ export const appRouter = router({
   }),
 
   professionals: router({
+    appointments: protectedProcedure.input(z.object({ id: z.string().uuid() })).query(async ({ ctx, input }) => {
+      if (!ctx.user?.unitId) throw new Error("Selecione uma unidade ativa");
+      const professional = await supabase.from("professionals").select("id").eq("id", input.id).eq("unit_id", ctx.user.unitId).single();
+      if (professional.error || !professional.data) throw new Error("Profissional indisponível nesta unidade");
+      const result = await supabase.from("appointments")
+        .select("id, appointment_date, status, client:client_id(nome), pet:pet_id(name), service:service_id(name)")
+        .eq("professional_id", input.id).eq("unit_id", ctx.user.unitId)
+        .order("appointment_date", { ascending: false }).limit(200);
+      if (result.error) throw new Error("Não foi possível carregar os atendimentos");
+      return result.data ?? [];
+    }),
     // List all professionals
     list: protectedProcedure.query(async ({ ctx }) => {
       try {

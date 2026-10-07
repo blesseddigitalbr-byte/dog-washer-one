@@ -24,8 +24,26 @@ const statusLabel: Record<string, string> = {
   active: "Ativo", inactive: "Inativo", vacation: "Em férias",
 };
 
+function ProfessionalStatement({ professional }: { professional: any }) {
+  const [tab, setTab] = useState("appointments");
+  const query = trpc.professionals.appointments.useQuery({ id: professional.id }, { retry: false });
+  const labels: Record<string,string> = { pending:"Agendado", scheduled:"Agendado", confirmed:"Confirmado", in_progress:"Em andamento", completed:"Concluído", cancelled:"Cancelado", no_show:"Não compareceu" };
+  const relationName = (value: any, field: string) => (Array.isArray(value) ? value[0] : value)?.[field] || "Não informado";
+  return <div className="space-y-5">
+    <div className="flex gap-2 border-b pb-3"><Button variant={tab === "appointments" ? "default" : "outline"} onClick={() => setTab("appointments")}>Atendimentos</Button><Button variant={tab === "finance" ? "default" : "outline"} onClick={() => setTab("finance")}>Extrato financeiro</Button></div>
+    {tab === "finance" ? <div className="rounded-xl border bg-muted/30 p-6"><h3 className="font-semibold">Repasses do profissional</h3><p className="mt-2 text-sm text-muted-foreground">Ainda não há vínculo verificado entre este profissional e uma carteira Asaas. Não calculamos créditos a partir da comissão cadastrada ou do valor dos atendimentos.</p><a href="/splits" className="mt-4 inline-block text-sm underline">Consultar conciliação de splits</a></div> : <>
+      <p className="text-xs text-muted-foreground">Até 200 atendimentos mais recentes da unidade atual. Agendados não são serviços realizados.</p>
+      {query.isLoading && <p>Carregando atendimentos...</p>}
+      {query.error && <p role="alert">{query.error.message}</p>}
+      {query.data && <><div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{[["Listados",query.data.length],["Concluídos",query.data.filter(a=>a.status === "completed").length],["Agendados",query.data.filter(a=>a.status === "scheduled").length],["Cancelados",query.data.filter(a=>a.status === "cancelled").length]].map(([label,value])=><div key={String(label)} className="rounded-xl border bg-muted/20 p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="text-2xl font-semibold">{value}</p></div>)}</div>
+      {!query.data.length ? <p className="py-8 text-center text-muted-foreground">Nenhum atendimento encontrado para este profissional.</p> : <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left text-muted-foreground"><th className="py-3">Data e horário</th><th>Cliente / Pet</th><th>Serviço</th><th>Status</th></tr></thead><tbody>{query.data.map(a=><tr key={a.id} className="border-b"><td className="py-4 pr-4 whitespace-nowrap">{new Date(a.appointment_date).toLocaleString("pt-BR")}</td><td className="pr-4"><p>{relationName(a.pet,"name")}</p><p className="text-xs text-muted-foreground">{relationName(a.client,"nome")}</p></td><td className="pr-4">{relationName(a.service,"name")}</td><td><Badge variant="outline" className={a.status === "completed" ? "bg-emerald-50 text-emerald-700" : ""}>{labels[a.status] ?? a.status}</Badge></td></tr>)}</tbody></table></div>}</>}
+    </>}
+  </div>;
+}
+
 export default function Team() {
   const [open, setOpen] = useState(false);
+  const [statement, setStatement] = useState<any | null>(null);
   const [editing, setEditing] = useState<any | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -144,6 +162,7 @@ export default function Team() {
                   {professional.phone && <p className="flex items-center gap-2"><Phone className="h-4 w-4" />{professional.phone}</p>}
                   {professional.email && <p className="flex items-center gap-2 break-all"><Mail className="h-4 w-4" />{professional.email}</p>}
                 </div>
+                <Button variant="outline" className="mt-5 w-full" onClick={() => setStatement(professional)}>Atendimentos e extrato</Button>
               </article>
             ))}
           </div>
@@ -167,6 +186,7 @@ export default function Team() {
           </form>
         </DialogContent>
       </Dialog>
+      <Dialog open={!!statement} onOpenChange={value => !value && setStatement(null)}><DialogContent className="max-h-[90vh] sm:max-w-5xl overflow-y-auto"><DialogHeader><DialogTitle className="text-xl text-[#10233f]">{statement?.name} · Extratos</DialogTitle></DialogHeader>{statement && <ProfessionalStatement professional={statement} />}</DialogContent></Dialog>
 
       <AlertDialog open={!!deleteId} onOpenChange={(value) => !value && setDeleteId(null)}>
         <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Inativar profissional?</AlertDialogTitle><AlertDialogDescription>O profissional deixará de aparecer em novos agendamentos, mas todo o histórico será preservado.</AlertDialogDescription></AlertDialogHeader><div className="flex justify-end gap-3"><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={deactivate}>Inativar</AlertDialogAction></div></AlertDialogContent>
