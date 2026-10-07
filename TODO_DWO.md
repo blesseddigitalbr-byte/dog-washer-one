@@ -171,6 +171,13 @@ Legenda: `[x]` etapa verificada; `[ ]` trabalho pendente. **Recuperar** = identi
 - [ ] Definir contrato comercial, preços por módulo, cobrança SaaS, domínio e política de suporte.
 - [ ] Revisar cores fixas das telas antigas para aderirem ao tema configurável.
 
+### Refinamento visual LUX DOG
+
+- [x] Logo original vinculado à organização LUX DOG, mantendo o arquivo intacto.
+- [x] Cores de marca antigas substituídas por tokens de tema nas páginas internas e formulários compartilhados.
+- [x] Tema propagado aos modais; títulos mais leves, foco visível, números alinháveis e respeito à preferência de movimento reduzido.
+- [ ] Revisão visual final em desktop e celular de todas as telas; logo configurável para outros clientes continua pendente.
+
 - [ ] Padronizar identidade DWO — Dog Washer One, cores e tipografia.
 - [ ] Preservar a estrutura de dados e ações úteis do Emergent.
 - [ ] Melhorar organização visual, tabelas, modais e responsividade.

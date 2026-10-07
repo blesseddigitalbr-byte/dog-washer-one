@@ -29,7 +29,7 @@ type ViewType = "calendar" | "week" | "day" | "agenda";
 const STATUS_COLORS: Record<string, { bg: string; text: string; badge: string }> = {
   pending: { bg: "bg-gray-100", text: "text-gray-800", badge: "bg-gray-600 text-white" },
   confirmed: { bg: "bg-blue-100", text: "text-blue-800", badge: "bg-blue-700 text-white" },
-  in_progress: { bg: "bg-yellow-100", text: "text-yellow-800", badge: "bg-accent text-foreground" },
+  in_progress: { bg: "bg-yellow-100", text: "text-yellow-800", badge: "bg-amber-200 text-amber-950" },
   completed: { bg: "bg-green-100", text: "text-green-800", badge: "bg-green-700 text-white" },
   cancelled: { bg: "bg-red-100", text: "text-red-800", badge: "bg-red-700 text-white" },
   no_show: { bg: "bg-red-200", text: "text-red-900", badge: "bg-red-800 text-white" },
