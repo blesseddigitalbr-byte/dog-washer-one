@@ -402,9 +402,9 @@ export function StudentForm({
       </div>
 
       {/* SEÇÃO 4: PERMISSÕES */}
-      <div className="p-6 rounded-lg border-l-4" style={{ backgroundColor: "#f5f1eb", borderLeftColor: "#8e6e3e" }}>
+      <div className="p-6 rounded-lg border-l-4" style={{ backgroundColor: "var(--accent)", borderLeftColor: "var(--secondary)" }}>
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 text-white rounded-full flex items-center justify-center font-bold text-sm" style={{ backgroundColor: "#8e6e3e" }}>
+          <div className="w-8 h-8 text-white rounded-full flex items-center justify-center font-bold text-sm" style={{ backgroundColor: "var(--secondary)" }}>
             4
           </div>
           <h3 className="text-lg font-semibold text-gray-900">Permissões</h3>
@@ -417,7 +417,7 @@ export function StudentForm({
             <div className="grid grid-cols-2 gap-3">
               {services.length > 0 ? (
                 services.map((service: any) => (
-                  <div key={service.id} className="flex items-center gap-2 p-2 bg-white rounded border border-amber-200">
+                  <div key={service.id} className="flex items-center gap-2 p-2 bg-white rounded border border-border">
                     <Checkbox
                       id={`service-${service.id}`}
                       checked={(formData.allowedServices || []).includes(service.id)}
@@ -444,7 +444,7 @@ export function StudentForm({
                 { id: "large", label: "Grande (15-30kg)" },
                 { id: "giant", label: "Gigante (acima de 30kg)" },
               ].map((size) => (
-                <div key={size.id} className="flex items-center gap-2 p-2 bg-white rounded border border-amber-200">
+                <div key={size.id} className="flex items-center gap-2 p-2 bg-white rounded border border-border">
                   <Checkbox
                     id={`size-${size.id}`}
                     checked={(formData.allowedDogSizes || []).includes(size.id)}
@@ -466,7 +466,7 @@ export function StudentForm({
                 { id: "vip", label: "VIP" },
                 { id: "model_dog", label: "Cão Modelo" },
               ].map((status) => (
-                <div key={status.id} className="flex items-center gap-2 p-2 bg-white rounded border border-amber-200">
+                <div key={status.id} className="flex items-center gap-2 p-2 bg-white rounded border border-border">
                   <Checkbox
                     id={`status-${status.id}`}
                     checked={(formData.petStatus || []).includes(status.id)}
@@ -542,7 +542,7 @@ export function StudentForm({
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancelar
         </Button>
-        <Button type="submit" disabled={isLoading || isUploadingPhoto} className="bg-amber-600 hover:bg-amber-700 text-white">
+        <Button type="submit" disabled={isLoading || isUploadingPhoto} className="bg-secondary hover:bg-secondary/90 text-white">
           {isLoading || isUploadingPhoto ? <Loader className="w-4 h-4 animate-spin mr-2" /> : null}
           {isEditMode ? "Atualizar" : "Criar"} Aluno
         </Button>

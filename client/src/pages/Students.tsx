@@ -222,7 +222,7 @@ export default function Students() {
           <DialogTrigger asChild>
             <Button
               onClick={() => handleOpenDialog()}
-              className="bg-amber-600 hover:bg-amber-700 text-white"
+              className="bg-secondary hover:bg-secondary/90 text-white"
             >
               <Plus className="mr-2 h-4 w-4" />
               + Novo Aluno
