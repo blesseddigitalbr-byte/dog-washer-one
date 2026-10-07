@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CameraPhoto } from "./CameraPhoto";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -333,6 +334,7 @@ export function PetForm({
           {/* Foto do Pet */}
           <div className="space-y-3 border-b pb-4">
             <h3 className="font-semibold text-sm text-foreground">Foto do Pet</h3>
+            {isOpen && <CameraPhoto disabled={isLoading} onCapture={(file, preview) => { setPhotoFile(file); setPhotoPreview(preview); }} />}
             
             <div className="flex gap-4">
               {photoPreview && (

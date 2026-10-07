@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { CameraPhoto } from "./CameraPhoto";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -281,6 +282,7 @@ export function ClientForm({
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="rounded-xl border border-border bg-white p-4">
             <Label htmlFor="tutor-photo">Foto do tutor</Label>
+            {isOpen && <CameraPhoto disabled={isSubmitting} onCapture={(_file, preview) => setPhoto({ base64: preview, mimeType: "image/jpeg" })} />}
             <div className="mt-3 flex items-center gap-4">
               {(photo?.base64 || clientData?.photoUrl) && <img src={photo?.base64 || clientData?.photoUrl} alt="Foto do tutor" className="h-20 w-20 rounded-full object-cover" />}
               <div className="flex-1"><Input id="tutor-photo" type="file" accept="image/jpeg,image/png,image/webp" disabled={isSubmitting} onChange={event => {

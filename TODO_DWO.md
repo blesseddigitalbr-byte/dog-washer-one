@@ -223,6 +223,10 @@ Legenda: `[x]` etapa verificada; `[ ]` trabalho pendente. **Recuperar** = identi
 
 ### Ajustes de cadastro do tutor — 07/10/2026
 
+- [x] Captura por câmera para tutor e pet, com prévia, permissão explícita, encerramento dos tracks e alternativa de upload.
+- [x] Testes de permissão negada e encerramento da câmera; tipos e build aprovados.
+- [ ] Homologar captura com webcam física e persistência da foto no dispositivo do usuário.
+
 - [x] Campo de foto do tutor (JPG/PNG/WebP até 5 MB), armazenamento privado e exibição no cadastro.
 - [x] Botões Cancelar e Salvar explícitos, com contraste e rodapé fixo.
 - [x] Checkboxes VIP/Escola e campos com bordas visíveis; preservação das marcações existentes.
