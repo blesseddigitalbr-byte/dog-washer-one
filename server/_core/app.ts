@@ -4,6 +4,7 @@ import { appRouter } from "../routers.js";
 import { createContext } from "./context.js";
 import healthRouter from "./healthRouter.js";
 import { registerUploadRoutes } from "./uploadHandler.js";
+import { registerAsaasWebhook } from "../asaas/webhook.js";
 
 export function createApiApp() {
   const app = express();
@@ -13,6 +14,7 @@ export function createApiApp() {
   app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
   registerUploadRoutes(app);
+  registerAsaasWebhook(app);
   app.use("/api/health", healthRouter);
   app.use(
     "/api/trpc",

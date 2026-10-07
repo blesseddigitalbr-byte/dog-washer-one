@@ -81,7 +81,7 @@ export default function DashboardLayout({
       title: "SISTEMA",
       items: [
         { icon: <UserCircle className="w-5 h-5" />, label: "Meu Perfil", path: "/profile" },
-        { icon: <Zap className="w-5 h-5" />, label: "Integrações", path: "/integrations", comingSoon: true },
+        { icon: <Zap className="w-5 h-5" />, label: "Integrações", path: "/integrations" },
         { icon: <Settings className="w-5 h-5" />, label: "Configurações", path: "/settings", comingSoon: true },
       ],
     },
@@ -130,6 +130,7 @@ export default function DashboardLayout({
               />
             </div>
           )}
+          {sidebarOpen && <p className="text-xs font-semibold text-sidebar-foreground">DWO · Dog Washer One</p>}
           {!sidebarOpen && (
             <button
               onClick={() => setSidebarOpen(true)}

@@ -1,4 +1,40 @@
-# Web App Template (tRPC + Manus Auth + Database)
+# DWO — Dog Washer One
+
+Plataforma de gestão de salões e escolas. Marca do produto: DWO; Lux Dog é uma unidade.
+O sistema atual usa React, Express/tRPC e Supabase Auth/Postgres com isolamento por organização.
+Repositório: https://github.com/blesseddigitalbr-byte/dog-washer-one
+Supabase existente: `cvnshgqqqwwkcjeunecj`.
+
+## Integração Asaas — etapa inicial
+
+Implementado: endpoint autenticado por conta/CNPJ, processamento transacional e deduplicação por ID
+do evento, cobranças sincronizadas e histórico em `/integrations`. Eventos não suportados ficam
+marcados para revisão. Confirmação de pagamento não é tratada como dinheiro disponível.
+
+A integração NÃO cria cobranças, splits ou transferências nesta etapa. Também não altera saldos
+de pacotes nem cria automaticamente um lançamento no caixa geral. Esses fluxos exigem associação
+explícita entre cobrança, cliente, pacote e unidade e testes de conciliação.
+
+Ativação controlada:
+
+1. Aplicar `supabase/migrations/202610070001_asaas_events.sql` no projeto existente após revisar
+   as migrações anteriores. Não executar os scripts antigos de criação/população indiscriminadamente.
+2. Cadastrar uma conta em `payment_provider_accounts` vinculada à organização e pessoa jurídica
+   corretas, inicialmente com `environment = sandbox`. `secret_reference` identifica uma variável
+   do servidor, por exemplo `ASAAS_LUX_DOG_SANDBOX` (não contém o segredo).
+3. Configurar no servidor `ASAAS_LUX_DOG_SANDBOX_WEBHOOK_TOKEN`, com token aleatório de pelo menos
+   32 caracteres. Não usar API key como token, não versionar segredos e não usar prefixo `VITE_`.
+4. Configurar no Asaas sandbox o webhook `https://SEU_DOMINIO/api/asaas/webhook/ID_DA_CONTA`, com
+   o mesmo authToken. Depois da configuração, ativar o registro da conta.
+5. Validar recebimento, confirmação, duplicidade, falha/reenvio e estorno no banco de testes antes
+   de ativar uma conta de produção. A migração SQL ainda requer validação em Postgres real.
+
+Verificações locais: `pnpm check`, `pnpm build` e
+`pnpm exec vitest run server/asaas/events.test.ts server/asaas/webhook.test.ts`.
+
+Documentação oficial: https://docs.asaas.com/docs/create-new-webhook-via-api
+
+## Documentação histórica do template (não descreve a autenticação atual)
 
 This template gives you a React 19 + Tailwind 4 + Express 4 + tRPC 11 stack with Manus OAuth already wired. Procedures are your contracts, types flow end to end, and authentication "just works".
 
