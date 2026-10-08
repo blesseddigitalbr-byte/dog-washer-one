@@ -279,3 +279,10 @@ Solicitado em 07/10/2026. Apenas planejamento; implementação futura, sem alter
 4. Fiscal e homologação completa do salão.
 5. Recuperação complementar e aprimoramento visual.
 6. Escola e Greenn (item 10), por último, conforme orientação do usuário.
+# Homologação — confirmação controlada de pagamento
+
+- [x] Adicionar simulação de pagamento exclusivamente no Asaas sandbox, com confirmação explícita e validação de unidade, conta, cliente, valor e referência.
+- [x] Validar compilação e tipos após a alteração. A situação financeira continua sendo atualizada pelo webhook, não pelo botão de simulação.
+- [ ] Confirmar pagamento fictício de R$ 5,00 e verificar o webhook recebido no DWO.
+- [ ] Fechar teste vinculado a atendimento realizado, apuração do profissional e crédito do repasse; não considerar o módulo liberado antes dessas evidências.
+

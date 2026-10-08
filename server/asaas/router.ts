@@ -15,6 +15,22 @@ const financialProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 export const asaasRouter = router({
+  confirmSandboxPayment: financialProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
+    const org = ctx.user.organizationId, unit = ctx.user.unitId;
+    if (!org || !unit) throw new Error("Selecione uma unidade");
+    const { data: draft } = await supabase.from("billing_drafts").select("*").eq("id", input.id).eq("organization_id", org).eq("unit_id", unit).maybeSingle();
+    if (!draft || draft.status !== "issued" || !draft.provider_payment_id || !draft.account_id) throw new Error("Cobrança emitida não encontrada");
+    const { data: account } = await supabase.from("payment_provider_accounts").select("secret_reference").eq("id", draft.account_id).eq("organization_id", org).eq("provider", "asaas").eq("environment", "sandbox").eq("status", "active").maybeSingle();
+    if (!account) throw new Error("A simulação exige uma conta sandbox ativa");
+    const api = sandboxAsaas(account.secret_reference);
+    const payment = await api(`payments/${encodeURIComponent(draft.provider_payment_id)}`);
+    if (!verifiedDraftPayment(payment, draft)) throw new Error("Cobrança divergente. Simulação bloqueada");
+    if (payment.status === "RECEIVED") return { id: draft.id };
+    if (payment.status !== "PENDING" && payment.status !== "OVERDUE") throw new Error("Esta cobrança não está disponível para simulação");
+    // Sandbox only. Persisted financial status must still come from the authenticated webhook.
+    await api(`sandbox/payment/${encodeURIComponent(draft.provider_payment_id)}/confirm`, {});
+    return { id: draft.id };
+  }),
   reconciliation: financialProcedure.query(async ({ ctx }) => {
     if (!ctx.user.unitId || !ctx.user.organizationId) return [];
     const { data: drafts, error } = await supabase.from("billing_drafts").select("id, client_id, appointment_id, client_package_id, amount_cents, account_id, provider_payment_id, status, description")

@@ -21,6 +21,11 @@ export default function Financial() {
   const [billingType, setBillingType] = useState<"PIX" | "BOLETO" | "CREDIT_CARD">("PIX");
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const [confirmDraft, setConfirmDraft] = useState<string | null>(null);
+  const [confirmPayment, setConfirmPayment] = useState<string | null>(null);
+  const simulate = trpc.asaas.confirmSandboxPayment.useMutation({
+    onSuccess: () => { setConfirmPayment(null); toast.success("Pagamento simulado. Atualize a conciliação para verificar o webhook; nenhum dinheiro real foi movimentado."); reconciliation.refetch(); },
+    onError: error => toast.error(error.message),
+  });
   const options = trpc.asaas.billingOptions.useQuery(undefined, { retry: false });
   const drafts = trpc.asaas.billingDrafts.useQuery(undefined, { retry: false });
   const reconciliation = trpc.asaas.reconciliation.useQuery(undefined, { retry: false });
@@ -73,12 +78,14 @@ export default function Financial() {
     </CardContent></Card>
     <Card><CardHeader><CardTitle>Rascunhos salvos</CardTitle></CardHeader><CardContent>
       {issue.error && <p role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{issue.error.message}</p>}
+        {simulate.error && <p role="alert" className="mb-3 text-red-800">{simulate.error.message}</p>}
       {drafts.data?.map(draft => <div key={`action-${draft.id}`} className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-white p-3">
         <div><p>{draft.description} · {money(Number(draft.amount_cents))}</p><p className="text-xs text-muted-foreground">{draft.provider_payment_id ?? 'Sem cobrança confirmada'} · {draft.status}</p></div>
         {draft.status === 'draft' && confirmDraft !== draft.id && <Button disabled={issue.isPending} onClick={() => setConfirmDraft(draft.id)}>Emitir no sandbox</Button>}
         {draft.status === 'draft' && confirmDraft === draft.id && <div className="flex flex-wrap items-center gap-2"><span className="text-sm">Confirmar emissão de TESTE, sem cobrança real?</span><Button disabled={issue.isPending} onClick={() => issue.mutate({ id: draft.id })}>Confirmar emissão sandbox</Button><Button variant="outline" disabled={issue.isPending} onClick={() => setConfirmDraft(null)}>Cancelar emissão</Button></div>}
         {['issuing', 'needs_review'].includes(draft.status) && <Button variant="outline" disabled={issue.isPending} onClick={() => issue.mutate({ id: draft.id })}>Consultar emissão</Button>}
         {draft.status === 'issued' && draft.provider_invoice_url && <Button variant="outline" asChild><a href={draft.provider_invoice_url} target="_blank" rel="noopener noreferrer">Abrir fatura de teste</a></Button>}
+          {draft.status === 'issued' && <div className="flex flex-wrap gap-2">{confirmPayment !== draft.id ? <Button variant="outline" disabled={simulate.isPending} onClick={() => setConfirmPayment(draft.id)}>Simular pagamento sandbox</Button> : <><span className="text-sm">Confirmar pagamento fictício?</span><Button disabled={simulate.isPending} onClick={() => simulate.mutate({ id: draft.id })}>Confirmar pagamento de teste</Button><Button variant="outline" disabled={simulate.isPending} onClick={() => setConfirmPayment(null)}>Cancelar simulação</Button></>}</div>}
       </div>)}
       {drafts.isLoading && <p>Carregando...</p>}{drafts.error && <p role="alert">{drafts.error.message}</p>}
       {drafts.data && !drafts.data.length && <p>Nenhum rascunho salvo.</p>}
