@@ -47,6 +47,7 @@ export const asaasRouter = router({
     if (error || !draft) throw new Error("Rascunho não encontrado ou migração de emissão pendente");
     if (draft.status === "issued") return { id: draft.id };
     if (draft.status === "cancelled") throw new Error("Rascunho cancelado");
+    if (Number(draft.amount_cents) < 500) throw new Error("Para emitir no Asaas, o valor da cobrança deve ser de pelo menos R$ 5,00");
     const { data: activeUnit } = await supabase.from("units").select("legal_entity_id, operation_mode").eq("id", unit).eq("organization_id", org).maybeSingle();
     if (!activeUnit?.legal_entity_id || activeUnit.operation_mode === "school") throw new Error("Vincule o salão à empresa responsável antes de emitir cobranças");
     const { data: accounts, error: accountError } = await supabase.from("payment_provider_accounts").select("id, secret_reference")

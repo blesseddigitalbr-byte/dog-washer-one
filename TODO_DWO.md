@@ -45,6 +45,9 @@ Solicitado em 07/10/2026. Apenas planejamento; implementação futura, sem alter
 - [x] Aplicar migrações de emissão e proteção de horários/executor no Supabase; tipos, build e 20 testes selecionados aprovados.
 - [ ] Homologar emissão pela interface, pagamento recebido e conciliação com serviço real de teste; não liberar produção antes disso.
 - [ ] Bloqueio confirmado em 08/10: Vercel sem `ASAAS_LUX_DOG_SANDBOX_API_KEY` (somente webhook configurado). Nova chave sandbox preparada sem saques; geração aguarda validação SMS do titular no Asaas. Não foi gerada cobrança nesta tentativa.
+- [x] Bloqueio da credencial resolvido: chave exposta desabilitada, nova chave sandbox salva como Secret na Vercel e redeploy Ready em 08/10, sem permissão de saque.
+- [x] Emissão pela interface homologada: cobrança fictícia `pay_p5iym3vcso3adm2j`, R$ 5,00, fatura sandbox e referência do rascunho persistidas. Não confirma pagamento ou repasse.
+- [ ] Verificar webhook/recebimento desta cobrança (painel inicialmente `awaiting_webhook`) e continuar homologação de serviço/repasse.
 - [x] Tutor/pet fictícios `DWO Homologação Financeiro` e rascunho `DWO TESTE SANDBOX emissão 08-10`, R$ 1,00, criados pela interface para continuidade da homologação. Manter identificados como teste e remover/arquivar após conclusão.
 - [ ] QR Pix/copia e cola, recorrência, recuperação operacional auditada e cancelamento/estorno ainda pendentes.
 - [ ] Homologar concorrência de agendamento em duas sessões e fluxo completo de baixa protegida.
