@@ -31,7 +31,9 @@ export const asaasRouter = router({
     return drafts.map(draft => {
       const payment = payments.data?.find(payment => payment.account_id === draft.account_id && payment.external_id === draft.provider_payment_id);
       const appointment = appointments.data?.find(appointment => appointment.id === draft.appointment_id);
-      const amountMatches = payment ? Math.round(Number(payment.value) * 100) === Number(draft.amount_cents) : undefined;
+      const amountMatches = payment ? Math.round(Number(payment.value) * 100) === Number(draft.amount_cents) &&
+        (!appointment || Math.round(Number(appointment.total_price) * 100) === Number(draft.amount_cents)) &&
+        (!draft.appointment_id || drafts.filter(other => other.appointment_id === draft.appointment_id).length === 1) : undefined;
       return { id: draft.id, description: draft.description, appointmentId: draft.appointment_id, professionalId: appointment?.professional_id ?? null,
         grossCents: Number(draft.amount_cents), netCents: payment?.net_value == null ? null : Math.round(Number(payment.net_value) * 100), paymentStatus: payment?.status ?? "awaiting_webhook", serviceStatus: appointment?.status ?? null,
         state: reconciliationState({ origin: draft.appointment_id ? "appointment" : draft.client_package_id ? "package" : "standalone", paymentStatus: payment?.status, appointmentStatus: appointment?.status, hasProfessional: !!appointment?.professional_id && appointment.client_id === draft.client_id, amountMatches }),

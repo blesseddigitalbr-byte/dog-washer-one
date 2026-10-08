@@ -66,6 +66,10 @@ Solicitado em 07/10/2026. Apenas planejamento; implementação futura, sem alter
 
 ## 2. Recebimentos e conciliação — aprimorar / P0
 
+- [x] Painel inicial por unidade de cobranças emitidas com recebimento, bruto/líquido e situação do atendimento; cruzamento por conta e ID do pagamento.
+- [x] Regras testadas: confirmação não libera apuração; exigir execução, recebimento, executor e valor coerente; pacotes sem rateio não geram direito automático.
+- [ ] Homologar painel com webhook de cobrança emitida pelo novo fluxo.
+
 - [ ] Unificar estados: pendente, confirmado, recebido, vencido, cancelado e estornado.
 - [ ] Não confundir confirmação de cartão com saldo disponível.
 - [ ] Conciliar cobrança com atendimento/pacote/ciclo e executor.
