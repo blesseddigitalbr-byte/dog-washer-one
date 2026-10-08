@@ -72,6 +72,7 @@ export default function Financial() {
       </form>
     </CardContent></Card>
     <Card><CardHeader><CardTitle>Rascunhos salvos</CardTitle></CardHeader><CardContent>
+      {issue.error && <p role="alert" className="mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{issue.error.message}</p>}
       {drafts.data?.map(draft => <div key={`action-${draft.id}`} className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-white p-3">
         <div><p>{draft.description} · {money(Number(draft.amount_cents))}</p><p className="text-xs text-muted-foreground">{draft.provider_payment_id ?? 'Sem cobrança confirmada'} · {draft.status}</p></div>
         {draft.status === 'draft' && confirmDraft !== draft.id && <Button disabled={issue.isPending} onClick={() => setConfirmDraft(draft.id)}>Emitir no sandbox</Button>}
