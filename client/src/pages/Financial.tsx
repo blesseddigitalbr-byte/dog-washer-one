@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { parseBrlCents } from "../../../shared/billing";
+import { reconciliationLabels } from "../../../shared/reconciliation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,7 @@ export default function Financial() {
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
   const options = trpc.asaas.billingOptions.useQuery(undefined, { retry: false });
   const drafts = trpc.asaas.billingDrafts.useQuery(undefined, { retry: false });
+  const reconciliation = trpc.asaas.reconciliation.useQuery(undefined, { retry: false });
   const issue = trpc.asaas.issueSandboxDraft.useMutation({
     onSuccess: () => { toast.success("Cobrança localizada/emitida no sandbox. Isso não confirma pagamento nem gera repasse."); drafts.refetch(); },
     onError: error => { toast.error(error.message); drafts.refetch(); },
@@ -80,5 +82,16 @@ export default function Financial() {
       {!!drafts.data?.length && <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-3">Cliente / descrição</th><th>Origem</th><th>Valor</th><th>Vencimento</th><th>Situação</th></tr></thead><tbody>{drafts.data.map(draft => <tr key={draft.id} className="border-b"><td className="py-3">{options.data?.clients.find(c => c.id === draft.client_id)?.nome ?? "Cliente"}<p className="text-muted-foreground">{draft.description}</p></td><td>{draft.appointment_id ? "Atendimento" : draft.client_package_id ? "Pacote" : "Avulsa"}</td><td>{money(Number(draft.amount_cents))}</td><td>{draft.due_date.split("-").reverse().join("/")}</td><td>{draft.status === "draft" ? "Rascunho · não emitido" : draft.status}</td></tr>)}</tbody></table></div>}
     </CardContent></Card>
     <Button variant="outline" asChild><a href="/splits">Ver splits e repasses</a></Button>
+    <Card><CardHeader><CardTitle>Conciliação: recebimento e serviço</CardTitle></CardHeader><CardContent>
+      <p className="mb-3 text-sm text-muted-foreground">Apto à apuração não significa repasse efetuado. Cartão confirmado não é recebimento disponível.</p>
+      <Button variant="outline" disabled={reconciliation.isFetching} onClick={() => reconciliation.refetch()}>Atualizar conciliação</Button>
+      {reconciliation.error && <p role="alert">{reconciliation.error.message}</p>}
+      {reconciliation.data?.length === 0 && <p className="mt-3">Nenhuma cobrança emitida vinculada nesta unidade.</p>}
+      {reconciliation.data?.map(row => <div key={row.id} className="mt-3 rounded-lg border p-3 space-y-1">
+        <p>{row.description} · Bruto {money(row.grossCents)}{row.netCents != null ? ` · Líquido ${money(row.netCents)}` : ''}</p>
+        <p className="text-sm text-muted-foreground">Pagamento: {row.paymentStatus} · Serviço: {row.serviceStatus ?? 'Sem atendimento individual'} · {reconciliationLabels[row.state]}</p>
+        {row.professionalId && <p className="text-xs text-muted-foreground">Executor identificado: {row.professionalId}</p>}
+      </div>)}
+    </CardContent></Card>
   </div>;
 }

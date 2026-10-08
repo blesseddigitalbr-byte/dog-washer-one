@@ -4,6 +4,7 @@ import { supabase, supabaseAdmin } from "../_core/supabase.js";
 import { z } from "zod";
 import { sandboxAsaas, verifiedDraftPayment } from "./client.js";
 import { safeInvoiceUrl } from "./events.js";
+import { reconciliationState } from "../../shared/reconciliation.js";
 import { billingDraftSchema } from "../../shared/billing.js";
 
 const financialProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -14,6 +15,29 @@ const financialProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 export const asaasRouter = router({
+  reconciliation: financialProcedure.query(async ({ ctx }) => {
+    if (!ctx.user.unitId || !ctx.user.organizationId) return [];
+    const { data: drafts, error } = await supabase.from("billing_drafts").select("id, client_id, appointment_id, client_package_id, amount_cents, account_id, provider_payment_id, status, description")
+      .eq("unit_id", ctx.user.unitId).eq("organization_id", ctx.user.organizationId).eq("status", "issued").order("created_at", { ascending: false }).limit(100);
+    if (error) throw new Error("Não foi possível carregar cobranças emitidas");
+    if (!drafts?.length) return [];
+    const paymentIds = Array.from(new Set(drafts.map(draft => draft.provider_payment_id).filter(Boolean)));
+    const appointmentIds = drafts.map(draft => draft.appointment_id).filter(Boolean);
+    const [payments, appointments] = await Promise.all([
+      supabase.from("asaas_payments").select("account_id, external_id, status, value, net_value").eq("organization_id", ctx.user.organizationId).in("external_id", paymentIds),
+      appointmentIds.length ? supabase.from("appointments").select("id, status, professional_id, client_id, total_price").eq("unit_id", ctx.user.unitId).in("id", appointmentIds) : Promise.resolve({ data: [], error: null }),
+    ]);
+    if (payments.error || appointments.error) throw new Error("Não foi possível conciliar recebimentos e serviços");
+    return drafts.map(draft => {
+      const payment = payments.data?.find(payment => payment.account_id === draft.account_id && payment.external_id === draft.provider_payment_id);
+      const appointment = appointments.data?.find(appointment => appointment.id === draft.appointment_id);
+      const amountMatches = payment ? Math.round(Number(payment.value) * 100) === Number(draft.amount_cents) : undefined;
+      return { id: draft.id, description: draft.description, appointmentId: draft.appointment_id, professionalId: appointment?.professional_id ?? null,
+        grossCents: Number(draft.amount_cents), netCents: payment?.net_value == null ? null : Math.round(Number(payment.net_value) * 100), paymentStatus: payment?.status ?? "awaiting_webhook", serviceStatus: appointment?.status ?? null,
+        state: reconciliationState({ origin: draft.appointment_id ? "appointment" : draft.client_package_id ? "package" : "standalone", paymentStatus: payment?.status, appointmentStatus: appointment?.status, hasProfessional: !!appointment?.professional_id && appointment.client_id === draft.client_id, amountMatches }),
+      };
+    });
+  }),
   issueSandboxDraft: financialProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
     const org = ctx.user.organizationId, unit = ctx.user.unitId;
     if (!org || !unit) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Selecione uma unidade" });
