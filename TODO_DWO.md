@@ -286,3 +286,15 @@ Solicitado em 07/10/2026. Apenas planejamento; implementação futura, sem alter
 - [x] Confirmar pagamento fictício de R$ 5,00 e verificar o webhook recebido no DWO: pay_p5iym3vcso3adm2j mudou de pending para received; líquido R$ 4,01. Cobrança avulsa permanece bloqueada para apuração por não possuir atendimento vinculado. Verificado na interface publicada em 08/10/2026.
 - [ ] Fechar teste vinculado a atendimento realizado, apuração do profissional e crédito do repasse; não considerar o módulo liberado antes dessas evidências.
 
+# Recuperação do agendamento Emergent — profissional e aluno
+
+- [x] Comparar AppointmentDialog.js do legado com AppointmentForm.tsx do DWO. Identificado vínculo de aluno apenas no console e removido.
+- [x] Persistir aluno executor no atendimento, separado do profissional supervisor; reabrir edição mantendo executor.
+- [x] Aplicar migração 202610080003 no Supabase (validação com rollback seguida de aplicação bem-sucedida).
+- [x] Validar no banco autorização, unidade, supervisor, serviço e porte permitidos ao aluno; impedir alteração do executor após conclusão.
+- [x] Regra confirmada pela proprietária: aluno não gera split nem repasse, também não para o supervisor; teste automatizado de conciliação.
+- [ ] Validar na interface um agendamento de aluno com cadastro completo e executar o fluxo até conclusão.
+- [ ] Incorporar múltiplos serviços por visita do legado com duração, preço e baixa de pacote consistentes.
+- [ ] Revisar disponibilidade, recorrência, filtros por executor e histórico prático do aluno.
+- [ ] Integrar cobrança pela agenda com conciliação do atendimento do profissional.
+

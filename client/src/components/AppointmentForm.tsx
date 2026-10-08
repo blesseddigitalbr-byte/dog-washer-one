@@ -148,6 +148,8 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
     setSelectedPet(petId);
     setSelectedService(serviceId);
     setSelectedProfessional(professionalId);
+    setExecutedBy(appointment.student_id ? "student" : "professional");
+    setSelectedStudent(appointment.student_id || "");
     setSelectedPackage(appointment.clientPackageId || appointment.client_package_id || "");
     setAppointmentDate(localDate);
     setStartTime(appointment.start_time?.slice(0, 5) || `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`);
@@ -159,7 +161,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
 
   // Validate student permissions
   const validatePermissionsMutation = trpc.students.validatePermissions.useQuery(
-    selectedStudent && executedBy === "student" ? { studentId: selectedStudent } : { studentId: "" },
+    selectedStudent && executedBy === "student" ? { studentId: selectedStudent, serviceId: selectedService || undefined, dogSize: allPets.find((pet: any) => pet.id === selectedPet)?.size } : { studentId: "" },
     { enabled: !!selectedStudent && executedBy === "student" }
   );
 
@@ -218,8 +220,8 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
       toast.error("Selecione um aluno");
       return;
     }
-    if (executedBy === "student" && studentPermissions && !studentPermissions.valid) {
-      toast.error(studentPermissions.reason);
+    if (executedBy === "student" && (!validatePermissionsMutation.data?.valid || validatePermissionsMutation.isFetching)) {
+      toast.error(validatePermissionsMutation.data?.reason || "Aguarde a validação das permissões do aluno");
       return;
     }
 
@@ -243,6 +245,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
         petId: selectedPet,
         serviceId: selectedService,
         professionalId,
+        studentId: executedBy === "student" ? selectedStudent : undefined,
         clientPackageId: selectedPackage && selectedPackage !== "none" ? selectedPackage : undefined,
         appointmentDate: startsAt.toISOString(),
         recurrenceRule,
@@ -251,10 +254,11 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
       };
 
       if (appointment?.id) {
-        await updateMutation.mutateAsync({
+        if (["pending", "confirmed"].includes(appointment.status)) await updateMutation.mutateAsync({
           id: appointment.id,
           ...appointmentPayload,
           clientPackageId: appointmentPayload.clientPackageId || null,
+          studentId: appointmentPayload.studentId || null,
         });
         if (appointmentStatus !== (appointment.status || "pending")) {
           if (["cancelled", "no_show"].includes(appointmentStatus) && !statusReason.trim()) {
@@ -271,10 +275,6 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
         await createMutation.mutateAsync(appointmentPayload);
       }
 
-      // Se foi um aluno, registrar na tabela appointment_students
-      if (executedBy === "student" && selectedStudent) {
-        console.log("Aluno vinculado ao agendamento:", selectedStudent);
-      }
 
       toast.success(appointment?.id ? "Agendamento atualizado com sucesso!" : "Agendamento criado com sucesso!");
       await utils.appointments.list.invalidate();
@@ -534,6 +534,8 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
               {studentPermissions.valid ? (
                 <>
                   <p className="text-sm font-semibold text-green-900 mb-2">✓ Aluno autorizado para prática</p>
+                  <p className="mb-2 text-sm">Supervisor: {professionals.find((professional: any) => professional.id === studentPermissions.student?.instructor_id)?.name || "Não vinculado — complete o cadastro do aluno"}</p>
+                  <p className="mb-2 text-sm">Atendimento realizado por aluno não gera split ou repasse.</p>
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
                       <p className="text-green-700">Nível Prático:</p>

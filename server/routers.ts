@@ -1157,6 +1157,7 @@ export const appRouter = router({
         notes: z.string().trim().max(2000).optional(),
         recurrenceRule: z.enum(["none", "weekly", "biweekly", "monthly"]).default("none"),
         sendEmail: z.boolean().default(false),
+        studentId: z.string().uuid().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
         try {
@@ -1218,6 +1219,7 @@ export const appRouter = router({
               pet_id: input.petId,
               service_id: input.serviceId,
               professional_id: input.professionalId,
+              student_id: input.studentId || null,
               client_package_id: input.clientPackageId || null,
               appointment_date: input.appointmentDate,
               start_time: formatTime(startsAt),
@@ -1346,6 +1348,7 @@ export const appRouter = router({
         serviceId: z.string().uuid(),
         professionalId: z.string().uuid(),
         clientPackageId: z.string().uuid().nullable().optional(),
+        studentId: z.string().uuid().nullable().optional(),
         appointmentDate: z.string().datetime(),
         recurrenceRule: z.enum(["none", "weekly", "biweekly", "monthly"]).default("none"),
         notes: z.string().optional(),
@@ -1398,6 +1401,7 @@ export const appRouter = router({
             pet_id: input.petId,
             service_id: input.serviceId,
             professional_id: input.professionalId,
+            student_id: input.studentId || null,
             client_package_id: input.clientPackageId || null,
             appointment_date: input.appointmentDate,
             start_time: formatTime(startsAt),
@@ -1905,18 +1909,20 @@ export const appRouter = router({
       }),
 
     // Validate student permissions for appointment
-    validatePermissions: publicProcedure
+    validatePermissions: protectedProcedure
       .input(z.object({
         studentId: z.string().uuid(),
         serviceId: z.string().uuid().optional(),
         dogSize: z.string().optional(),
       }))
-      .query(async ({ input }) => {
+      .query(async ({ input, ctx }) => {
+        if (!ctx.user.unitId) return { valid: false, reason: "Selecione uma unidade" };
         try {
           const { data: student, error } = await supabase
             .from("students")
             .select("*")
             .eq("id", input.studentId)
+            .eq("unit_id", ctx.user.unitId)
             .single();
 
           if (error) throw error;

@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 import { reconciliationState } from "../../shared/reconciliation";
 describe("Receipt and service reconciliation", () => {
   const done = { origin: "appointment" as const, paymentStatus: "received", appointmentStatus: "completed", hasProfessional: true, amountMatches: true };
+  it("never grants split entitlement to a student or the supervising professional", () => {
+    expect(reconciliationState({ ...done, studentExecutor: true })).toBe("student_service");
+    expect(reconciliationState({ ...done, origin: "package", studentExecutor: true })).toBe("student_service");
+  });
   it("requires received payment and completed service", () => {
     expect(reconciliationState(done)).toBe("ready_for_calculation");
     expect(reconciliationState({ ...done, paymentStatus: "confirmed" })).toBe("receipt_pending");

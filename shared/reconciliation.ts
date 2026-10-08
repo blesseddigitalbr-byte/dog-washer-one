@@ -1,7 +1,8 @@
-export type ReconciliationState = "cancelled_payment" | "amount_mismatch" | "package_allocation_pending" | "service_link_pending" | "service_not_performed" | "professional_pending" | "execution_pending" | "receipt_pending" | "ready_for_calculation";
-export function reconciliationState(input: { origin: "appointment" | "package" | "standalone"; paymentStatus?: string | null; appointmentStatus?: string | null; hasProfessional?: boolean; amountMatches?: boolean }): ReconciliationState {
+export type ReconciliationState = "student_service" | "cancelled_payment" | "amount_mismatch" | "package_allocation_pending" | "service_link_pending" | "service_not_performed" | "professional_pending" | "execution_pending" | "receipt_pending" | "ready_for_calculation";
+export function reconciliationState(input: { origin: "appointment" | "package" | "standalone"; paymentStatus?: string | null; appointmentStatus?: string | null; hasProfessional?: boolean; amountMatches?: boolean; studentExecutor?: boolean }): ReconciliationState {
   if (input.paymentStatus === "refunded" || input.paymentStatus === "deleted") return "cancelled_payment";
   if (input.amountMatches === false) return "amount_mismatch";
+  if (input.studentExecutor) return "student_service";
   if (input.origin === "package") return "package_allocation_pending";
   if (input.origin === "standalone") return "service_link_pending";
   if (["cancelled", "no_show"].includes(input.appointmentStatus ?? "")) return "service_not_performed";
@@ -11,6 +12,7 @@ export function reconciliationState(input: { origin: "appointment" | "package" |
   return "ready_for_calculation";
 }
 export const reconciliationLabels: Record<ReturnType<typeof reconciliationState>, string> = {
+  student_service: "Atendimento de aluno — sem split ou repasse",
   cancelled_payment: "Pagamento cancelado/estornado — revisar",
   amount_mismatch: "Valor divergente — revisar",
   package_allocation_pending: "Pacote — rateio por serviço pendente",

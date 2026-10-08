@@ -41,7 +41,7 @@ export const asaasRouter = router({
     const appointmentIds = drafts.map(draft => draft.appointment_id).filter(Boolean);
     const [payments, appointments] = await Promise.all([
       supabase.from("asaas_payments").select("account_id, external_id, status, value, net_value").eq("organization_id", ctx.user.organizationId).in("external_id", paymentIds),
-      appointmentIds.length ? supabase.from("appointments").select("id, status, professional_id, client_id, total_price").eq("unit_id", ctx.user.unitId).in("id", appointmentIds) : Promise.resolve({ data: [], error: null }),
+      appointmentIds.length ? supabase.from("appointments").select("id, status, professional_id, student_id, client_id, total_price").eq("unit_id", ctx.user.unitId).in("id", appointmentIds) : Promise.resolve({ data: [], error: null }),
     ]);
     if (payments.error || appointments.error) throw new Error("Não foi possível conciliar recebimentos e serviços");
     return drafts.map(draft => {
@@ -52,7 +52,7 @@ export const asaasRouter = router({
         (!draft.appointment_id || drafts.filter(other => other.appointment_id === draft.appointment_id).length === 1) : undefined;
       return { id: draft.id, description: draft.description, appointmentId: draft.appointment_id, professionalId: appointment?.professional_id ?? null,
         grossCents: Number(draft.amount_cents), netCents: payment?.net_value == null ? null : Math.round(Number(payment.net_value) * 100), paymentStatus: payment?.status ?? "awaiting_webhook", serviceStatus: appointment?.status ?? null,
-        state: reconciliationState({ origin: draft.appointment_id ? "appointment" : draft.client_package_id ? "package" : "standalone", paymentStatus: payment?.status, appointmentStatus: appointment?.status, hasProfessional: !!appointment?.professional_id && appointment.client_id === draft.client_id, amountMatches }),
+        state: reconciliationState({ origin: draft.appointment_id ? "appointment" : draft.client_package_id ? "package" : "standalone", paymentStatus: payment?.status, appointmentStatus: appointment?.status, hasProfessional: !!appointment?.professional_id && appointment.client_id === draft.client_id, amountMatches, studentExecutor: !!appointment?.student_id }),
       };
     });
   }),
