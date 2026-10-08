@@ -1,6 +1,9 @@
 import { TRPCError } from "@trpc/server";
 import { protectedProcedure, router } from "../_core/trpc.js";
-import { supabase } from "../_core/supabase.js";
+import { supabase, supabaseAdmin } from "../_core/supabase.js";
+import { z } from "zod";
+import { sandboxAsaas, verifiedDraftPayment } from "./client.js";
+import { safeInvoiceUrl } from "./events.js";
 import { billingDraftSchema } from "../../shared/billing.js";
 
 const financialProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -11,6 +14,58 @@ const financialProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 export const asaasRouter = router({
+  issueSandboxDraft: financialProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
+    const org = ctx.user.organizationId, unit = ctx.user.unitId;
+    if (!org || !unit) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Selecione uma unidade" });
+    const { data: draft, error } = await supabase.from("billing_drafts").select("*").eq("id", input.id).eq("organization_id", org).eq("unit_id", unit).maybeSingle();
+    if (error || !draft) throw new Error("Rascunho não encontrado ou migração de emissão pendente");
+    if (draft.status === "issued") return { id: draft.id };
+    if (draft.status === "cancelled") throw new Error("Rascunho cancelado");
+    const { data: activeUnit } = await supabase.from("units").select("legal_entity_id, operation_mode").eq("id", unit).eq("organization_id", org).maybeSingle();
+    if (!activeUnit?.legal_entity_id || activeUnit.operation_mode === "school") throw new Error("Vincule o salão à empresa responsável antes de emitir cobranças");
+    const { data: accounts, error: accountError } = await supabase.from("payment_provider_accounts").select("id, secret_reference")
+      .eq("organization_id", org).eq("legal_entity_id", activeUnit.legal_entity_id).eq("provider", "asaas").eq("environment", "sandbox").eq("status", "active");
+    if (accountError || accounts?.length !== 1) throw new Error("Configure uma conta Asaas sandbox ativa para a empresa do salão");
+    const account = accounts[0];
+    if (draft.account_id && draft.account_id !== account.id) throw new Error("A conta mudou. Revise a cobrança na conta de origem");
+    const api = sandboxAsaas(account.secret_reference);
+    const recovery = draft.status !== "draft";
+    if (!recovery) {
+      const { data: claimed, error: claimError } = await supabaseAdmin.from("billing_drafts").update({ status: "issuing", account_id: account.id })
+        .eq("id", draft.id).eq("organization_id", org).eq("unit_id", unit).eq("status", "draft").select("id").maybeSingle();
+      if (claimError || !claimed) throw new Error("Emissão já iniciada. Atualize a lista e consulte o resultado");
+    }
+    const update = async (values: Record<string, unknown>) => {
+      const { error } = await supabaseAdmin.from("billing_drafts").update(values).eq("id", draft.id).eq("organization_id", org).eq("unit_id", unit).eq("account_id", account.id);
+      if (error) throw new Error("Não foi possível registrar o resultado. Consulte antes de repetir");
+    };
+    try {
+      // Never repeat a POST after an ambiguous response. Recovery performs GET only.
+      const existing = await api(`payments?externalReference=${encodeURIComponent(draft.id)}&limit=2`);
+      let payment = existing.data?.[0];
+      if ((existing.data?.length ?? 0) > 1) throw new Error("Mais de uma cobrança encontrada. Revisão necessária");
+      if (!payment && recovery) throw new Error("Nenhuma cobrança localizada ainda. Não será criada outra automaticamente; revisão necessária");
+      if (!payment) {
+        const { data: client } = await supabase.from("clientes").select("id, nome, cpf").eq("id", draft.client_id).eq("unit_id", unit).eq("organization_id", org).maybeSingle();
+        const taxId = client?.cpf?.replace(/\D/g, "") ?? "";
+        if (!client || ![11, 14].includes(taxId.length)) throw new Error("Complete o CPF/CNPJ do cliente antes da emissão");
+        const reference = `dwo:${org}:${client.id}`;
+        const customers = await api(`customers?externalReference=${encodeURIComponent(reference)}&limit=2`);
+        if ((customers.data?.length ?? 0) > 1) throw new Error("Cliente duplicado no Asaas. Revise antes de emitir");
+        const customer = customers.data?.[0] ?? await api("customers", { name: client.nome, cpfCnpj: taxId, externalReference: reference, notificationDisabled: true });
+        if (typeof customer.id !== "string" || !customer.id.startsWith("cus_")) throw new Error("Resposta inválida ao cadastrar cliente");
+        draft.provider_customer_id = customer.id;
+        await update({ provider_customer_id: customer.id });
+        payment = await api("payments", { customer: customer.id, billingType: draft.billing_type, value: Number(draft.amount_cents) / 100, dueDate: draft.due_date, description: draft.description, externalReference: draft.id });
+      }
+      if (!verifiedDraftPayment(payment, draft)) throw new Error("Dados da cobrança divergentes do rascunho. Revisão necessária");
+      await update({ status: "issued", provider_payment_id: payment.id, provider_invoice_url: safeInvoiceUrl(payment.invoiceUrl) });
+      return { id: draft.id };
+    } catch (error) {
+      await update({ status: "needs_review" });
+      throw new Error(error instanceof Error ? error.message : "Emissão sem confirmação. Consulte antes de repetir");
+    }
+  }),
   billingOptions: financialProcedure.query(async ({ ctx }) => {
     if (!ctx.user.unitId) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Selecione uma unidade" });
     const [clients, appointments, packages] = await Promise.all([
@@ -23,7 +78,7 @@ export const asaasRouter = router({
   }),
   billingDrafts: financialProcedure.query(async ({ ctx }) => {
     if (!ctx.user.unitId) return [];
-    const { data, error } = await supabase.from("billing_drafts").select("id, client_id, appointment_id, client_package_id, amount_cents, billing_type, due_date, description, status, created_at")
+    const { data, error } = await supabase.from("billing_drafts").select("id, client_id, appointment_id, client_package_id, amount_cents, billing_type, due_date, description, status, created_at, provider_payment_id, provider_invoice_url")
       .eq("unit_id", ctx.user.unitId).order("created_at", { ascending: false }).limit(100);
     if (error) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Os rascunhos de cobrança precisam da migração 202610070003 aplicada." });
     return data ?? [];

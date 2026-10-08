@@ -37,6 +37,16 @@ Solicitado em 07/10/2026. Apenas planejamento; implementação futura, sem alter
 
 ## 1. Cobranças — recuperar / prioridade P0
 
+### Etapa 08/10 — emissão sandbox e proteção da agenda
+
+- [x] Implementar emissão sandbox de rascunho com conta vinculada à pessoa jurídica da unidade, cadastro/localização do cliente e fatura hospedada.
+- [x] Proteger contra POST duplicado concorrente com reserva atômica do rascunho; resultados incertos ficam para consulta sem novo POST automático.
+- [x] Conferir referência, cliente, valor e modalidade antes de vincular resposta do Asaas.
+- [x] Aplicar migrações de emissão e proteção de horários/executor no Supabase; tipos, build e 20 testes selecionados aprovados.
+- [ ] Homologar emissão pela interface, pagamento recebido e conciliação com serviço real de teste; não liberar produção antes disso.
+- [ ] QR Pix/copia e cola, recorrência, recuperação operacional auditada e cancelamento/estorno ainda pendentes.
+- [ ] Homologar concorrência de agendamento em duas sessões e fluxo completo de baixa protegida.
+
 - [x] Etapa preparatória: formulário único e rascunhos persistidos, acessíveis pelo Financeiro, Agendamento e Pacotes (migração aplicada, gravação via plataforma e entrada contextual de pacote verificadas; publicação 6151c2c).
 
 - [ ] Serviço único de criação de cobranças no servidor, usado por todas as telas.

@@ -1330,6 +1330,7 @@ export const appRouter = router({
           .update(changes)
           .eq("id", input.id)
           .eq("unit_id", ctx.user.unitId)
+          .eq("status", current.status)
           .select()
           .single();
         if (error) throw error;
@@ -1413,6 +1414,7 @@ export const appRouter = router({
             .update(updateData)
             .eq("id", input.id)
             .eq("unit_id", ctx.user.unitId)
+            .in("status", ["pending", "confirmed"])
             .select()
             .single();
 
