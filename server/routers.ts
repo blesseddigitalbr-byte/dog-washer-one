@@ -1852,6 +1852,17 @@ export const appRouter = router({
         }
       }),
 
+    portfolio: protectedProcedure.input(z.object({ studentId: z.string().uuid() })).query(async ({ input, ctx }) => {
+      if (!ctx.user?.unitId || !ctx.user.organizationId) throw new Error("Selecione uma unidade");
+      const { data: student, error: studentError } = await supabase.from("students").select("id, name, academic_id").eq("id", input.studentId).eq("unit_id", ctx.user.unitId).eq("organization_id", ctx.user.organizationId).maybeSingle();
+      if (studentError || !student) throw new Error("Aluno não encontrado nesta unidade");
+      // Read from the execution source of truth: one entry per completed appointment.
+      // No data is transmitted to the academic portal by this query.
+      const { data, error } = await supabase.from("appointments").select("id, appointment_date, completed_at, duration_minutes, service:service_id(name), professional:professional_id(name), pet:pet_id(name)").eq("unit_id", ctx.user.unitId).eq("organization_id", ctx.user.organizationId).eq("student_id", student.id).eq("status", "completed").order("appointment_date", { ascending: false });
+      if (error) throw new Error("Não foi possível carregar o portfólio");
+      return { student, integrationStatus: "pending" as const, entries: data ?? [], plannedPracticeMinutes: (data ?? []).reduce((sum, row) => sum + Number(row.duration_minutes || 0), 0) };
+    }),
+
     // Get student attendances/appointments from appointmentStudents
     getAttendances: publicProcedure
       .input(z.object({

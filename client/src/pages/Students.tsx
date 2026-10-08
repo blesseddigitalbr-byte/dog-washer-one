@@ -11,9 +11,11 @@ import { Plus, Loader } from "lucide-react";
 import { StudentStats } from "@/components/StudentStats";
 import { StudentCard } from "@/components/StudentCard";
 import { StudentForm } from "@/components/StudentForm";
+import { StudentPortfolio } from "@/components/StudentPortfolio";
 
 export default function Students() {
   const [openDialog, setOpenDialog] = useState(false);
+  const [portfolioStudent, setPortfolioStudent] = useState<{ id: string; name: string } | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
@@ -325,16 +327,16 @@ export default function Students() {
           </Card>
         ) : (
           filteredStudents.map((student: any) => (
-            <StudentCard
-              key={student.id}
+            <div key={student.id} className="space-y-2"><StudentCard
               student={student}
               onEdit={handleOpenDialog}
               onDelete={(id) => setDeleteId(id)}
-            />
+            /><Button variant="outline" className="w-full" onClick={() => setPortfolioStudent(student)}>Ver portfólio acadêmico</Button></div>
           ))
         )}
       </div>
 
+      <StudentPortfolio student={portfolioStudent} onClose={() => setPortfolioStudent(null)} />
       {/* Delete Confirmation */}
       <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
         <AlertDialogContent>

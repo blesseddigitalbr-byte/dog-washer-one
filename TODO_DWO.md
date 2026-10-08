@@ -298,3 +298,12 @@ Solicitado em 07/10/2026. Apenas planejamento; implementação futura, sem alter
 - [ ] Revisar disponibilidade, recorrência, filtros por executor e histórico prático do aluno.
 - [ ] Integrar cobrança pela agenda com conciliação do atendimento do profissional.
 
+# Portfólio acadêmico do aluno
+
+- [x] Regra: somente atendimentos concluídos pelo aluno compõem a base do portfólio; sem split ou repasse.
+- [x] Consulta protegida e limitada à unidade/organização do aluno, usando appointments.student_id e status completed como fonte de verdade.
+- [x] Adicionar acesso ao portfólio pela tela Alunos, com pet, serviço, supervisor, data e duração prevista. Identificador do atendimento evita duplicação na consulta.
+- [ ] Integrar portal acadêmico com autenticação, identificador externo e sincronização idempotente. Nenhum envio externo foi implementado ou realizado.
+- [ ] Incorporar fotos autorizadas, avaliação da prática e horas efetivamente validadas pelo supervisor. Duração prevista não equivale a carga horária acadêmica validada.
+- [ ] Testar interface com prática concluída e verificar isolamento entre unidades e exclusão de cancelamentos.
+
