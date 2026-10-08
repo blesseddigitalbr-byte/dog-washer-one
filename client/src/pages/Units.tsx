@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import UnitFormDialog from "@/components/UnitFormDialog";
+import { LegalEntityForm } from "@/components/LegalEntityForm";
 
 const MODE_LABELS: Record<string, string> = {
   salon: "Salão",
@@ -33,6 +34,7 @@ export default function Units() {
   const workspace = contextQuery.data;
   const [unitFormOpen, setUnitFormOpen] = useState(false);
   const [editingUnit, setEditingUnit] = useState<any | null>(null);
+  const [editingEntity, setEditingEntity] = useState<any | null>(null);
   const canManage = user?.role === "owner" || user?.role === "admin";
 
   if (contextQuery.isLoading) {
@@ -78,6 +80,7 @@ export default function Units() {
           <h2 className="mb-4 text-lg font-bold text-foreground">
             Pessoas jurídicas
           </h2>
+          <p className="mb-4 text-sm text-muted-foreground">Empresas responsáveis pelos dados legais e fiscais. Uma empresa pode ter várias unidades.</p>
           <div className="grid gap-4 lg:grid-cols-2">
             {workspace.legalEntities.map((entity: any) => (
               <article
@@ -105,6 +108,7 @@ export default function Units() {
                 <p className="font-mono text-sm font-semibold text-primary">
                   {formatTaxId(entity.tax_id)}
                 </p>
+                {canManage && <Button variant="outline" size="sm" className="mt-4" onClick={() => setEditingEntity(entity)}><Pencil className="mr-2 h-4 w-4" />Editar empresa</Button>}
                 {(entity.city || entity.state) && (
                   <p className="mt-3 flex items-center gap-2 text-sm text-slate-500">
                     <MapPin className="h-4 w-4" />
@@ -162,6 +166,13 @@ export default function Units() {
                   <p className="mt-1 text-sm text-slate-500">
                     {formatTaxId(unit.cnpj)}
                   </p>
+                  <p className="mt-2 text-sm text-muted-foreground">Empresa vinculada: {workspace.legalEntities.find((entity: any) => entity.id === unit.legal_entity_id)?.trading_name || workspace.legalEntities.find((entity: any) => entity.id === unit.legal_entity_id)?.company_name || "Não vinculada"}</p>
+                  {(() => {
+                    const company = workspace.legalEntities.find((entity: any) => entity.id === unit.legal_entity_id);
+                    const companyTax = (company?.tax_id ?? "").replace(/\D/g, "");
+                    const unitTax = (unit.cnpj ?? "").replace(/\D/g, "");
+                    return company && unitTax && companyTax !== unitTax ? <p className="mt-2 rounded-lg bg-amber-50 p-2 text-sm text-amber-900">{companyTax ? "CNPJ da unidade diferente do CNPJ da empresa vinculada. Confira os cadastros." : "A unidade tem CNPJ, mas a empresa vinculada ainda não. Complete o cadastro da empresa."}</p> : null;
+                  })()}
                   {(unit.city || unit.state) && (
                     <p className="mt-3 flex items-center gap-2 text-sm text-slate-500">
                       <MapPin className="h-4 w-4" />
@@ -207,6 +218,7 @@ export default function Units() {
         unit={editingUnit}
         legalEntities={workspace.legalEntities}
       />
+      <LegalEntityForm entity={editingEntity} onClose={() => setEditingEntity(null)} />
     </div>
   );
 }

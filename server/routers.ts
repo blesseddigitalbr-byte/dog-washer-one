@@ -288,6 +288,26 @@ export const appRouter = router({
         return { unitId: data as string };
       }),
 
+    saveLegalEntity: protectedProcedure
+      .input(z.object({
+        id: z.string().uuid(),
+        companyName: z.string().trim().min(2).max(160),
+        tradingName: z.string().trim().max(160),
+        taxId: z.string().transform(value => value.replace(/\D/g, "")).refine(value => !value || value.length === 14, "Informe um CNPJ com 14 dígitos"),
+        city: z.string().trim().max(100),
+        state: z.string().trim().max(2),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (!ctx.user?.organizationId || !["owner", "admin"].includes(ctx.user.role)) throw new Error("Somente administradores podem editar empresas");
+        const { data, error } = await supabase.from("legal_entities").update({
+          company_name: input.companyName, trading_name: input.tradingName || null,
+          tax_id: input.taxId || null, city: input.city || null, state: input.state.toUpperCase() || null,
+          updated_at: new Date().toISOString(),
+        }).eq("id", input.id).eq("organization_id", ctx.user.organizationId).select("id").maybeSingle();
+        if (error || !data) throw new Error("Não foi possível atualizar a empresa. Verifique seu acesso.");
+        return { id: data.id };
+      }),
+
     saveUnit: protectedProcedure
       .input(z.object({
         id: z.string().uuid().optional(),

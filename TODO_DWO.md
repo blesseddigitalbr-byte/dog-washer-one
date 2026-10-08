@@ -6,6 +6,14 @@ Legenda: `[x]` etapa verificada; `[ ]` trabalho pendente. **Recuperar** = identi
 
 ## 0. Auditoria e preservação
 
+### Estrutura empresarial — 08/10/2026
+
+- [x] Implementar edição de pessoa jurídica para owner/admin, restrita à organização e sem alterar contas financeiras.
+- [x] Mostrar empresa vinculada à unidade e alertar divergência/ausência de CNPJ entre os cadastros.
+- [ ] Homologar gravação de pessoa jurídica no ambiente publicado.
+- [ ] Localizar cadastro original da Blessed e verificar migração/permissões antes de recuperar; não criar duplicata sem dados confirmados.
+- [ ] Definir fonte fiscal única sem sobrescrever CNPJs de filiais ou vínculos existentes.
+
 ### Backlog novo — Portal do Tutor
 
 Solicitado em 07/10/2026. Apenas planejamento; implementação futura, sem alterar a prioridade atual do salão nem a orientação de deixar o item 10 por último.
