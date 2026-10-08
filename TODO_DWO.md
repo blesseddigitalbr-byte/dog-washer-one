@@ -283,6 +283,6 @@ Solicitado em 07/10/2026. Apenas planejamento; implementação futura, sem alter
 
 - [x] Adicionar simulação de pagamento exclusivamente no Asaas sandbox, com confirmação explícita e validação de unidade, conta, cliente, valor e referência.
 - [x] Validar compilação e tipos após a alteração. A situação financeira continua sendo atualizada pelo webhook, não pelo botão de simulação.
-- [ ] Confirmar pagamento fictício de R$ 5,00 e verificar o webhook recebido no DWO.
+- [x] Confirmar pagamento fictício de R$ 5,00 e verificar o webhook recebido no DWO: pay_p5iym3vcso3adm2j mudou de pending para received; líquido R$ 4,01. Cobrança avulsa permanece bloqueada para apuração por não possuir atendimento vinculado. Verificado na interface publicada em 08/10/2026.
 - [ ] Fechar teste vinculado a atendimento realizado, apuração do profissional e crédito do repasse; não considerar o módulo liberado antes dessas evidências.
 
