@@ -20,11 +20,12 @@ export default function Financial() {
   const [dueDate, setDueDate] = useState("");
   const [billingType, setBillingType] = useState<"PIX" | "BOLETO" | "CREDIT_CARD">("PIX");
   const [requestId, setRequestId] = useState(() => crypto.randomUUID());
+  const [confirmDraft, setConfirmDraft] = useState<string | null>(null);
   const options = trpc.asaas.billingOptions.useQuery(undefined, { retry: false });
   const drafts = trpc.asaas.billingDrafts.useQuery(undefined, { retry: false });
   const reconciliation = trpc.asaas.reconciliation.useQuery(undefined, { retry: false });
   const issue = trpc.asaas.issueSandboxDraft.useMutation({
-    onSuccess: () => { toast.success("Cobrança localizada/emitida no sandbox. Isso não confirma pagamento nem gera repasse."); drafts.refetch(); },
+    onSuccess: () => { setConfirmDraft(null); toast.success("Cobrança localizada/emitida no sandbox. Isso não confirma pagamento nem gera repasse."); drafts.refetch(); reconciliation.refetch(); },
     onError: error => { toast.error(error.message); drafts.refetch(); },
   });
   const selectedOrigin = origin === "appointment" ? options.data?.appointments.find(a => a.id === originId) : origin === "package" ? options.data?.packages.find(p => p.id === originId) : undefined;
@@ -73,7 +74,8 @@ export default function Financial() {
     <Card><CardHeader><CardTitle>Rascunhos salvos</CardTitle></CardHeader><CardContent>
       {drafts.data?.map(draft => <div key={`action-${draft.id}`} className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-white p-3">
         <div><p>{draft.description} · {money(Number(draft.amount_cents))}</p><p className="text-xs text-muted-foreground">{draft.provider_payment_id ?? 'Sem cobrança confirmada'} · {draft.status}</p></div>
-        {draft.status === 'draft' && <Button disabled={issue.isPending} onClick={() => { if (window.confirm('Emitir esta cobrança de TESTE no Asaas sandbox? Não haverá cobrança real.')) issue.mutate({ id: draft.id }); }}>Emitir no sandbox</Button>}
+        {draft.status === 'draft' && confirmDraft !== draft.id && <Button disabled={issue.isPending} onClick={() => setConfirmDraft(draft.id)}>Emitir no sandbox</Button>}
+        {draft.status === 'draft' && confirmDraft === draft.id && <div className="flex flex-wrap items-center gap-2"><span className="text-sm">Confirmar emissão de TESTE, sem cobrança real?</span><Button disabled={issue.isPending} onClick={() => issue.mutate({ id: draft.id })}>Confirmar emissão sandbox</Button><Button variant="outline" disabled={issue.isPending} onClick={() => setConfirmDraft(null)}>Cancelar emissão</Button></div>}
         {['issuing', 'needs_review'].includes(draft.status) && <Button variant="outline" disabled={issue.isPending} onClick={() => issue.mutate({ id: draft.id })}>Consultar emissão</Button>}
         {draft.status === 'issued' && draft.provider_invoice_url && <Button variant="outline" asChild><a href={draft.provider_invoice_url} target="_blank" rel="noopener noreferrer">Abrir fatura de teste</a></Button>}
       </div>)}
