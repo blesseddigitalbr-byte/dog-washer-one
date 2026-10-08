@@ -1916,7 +1916,7 @@ export const appRouter = router({
         dogSize: z.string().optional(),
       }))
       .query(async ({ input, ctx }) => {
-        if (!ctx.user.unitId) return { valid: false, reason: "Selecione uma unidade" };
+        if (!ctx.user?.unitId) return { valid: false, reason: "Selecione uma unidade" };
         try {
           const { data: student, error } = await supabase
             .from("students")
