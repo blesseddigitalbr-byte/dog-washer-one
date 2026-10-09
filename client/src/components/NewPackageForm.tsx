@@ -5,12 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 interface NewPackageFormProps {
   onClose: () => void;
 }
 
 export function NewPackageForm({ onClose }: NewPackageFormProps) {
+  const [, navigate] = useLocation();
+  const [planAppointments, setPlanAppointments] = useState(true);
   const utils = trpc.useUtils();
   const [formData, setFormData] = useState({
     clientId: "",
@@ -30,10 +33,11 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
   const { data: clients = [] } = trpc.clients.list.useQuery();
   const { data: plans = [] } = trpc.packages.list.useQuery();
   const createMutation = trpc.clientPackages.create.useMutation({
-    onSuccess: () => {
+    onSuccess: (created) => {
       toast.success("Pacote criado com sucesso!");
       utils.clientPackages.list.invalidate();
       onClose();
+      if (planAppointments) navigate(`/schedule-simulator?client=${encodeURIComponent(created.client_id)}&pet=${encodeURIComponent(created.pet_id)}&package=${encodeURIComponent(created.id)}`);
     },
     onError: (error: any) => {
       toast.error(`Erro ao criar pacote: ${error.message}`);
@@ -77,6 +81,10 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <label className="flex items-center gap-3 rounded-lg border p-3 text-sm">
+        <input type="checkbox" className="h-5 w-5 accent-purple-600" checked={planAppointments} onChange={event => setPlanAppointments(event.target.checked)} />
+        Planejar datas dos atendimentos após salvar o pacote
+      </label>
       <div>
         <Label htmlFor="plan">Plano de referência</Label>
         <Select value={formData.packageId || "none"} onValueChange={(value) => {

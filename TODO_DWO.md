@@ -6,6 +6,11 @@ Atualizado em 07/10/2026. Prioridade: salão. Referência: código local do Emer
 
 ### Critérios de liberação e arquitetura segura
 
+- [x] Integrar contratação ao simulador por opção Planejar datas após salvar, com tutor/pet/contrato explícitos; adicionar acesso no detalhe do pacote. Não agenda nem envia mensagens automaticamente.
+- [x] Não substituir silenciosamente um contrato explícito ausente pelo primeiro contrato encontrado no simulador.
+- [ ] Homologar contratação → simulação → revisão → agenda, incluindo contrato indisponível, quantidades e prevenção de duplicatas.
+- [ ] Integração Google Agenda: calendário do salão, convidados tutor/profissional, identificadores permanentes e atualização/cancelamento idempotentes; conexão autorizada pendente. Sem envio externo nesta etapa.
+
 - [x] Adicionar opção explícita Combo Higiene + Trimming/Tosa na agenda, persistir include_grooming em criação/edição e preservar seleção ao reabrir.
 - [x] Corrigir baixa preparada: todo atendimento consome banho; somente include_grooming consome tosa/trimming. Tosa higiênica não deve ser inferida pelo nome.
 - [x] Remover inferência por palavra tosa/trimming da escolha de saldo no simulador: banho como base e crédito adicional quando solicitado.

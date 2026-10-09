@@ -93,12 +93,13 @@ export default function ScheduleSimulator() {
   const professionalsQuery = trpc.professionals.list.useQuery();
   const utils = trpc.useUtils();
 
-  const [clientId, setClientId] = useState("");
-  const [petId, setPetId] = useState("");
+  const [entry] = useState(() => new URLSearchParams(window.location.search));
+  const [clientId, setClientId] = useState(entry.get("client") || "");
+  const [petId, setPetId] = useState(entry.get("pet") || "");
   const [serviceId, setServiceId] = useState("");
   const [professionalId, setProfessionalId] = useState("");
   const [appointmentType, setAppointmentType] = useState<"package" | "standalone">("package");
-  const [clientPackageId, setClientPackageId] = useState("");
+  const [clientPackageId, setClientPackageId] = useState(entry.get("package") || "");
   const [frequency, setFrequency] = useState<"weekly" | "biweekly" | "every_21_days" | "monthly" | "once">("biweekly");
   const [quantity, setQuantity] = useState(4);
   const [groomingQuantity, setGroomingQuantity] = useState(0);
@@ -125,7 +126,7 @@ export default function ScheduleSimulator() {
   const selectedPet = pets.find((pet: any) => pet.id === petId);
   const packagesQuery = trpc.clientPackages.byClient.useQuery({ clientId }, { enabled: !!clientId });
   const packages = (packagesQuery.data ?? []).filter((item: any) => !petId || item.pet_id === petId);
-  const selectedPackage = packages.find((item: any) => item.id === clientPackageId) || packages[0];
+  const selectedPackage = clientPackageId ? packages.find((item: any) => item.id === clientPackageId) : packages[0];
   const selectedService = (servicesQuery.data ?? []).find((item: any) => item.id === serviceId);
   const activeServices = (servicesQuery.data ?? []).filter((item: any) => !item.status || item.status === "active");
 

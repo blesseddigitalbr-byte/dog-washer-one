@@ -10,8 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { NewPackageForm } from "@/components/NewPackageForm";
 import { toast } from "sonner";
 import { packageJourney } from "../../../shared/packageJourney";
+import { useLocation } from "wouter";
 
 export default function Packages() {
+  const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [isNewPackageOpen, setIsNewPackageOpen] = useState(false);
@@ -261,6 +263,7 @@ export default function Packages() {
               </div>
               <section className="rounded-xl border p-5 text-sm">
                 <h3 className="font-medium mb-3">Jornada de pacotes deste tutor e pet</h3>
+                <Button variant="outline" className="mb-3" onClick={() => navigate(`/schedule-simulator?client=${encodeURIComponent(selectedPackage.client_id)}&pet=${encodeURIComponent(selectedPackage.pet_id)}&package=${encodeURIComponent(selectedPackage.id)}`)}>Planejar atendimentos deste pacote</Button>
                 <p className="mb-3 text-xs text-muted-foreground">Cada contrato preserva seus créditos, vencimento e situação financeira. Renovação não apaga o anterior.</p>
                 <div className="space-y-3">
                   {packages.filter((pkg: any) => pkg.client_id === selectedPackage.client_id && pkg.pet_id === selectedPackage.pet_id)
