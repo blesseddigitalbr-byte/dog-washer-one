@@ -365,4 +365,8 @@ Solicitado em 07/10/2026. Apenas planejamento; implementação futura, sem alter
 - [x] Exportar identificação da organização/unidade, tutor, CPF informado, email, descrição, valor e IDs de cobrança/pagamento; proteger CSV contra fórmulas e delimitações maliciosas.
 - [ ] Homologar download na interface e complementar dados do emitente/endereço e formato exigido pelo escritório. Exportação não é envio nem documento fiscal.
 - [ ] Registrar número, data e comprovante da nota emitida externamente, com bloqueio de emissão duplicada, antes de habilitar DWO/Asaas.
+- [x] Implementar registro de nota externa com número, chave, data, valor e descrição; permitir cobrança ainda não identificada e distinguir essa pendência na tela.
+- [x] Bloquear nova preparação para cobrança com nota externa vinculada e cancelar rascunho ainda não emitido de forma transacional. Registro não valida autenticidade nem confirma pagamento.
+- [ ] Anexar PDF/XML, homologar interface e implementar vínculo posterior auditado. Ainda não registrar a NF enviada contra cobrança presumida.
+- [ ] Importar cadastros/histórico com revisão de duplicatas e identificar a parcela do plano mensal correspondente à NF nº 1; não associar somente por nome ou valor.
 

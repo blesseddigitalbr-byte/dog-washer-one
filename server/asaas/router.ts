@@ -9,6 +9,7 @@ import { billingDraftSchema } from "../../shared/billing.js";
 import { providerComparison } from "../../shared/provider-check.js";
 import { normalizeStatement, statementQuerySchema } from "./statement.js";
 import { invoiceCsv } from "../../shared/invoice-export.js";
+import { externalInvoiceSchema } from "../../shared/external-invoice.js";
 
 const financialProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (!ctx.user || !["owner", "admin", "manager"].includes(ctx.user.role)) {
@@ -18,6 +19,25 @@ const financialProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 export const asaasRouter = router({
+  externalInvoices: financialProcedure.query(async ({ ctx }) => {
+    if (!ctx.user.organizationId || !ctx.user.unitId) return [];
+    const { data, error } = await supabase.from("external_invoices").select("id, number, issued_date, amount_cents, service_description, billing_draft_id").eq("organization_id", ctx.user.organizationId).eq("unit_id", ctx.user.unitId).order("issued_date", { ascending: false }).limit(100);
+    if (error) throw new Error("Registro de notas externas indisponível. Verifique a migração fiscal");
+    return data ?? [];
+  }),
+  registerExternalInvoice: financialProcedure.input(externalInvoiceSchema).mutation(async ({ ctx, input }) => {
+    const org = ctx.user.organizationId, unit = ctx.user.unitId;
+    if (!org || !unit) throw new Error("Selecione uma unidade");
+    const { data: activeUnit } = await supabase.from("units").select("operation_mode, legal_entity_id").eq("id", unit).eq("organization_id", org).maybeSingle();
+    if (!activeUnit?.legal_entity_id || activeUnit.operation_mode === "school") throw new Error("Registro exclusivo do salão");
+    if (input.billingDraftId) {
+      const { data: billing } = await supabase.from("billing_drafts").select("id, amount_cents").eq("id", input.billingDraftId).eq("organization_id", org).eq("unit_id", unit).eq("status", "issued").maybeSingle();
+      if (!billing || Number(billing.amount_cents) !== input.amountCents) throw new Error("Cobrança indisponível ou valor divergente. Registre sem vínculo para conferência");
+    }
+    const { data, error } = await supabaseAdmin.from("external_invoices").insert({ organization_id: org, unit_id: unit, billing_draft_id: input.billingDraftId ?? null, number: input.number, access_key: input.accessKey, issued_date: input.issuedDate, amount_cents: input.amountCents, service_description: input.serviceDescription, created_by: ctx.user.id }).select("id").single();
+    if (error) throw new Error("Não foi possível registrar. Confira duplicidade da chave ou nota já vinculada/em processamento");
+    return data;
+  }),
   exportInvoice: financialProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
     const org = ctx.user.organizationId, unit = ctx.user.unitId;
     if (!org || !unit) throw new Error("Selecione uma unidade");
@@ -45,9 +65,10 @@ export const asaasRouter = router({
     if (!activeUnit?.legal_entity_id || activeUnit.operation_mode === "school") throw new Error("Esta preparação fiscal é exclusiva do salão vinculado à empresa responsável");
     const { data: billing } = await supabase.from("billing_drafts").select("id, amount_cents, provider_payment_id").eq("id", input.billingDraftId).eq("organization_id", org).eq("unit_id", unit).eq("status", "issued").maybeSingle();
     if (!billing?.provider_payment_id) throw new Error("Emita e confira a cobrança antes de preparar a nota");
-    const { data: existing, error: lookupError } = await supabase.from("invoice_drafts").select("id, service_description, effective_date").eq("billing_draft_id", billing.id).eq("organization_id", org).eq("unit_id", unit).maybeSingle();
+    const { data: existing, error: lookupError } = await supabase.from("invoice_drafts").select("id, service_description, effective_date, status").eq("billing_draft_id", billing.id).eq("organization_id", org).eq("unit_id", unit).maybeSingle();
     if (lookupError) throw new Error("Não foi possível consultar notas já preparadas");
     if (existing) {
+      if (existing.status !== "awaiting_fiscal_validation") throw new Error("Rascunho indisponível: nota registrada externamente, cancelada ou em processamento");
       if (existing.service_description !== input.serviceDescription || existing.effective_date !== input.effectiveDate) throw new Error("Esta cobrança já tem uma nota preparada com outros dados. Revisão necessária");
       return { id: existing.id };
     }
