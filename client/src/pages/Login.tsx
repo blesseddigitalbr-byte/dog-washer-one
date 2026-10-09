@@ -1,7 +1,10 @@
 import { supabase } from "@/lib/supabase";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import { loginBrand } from "../../../shared/loginBrand";
 
 export default function Login() {
+  const brand = loginBrand(window.location.hostname);
+  useEffect(() => { document.title = `${brand.name} | Entrar`; }, [brand.name]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -18,16 +21,21 @@ export default function Login() {
   }
 
   return (
-    <main className="min-h-screen bg-[#07111E] px-6 flex items-center justify-center">
-      <section className="w-full max-w-md rounded-2xl bg-[#F8F6F1] p-8 shadow-2xl">
+    <main style={{ backgroundColor: brand.background }} className="min-h-screen px-6 flex items-center justify-center">
+      <section className={`w-full max-w-md rounded-2xl p-8 shadow-xl ${brand.lux ? "bg-white border border-purple-100" : "bg-[#F8F6F1]"}`}>
         <div className="mb-8 text-center">
-          <img
+          {brand.lux ? <>
+            <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full bg-white">
+              <img src={brand.logo} alt="Lux Dog" className="absolute left-1/2 top-1/2 w-[525px] max-w-none" style={{ transform: "translate(-50%, -32.5%)" }} />
+            </div>
+            <p className="mt-3 text-xs font-medium text-purple-600">by Dog Washer</p>
+          </> : <img
             src="/brand/dwo-horizontal.png"
             alt="DWO — Dog Washer One"
             className="mx-auto mb-5 h-auto w-full max-w-[330px]"
-          />
+          />}
           <p className="mt-2 text-sm text-slate-600">
-            Gestão, ensino e operação em uma única plataforma.
+            {brand.message}
           </p>
         </div>
 
@@ -55,10 +63,11 @@ export default function Login() {
             />
           </label>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
 
           <button
             className="w-full rounded-lg bg-[#113A7A] px-4 py-3 font-medium text-white transition hover:bg-[#07111E] disabled:opacity-60"
+            style={{ background: brand.lux ? `linear-gradient(110deg, ${brand.secondary}, ${brand.primary})` : brand.primary }}
             type="submit"
             disabled={loading}
           >
