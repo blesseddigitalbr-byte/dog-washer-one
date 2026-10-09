@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { AsaasStatement } from "@/components/AsaasStatement";
+import { InvoicePreparation } from "@/components/InvoicePreparation";
 
 const money = (cents: number) => (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const selectClass = "h-10 w-full rounded-md border bg-background px-3 text-sm";
@@ -47,6 +48,7 @@ export default function Financial() {
       setAmount(Number(selectedOrigin.price).toFixed(2).replace(".", ","));
       setDescription(`Pacote ${selectedOrigin.code}`);
     } else if (origin === "appointment" && selectedOrigin && "appointment_date" in selectedOrigin) {
+      setAmount(Number(selectedOrigin.total_price).toFixed(2).replace(".", ","));
       setDescription(`Atendimento ${new Date(selectedOrigin.appointment_date).toLocaleDateString("pt-BR")}`);
     }
   }, [origin, selectedOrigin]);
@@ -102,6 +104,7 @@ export default function Financial() {
       {!!drafts.data?.length && <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b text-left"><th className="py-3">Cliente / descrição</th><th>Origem</th><th>Valor</th><th>Vencimento</th><th>Situação</th></tr></thead><tbody>{drafts.data.map(draft => <tr key={draft.id} className="border-b"><td className="py-3">{options.data?.clients.find(c => c.id === draft.client_id)?.nome ?? "Cliente"}<p className="text-muted-foreground">{draft.description}</p></td><td>{draft.appointment_id ? "Atendimento" : draft.client_package_id ? "Pacote" : "Avulsa"}</td><td>{money(Number(draft.amount_cents))}</td><td>{draft.due_date.split("-").reverse().join("/")}</td><td>{draft.status === "draft" ? "Rascunho · não emitido" : draft.status}</td></tr>)}</tbody></table></div>}
     </CardContent></Card>
       <AsaasStatement />
+      <InvoicePreparation />
       <Button variant="outline" asChild><a href="/splits">Ver splits e repasses</a></Button>
     <Card><CardHeader><CardTitle>Conciliação: recebimento e serviço</CardTitle></CardHeader><CardContent>
       <p className="mb-3 text-sm text-muted-foreground">Apto à apuração não significa repasse efetuado. Cartão confirmado não é recebimento disponível.</p>

@@ -17,6 +17,29 @@ const financialProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 export const asaasRouter = router({
+  invoiceDrafts: financialProcedure.query(async ({ ctx }) => {
+    if (!ctx.user.organizationId || !ctx.user.unitId) return [];
+    const { data, error } = await supabase.from("invoice_drafts").select("id, billing_draft_id, amount_cents, service_description, effective_date, status").eq("organization_id", ctx.user.organizationId).eq("unit_id", ctx.user.unitId).order("created_at", { ascending: false }).limit(100);
+    if (error) throw new Error("Preparação fiscal indisponível. Verifique a migração de NFS-e");
+    return data ?? [];
+  }),
+  prepareInvoice: financialProcedure.input(z.object({ billingDraftId: z.string().uuid(), serviceDescription: z.string().trim().min(5).max(2000), effectiveDate: z.string().date() })).mutation(async ({ ctx, input }) => {
+    const org = ctx.user.organizationId, unit = ctx.user.unitId;
+    if (!org || !unit) throw new Error("Selecione uma unidade");
+    const { data: activeUnit } = await supabase.from("units").select("operation_mode, legal_entity_id").eq("id", unit).eq("organization_id", org).maybeSingle();
+    if (!activeUnit?.legal_entity_id || activeUnit.operation_mode === "school") throw new Error("Esta preparação fiscal é exclusiva do salão vinculado à empresa responsável");
+    const { data: billing } = await supabase.from("billing_drafts").select("id, amount_cents, provider_payment_id").eq("id", input.billingDraftId).eq("organization_id", org).eq("unit_id", unit).eq("status", "issued").maybeSingle();
+    if (!billing?.provider_payment_id) throw new Error("Emita e confira a cobrança antes de preparar a nota");
+    const { data: existing, error: lookupError } = await supabase.from("invoice_drafts").select("id, service_description, effective_date").eq("billing_draft_id", billing.id).eq("organization_id", org).eq("unit_id", unit).maybeSingle();
+    if (lookupError) throw new Error("Não foi possível consultar notas já preparadas");
+    if (existing) {
+      if (existing.service_description !== input.serviceDescription || existing.effective_date !== input.effectiveDate) throw new Error("Esta cobrança já tem uma nota preparada com outros dados. Revisão necessária");
+      return { id: existing.id };
+    }
+    const { data, error } = await supabase.from("invoice_drafts").insert({ billing_draft_id: billing.id, organization_id: org, unit_id: unit, amount_cents: billing.amount_cents, service_description: input.serviceDescription, effective_date: input.effectiveDate, created_by: ctx.user.id }).select("id").single();
+    if (error) throw new Error("Não foi possível preparar a nota. Confira se já existe um registro");
+    return data;
+  }),
   sandboxStatement: financialProcedure.input(statementQuerySchema).query(async ({ ctx, input }) => {
     const org = ctx.user.organizationId, unit = ctx.user.unitId;
     if (!org || !unit) throw new Error("Selecione uma unidade");
@@ -150,7 +173,7 @@ export const asaasRouter = router({
     if (!ctx.user.unitId) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Selecione uma unidade" });
     const [clients, appointments, packages] = await Promise.all([
       supabase.from("clientes").select("id, nome").eq("unit_id", ctx.user.unitId).order("nome"),
-      supabase.from("appointments").select("id, client_id, appointment_date, professional_id").eq("unit_id", ctx.user.unitId).order("appointment_date", { ascending: false }).limit(200),
+      supabase.from("appointments").select("id, client_id, appointment_date, professional_id, total_price").eq("unit_id", ctx.user.unitId).order("appointment_date", { ascending: false }).limit(200),
       supabase.from("client_packages").select("id, client_id, code, price").eq("unit_id", ctx.user.unitId).order("created_at", { ascending: false }).limit(200),
     ]);
     if (clients.error || appointments.error || packages.error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Não foi possível carregar as origens de cobrança" });

@@ -350,3 +350,15 @@ Solicitado em 07/10/2026. Apenas planejamento; implementação futura, sem alter
 - [ ] Relatório completo persistido, paginação integral, taxas, transferências, repasses, estornos e vínculo operacional ainda pendentes.
 - [ ] Ativar produção somente com credencial segura e homologação de consulta/webhooks; não habilitar saques neste fluxo.
 
+# Preparação fiscal — salão e escola
+
+- [x] Registrar divisão atual: contabilidade emite notas do salão; responsável emite notas da escola. Não modificar esse processo automaticamente.
+- [x] Revisar implementação legada e não copiar códigos municipais ou alíquotas presumidas.
+- [x] Implementar rascunho vinculado a uma cobrança emitida, limitado à organização/unidade e sem envio ao Asaas ou à contabilidade.
+- [x] Aplicar migração 202610080005 após teste transacional com rollback e validar tipos.
+- [x] Preencher valor da cobrança de agendamento a partir do atendimento selecionado.
+- [ ] Homologar preparação fiscal na interface publicada; revisar/exportar dados e registrar notas emitidas externamente.
+- [ ] Confirmar código municipal, ISS, competência, dados fiscais e processo de emissão com a contabilidade.
+- [ ] Implementar e homologar emissão Asaas, estados fiscais, PDF/XML e prevenção de duplicidade com notas externas. Emissão automática continua desabilitada.
+- [ ] Configurar fluxo fiscal separado da escola e empresa responsável; não utilizar configuração do salão.
+
