@@ -1,5 +1,20 @@
 begin;
 
+create table public.appointment_package_allocations (
+  appointment_id uuid primary key references public.appointments(id),
+  organization_id uuid not null references public.organizations(id),
+  unit_id uuid not null references public.units(id),
+  requested_package_id uuid not null references public.client_packages(id),
+  consumed_package_id uuid not null references public.client_packages(id),
+  created_by uuid not null references auth.users(id),
+  created_at timestamptz not null default now()
+);
+alter table public.appointment_package_allocations enable row level security;
+alter table public.appointment_package_allocations force row level security;
+create policy package_allocation_read on public.appointment_package_allocations for select to authenticated
+using(organization_id=public.current_organization_id() and unit_id=public.current_unit_id());
+revoke insert,update,delete on public.appointment_package_allocations from authenticated,anon;
+
 -- History is written only by the authorized execution procedure, never by clients.
 revoke insert, update, delete on public.package_sessions, public.visit_history from authenticated, anon;
 drop policy if exists package_sessions_appointment_tenant on public.package_sessions;
@@ -18,6 +33,7 @@ declare
   service_text text;
   consume_grooming boolean;
   consume_bath boolean;
+  chosen_package uuid;
 begin
   if not exists(select 1 from public.profiles where id=auth.uid() and active
     and role in ('owner','admin','manager','staff')) then
@@ -41,6 +57,30 @@ begin
   consume_bath:=not consume_grooming or apt.include_grooming or service_text like '%banho%'
     or service_text like '%higiene%' or service_text like '%combo%';
   if apt.client_package_id is not null then
+    -- One allocation at a time per tutor/pet. Never mix credits from two contracts.
+    perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(
+      apt.unit_id::text || ':' || apt.client_id::text || ':' || apt.pet_id::text,0));
+    if not exists(select 1 from public.client_packages where id=apt.client_package_id
+      and organization_id=apt.organization_id and unit_id=apt.unit_id
+      and client_id=apt.client_id and pet_id=apt.pet_id and status<>'cancelled') then
+      raise exception 'Origem do pacote inválida ou cancelada';
+    end if;
+    select id into chosen_package from public.client_packages
+    where organization_id=apt.organization_id and unit_id=apt.unit_id
+      and client_id=apt.client_id and pet_id=apt.pet_id and status='active'
+      and contract_date <= (now() at time zone 'America/Sao_Paulo')::date
+      and (expiry_date is null or expiry_date >= (now() at time zone 'America/Sao_Paulo')::date)
+      and (not consume_bath or balance_baths>0) and (not consume_grooming or balance_groomings>0)
+    order by expiry_date asc nulls last,contract_date asc,created_at asc,id asc
+    limit 1 for update;
+    if chosen_package is null then raise exception 'Nenhum pacote válido com saldo para todos os serviços'; end if;
+    insert into public.appointment_package_allocations(appointment_id,organization_id,unit_id,
+      requested_package_id,consumed_package_id,created_by)
+    values(apt.id,apt.organization_id,apt.unit_id,apt.client_package_id,chosen_package,auth.uid());
+    if chosen_package is distinct from apt.client_package_id then
+      update public.appointments set client_package_id=chosen_package where id=apt.id;
+      apt.client_package_id:=chosen_package;
+    end if;
     update public.client_packages set
       balance_baths=balance_baths-case when consume_bath then 1 else 0 end,
       balance_groomings=balance_groomings-case when consume_grooming then 1 else 0 end,

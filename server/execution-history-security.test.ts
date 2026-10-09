@@ -15,4 +15,12 @@ describe("execution migration contract (not database homologation)", () => {
     expect(sql.indexOf("apt.execution_reversed_at is not null")).toBeLessThan(sql.indexOf("apt.status='completed'"));
     expect(sql).toContain("Histórico incompatível com a baixa");
   });
+  it("allocates earliest-expiring eligible credits within the same tutor/pet and keeps provenance", () => {
+    expect(sql).toContain("pg_advisory_xact_lock");
+    expect(sql).toContain("order by expiry_date asc nulls last,contract_date asc,created_at asc,id asc");
+    expect(sql).toContain("limit 1 for update");
+    expect(sql).toContain("requested_package_id,consumed_package_id,created_by");
+    expect(sql).toContain("client_id=apt.client_id and pet_id=apt.pet_id and status='active'");
+    expect(sql).toContain("Nenhum pacote válido com saldo para todos os serviços");
+  });
 });

@@ -6,6 +6,12 @@ Atualizado em 07/10/2026. Prioridade: salão. Referência: código local do Emer
 
 ### Critérios de liberação e arquitetura segura
 
+- [x] Preparar continuidade de pacotes na baixa: mesma unidade/tutor/pet, validade, saldo integral para combo, menor vencimento primeiro, trava concorrente e registro de pacote solicitado versus consumido. Não juntar saldos nem estender validade.
+- [x] Validar criação da versão ampliada da migração 202610080010 no Supabase com rollback; três testes de contrato SQL, tipos e build aprovados. Não equivale a teste de consumo real.
+- [ ] Homologar consumo, concorrência, reversão e aplicar migração de continuidade. Não converter atendimento de pacote em avulso automaticamente quando faltar saldo.
+- [x] Exibir jornada de contratações/renovações por tutor/pet no detalhe do pacote, com código, origem, saldo, validade e situação; incluir código/validade na seleção da agenda.
+- [ ] Homologar jornada publicada e exibir alocação real no histórico; vínculo renewal_source_id preserva contratos independentes e não comprova recebimento.
+
 - [x] Preparar migração 202610080010: histórico de consumo/visita somente leitura direta; baixa privilegiada com autorização explícita, isolamento, validade, repetição e bloqueio de execução revertida.
 - [x] Validar criação da migração 202610080010 no Supabase em transação com rollback, sem persistir alterações; oito testes selecionados, tipos e build aprovados.
 - [ ] Executar cenários reais de baixa/permissão/concorrência e aplicar 202610080010 no banco. Proteção nova ainda não está ativa em produção. Saldo direto de contratos continua exigindo endurecimento separado.

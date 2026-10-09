@@ -252,6 +252,20 @@ export default function Packages() {
                 <div><p className="text-xs text-muted-foreground">Data do pagamento</p><p className="font-normal">{selectedPackage.payment_date ? new Date(selectedPackage.payment_date).toLocaleDateString("pt-BR") : "-"}</p></div>
                 <div><p className="text-xs text-muted-foreground">Forma de recebimento</p><p className="font-normal">{selectedPackage.payment_method || "-"}</p></div>
               </div>
+              <section className="rounded-xl border p-5 text-sm">
+                <h3 className="font-medium mb-3">Jornada de pacotes deste tutor e pet</h3>
+                <p className="mb-3 text-xs text-muted-foreground">Cada contrato preserva seus créditos, vencimento e situação financeira. Renovação não apaga o anterior.</p>
+                <div className="space-y-3">
+                  {packages.filter((pkg: any) => pkg.client_id === selectedPackage.client_id && pkg.pet_id === selectedPackage.pet_id)
+                    .sort((a: any, b: any) => a.contract_date.localeCompare(b.contract_date) || a.code.localeCompare(b.code))
+                    .map((pkg: any) => <div key={pkg.id} className="rounded-lg border p-3">
+                      <button type="button" className="text-primary underline underline-offset-4" onClick={() => setSelectedPackage(pkg)}>{pkg.code}</button>
+                      <p className="mt-1">{pkg.renewal_source_id ? `Renovação de ${packages.find((source: any) => source.id === pkg.renewal_source_id)?.code || "contrato anterior"}` : "Nova contratação"} · {pkg.contract_date}</p>
+                      <p className="text-muted-foreground">Saldo: {pkg.balance_baths} banho(s), {pkg.balance_groomings} tosa(s) · validade: {pkg.expiry_date || "não definida"}</p>
+                      <div className="mt-2">{getStatusBadge(pkg)}</div>
+                    </div>)}
+                </div>
+              </section>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 <Card><CardContent className="pt-5"><p className="text-xs text-muted-foreground">Banhos utilizados</p><p className="text-2xl font-bold">{selectedPackage.consumed_baths}/{selectedPackage.total_baths}</p></CardContent></Card>
                 <Card><CardContent className="pt-5"><p className="text-xs text-muted-foreground">Saldo de banhos</p><p className="text-2xl font-bold">{selectedPackage.balance_baths}</p></CardContent></Card>

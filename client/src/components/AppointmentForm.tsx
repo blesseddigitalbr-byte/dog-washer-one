@@ -445,11 +445,12 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
             <SelectItem value="none">Sem pacote</SelectItem>
             {clientPackages.filter((pkg: any) => !selectedPet || pkg.pet_id === selectedPet).map((pkg: any) => (
               <SelectItem key={pkg.id} value={pkg.id}>
-                {pkg.plan?.name || pkg.code} — saldo {pkg.balance_baths} banho(s), {pkg.balance_groomings} tosa(s)
+                {pkg.code} · {pkg.plan?.name || "Pacote"} — {pkg.balance_baths} banho(s), {pkg.balance_groomings} tosa(s) · validade {pkg.expiry_date || "não definida"}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        <p className="mt-2 text-xs text-muted-foreground">Cada contratação mantém seu próprio saldo e validade. A continuidade automática entre pacotes está em homologação.</p>
       </div>
 
       {/* Executado por */}
