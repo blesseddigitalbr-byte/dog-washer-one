@@ -6,6 +6,10 @@ Atualizado em 07/10/2026. Prioridade: salão. Referência: código local do Emer
 
 ### Critérios de liberação e arquitetura segura
 
+- [x] Preparar procedimento transacional 202610090001 para confirmação da simulação: trava, repetição sem nova inclusão, autorização, vínculos, validade/saldo, sobreposição, atendimentos/serviços/itens na mesma transação e proteção de edição de itens confirmados.
+- [x] Validar criação de 202610090001 no Supabase com rollback, sem persistência; dois testes de contrato SQL e tipos aprovados. Vercel Ready confirmado para 8fa7979 (alertas de feriados); conferência visual autenticada ainda pendente.
+- [ ] Executar cenários reais, falha parcial, concorrência e repetição de 202610090001; aplicar e substituir escrita multietapas da API somente após homologação. Ainda não ativo. Reserva entre contratos/simulações e acesso direto às tabelas exigem validações adicionais.
+
 - [x] Implementar alertas de feriados nacionais fixos e DF (30/11 e móveis verificados de 2026), em geração/edição do simulador, com sugestão de próxima data sem feriado conhecido. Não alterar datas automaticamente nem presumir disponibilidade.
 - [ ] Configuração persistida por unidade de feriados municipais/estaduais, datas móveis de outros anos, expediente/fechamentos e autorização de abertura em feriado. Cobertura local ainda não é completa.
 - [ ] Homologar alertas publicados e política de confirmação. Avisos continuam permitindo revisão/inclusão e não bloqueiam automaticamente expediente.
