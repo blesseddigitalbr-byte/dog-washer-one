@@ -506,6 +506,7 @@ export default function ScheduleSimulator() {
                       </label>
                       <Input className="h-9 border-border text-xs font-bold" value={item.final_service_name || finalServiceName} onChange={(event) => updateItemMutation.mutate({ id: item.id, finalServiceName: event.target.value })} />
                       <div className="flex items-center justify-end gap-2">
+                        {(item.alerts ?? []).length > 0 && <span className="max-w-48 text-xs text-amber-800">{item.alerts.join(" · ")}</span>}
                         {(item.alerts ?? []).length ? <AlertTriangle className="h-4 w-4 text-amber-700" /> : <CheckCircle2 className="h-4 w-4 text-emerald-700" />}
                         <Button variant="outline" size="sm" disabled={item.status === "created"} onClick={() => updateItemMutation.mutate({ id: item.id, ignored: item.status !== "ignored" })}>{item.status === "ignored" ? "Incluir" : "Não incluir"}</Button>
                       </div>

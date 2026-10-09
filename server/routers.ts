@@ -8,6 +8,7 @@ import { sendAppointmentConfirmationEmail } from "./_core/emailService.js";
 import { asaasRouter } from "./asaas/router.js";
 import { brandingRouter } from "./branding.js";
 import { validateSimulationSelection } from "../shared/simulationValidation.js";
+import { holidayAlerts } from "../shared/holidays.js";
 
 // Business routes are authenticated by default. Database RLS applies the
 // organization and unit boundaries to each request.
@@ -2124,8 +2125,10 @@ export const appRouter = router({
           ? Number(selectedPackage.balance_baths)
           : null;
         const duration = Number(serviceRes.data.duration_minutes || 60);
+        const {data: calendarUnit,error: calendarUnitError} = await supabase.from("units").select("state").eq("id",ctx.user.unitId).single();
+        if (calendarUnitError) throw new Error("Não foi possível conferir a localização da unidade");
         const items = dates.map((scheduledAt, index) => {
-          const alerts: string[] = [];
+          const alerts: string[] = holidayAlerts(scheduledAt.toISOString(),calendarUnit?.state);
           if (selectedPackage?.expiry_date && scheduledAt > new Date(`${selectedPackage.expiry_date}T23:59:59-03:00`)) alerts.push("Data fora da vigência do pacote");
           if (availableBalance !== null && index >= availableBalance) alerts.push("Quantidade maior que o saldo disponível");
           const scheduledEnd = new Date(scheduledAt.getTime() + duration * 60_000);
@@ -2233,10 +2236,12 @@ export const appRouter = router({
           return data;
         }
         const simulation = current.simulation;
+        const {data: calendarUnit,error: calendarUnitError} = await supabase.from("units").select("state").eq("id",ctx.user.unitId).single();
+        if (calendarUnitError) throw new Error("Não foi possível conferir a localização da unidade");
         const scheduledAt = new Date(input.scheduledAt || current.scheduled_at);
         const duration = Number(simulation.service?.duration_minutes || 60);
         const scheduledEnd = new Date(scheduledAt.getTime() + duration * 60_000);
-        const alerts: string[] = [];
+        const alerts: string[] = holidayAlerts(scheduledAt.toISOString(),calendarUnit?.state);
         if (simulation.client_package?.expiry_date && scheduledAt > new Date(`${simulation.client_package.expiry_date}T23:59:59-03:00`)) {
           alerts.push("Data fora da vigência do pacote");
         }
