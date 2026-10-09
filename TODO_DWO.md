@@ -6,6 +6,11 @@ Atualizado em 07/10/2026. Prioridade: salão. Referência: código local do Emer
 
 ### Critérios de liberação e arquitetura segura
 
+- [x] Adicionar opção explícita Combo Higiene + Trimming/Tosa na agenda, persistir include_grooming em criação/edição e preservar seleção ao reabrir.
+- [x] Corrigir baixa preparada: todo atendimento consome banho; somente include_grooming consome tosa/trimming. Tosa higiênica não deve ser inferida pelo nome.
+- [x] Remover inferência por palavra tosa/trimming da escolha de saldo no simulador: banho como base e crédito adicional quando solicitado.
+- [ ] Homologar agenda/simulador e aplicar migração 202610080010. Rotina atualmente publicada no banco ainda usa inferência por nome; não considerar correção de baixa ativa.
+
 - [x] Separar contratos substituídos da visão atual: pacote vencido/consumido com nova contratação válida do mesmo tutor/pet/unidade aparece só no histórico como encerrado/consumido; retirar do radar de vencidos/sem saldo sem apagar situação original ou financeiro.
 - [x] Testar substituição e exceções (outro tutor/pet/unidade, contrato futuro, cancelado, vencido ou zerado). Disponibilizar botão Mostrar histórico.
 - [ ] Conferir apresentação publicada com uma jornada real de homologação.

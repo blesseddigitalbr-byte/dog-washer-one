@@ -1161,6 +1161,7 @@ export const appRouter = router({
         notes: z.string().trim().max(2000).optional(),
         recurrenceRule: z.enum(["none", "weekly", "biweekly", "monthly"]).default("none"),
         sendEmail: z.boolean().default(false),
+        includeGrooming: z.boolean().default(false),
         studentId: z.string().uuid().optional(),
       }))
       .mutation(async ({ input, ctx }) => {
@@ -1232,6 +1233,7 @@ export const appRouter = router({
               total_price: Number(serviceRes.data.price || 0),
               recurrence_rule: input.recurrenceRule === "none" ? null : input.recurrenceRule,
               status: "pending",
+              include_grooming: input.includeGrooming,
               notes: input.notes || null,
               created_by: ctx.user.id,
             }])
@@ -1364,6 +1366,7 @@ export const appRouter = router({
         serviceId: z.string().uuid(),
         professionalId: z.string().uuid(),
         clientPackageId: z.string().uuid().nullable().optional(),
+        includeGrooming: z.boolean().optional(),
         studentId: z.string().uuid().nullable().optional(),
         appointmentDate: z.string().datetime(),
         recurrenceRule: z.enum(["none", "weekly", "biweekly", "monthly"]).default("none"),
@@ -1427,6 +1430,7 @@ export const appRouter = router({
             recurrence_rule: input.recurrenceRule === "none" ? null : input.recurrenceRule,
             notes: input.notes || null,
             updated_at: new Date().toISOString(),
+            ...(input.includeGrooming !== undefined ? { include_grooming: input.includeGrooming } : {}),
           };
 
           const { data, error } = await supabase
@@ -2066,8 +2070,6 @@ export const appRouter = router({
         if (input.clientPackageId && (!packageRes.data || packageRes.data.pet_id !== input.petId || packageRes.data.status !== "active")) {
           throw new Error("O pacote selecionado não está vigente para este pet");
         }
-        const serviceText = `${serviceRes.data.category || ""} ${serviceRes.data.name || ""}`.toLowerCase();
-        const consumesGrooming = serviceText.includes("tosa") || serviceText.includes("trimming");
         let selectedPackage: any = packageRes.data;
         if (input.appointmentType === "package" && !selectedPackage) {
           const { data: candidates, error: candidatesError } = await supabase
@@ -2080,7 +2082,8 @@ export const appRouter = router({
           if (candidatesError) throw candidatesError;
           selectedPackage = (candidates ?? []).find((item: any) => {
             const withinValidity = !item.expiry_date || item.expiry_date >= input.startDate;
-            const hasBalance = Number(consumesGrooming ? item.balance_groomings : item.balance_baths) > 0;
+            const hasBalance = Number(item.balance_baths) > 0
+              && (input.groomingQuantity === 0 || Number(item.balance_groomings) > 0);
             return withinValidity && hasBalance;
           });
           if (!selectedPackage) throw new Error("Pet sem pacote vigente e com saldo para este serviço");
@@ -2117,7 +2120,7 @@ export const appRouter = router({
         if (existingError) throw existingError;
 
         const availableBalance = selectedPackage
-          ? Number(consumesGrooming ? selectedPackage.balance_groomings : selectedPackage.balance_baths)
+          ? Number(selectedPackage.balance_baths)
           : null;
         const duration = Number(serviceRes.data.duration_minutes || 60);
         const items = dates.map((scheduledAt, index) => {

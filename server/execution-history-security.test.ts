@@ -23,4 +23,9 @@ describe("execution migration contract (not database homologation)", () => {
     expect(sql).toContain("client_id=apt.client_id and pet_id=apt.pet_id and status='active'");
     expect(sql).toContain("Nenhum pacote válido com saldo para todos os serviços");
   });
+  it("consumes grooming only when explicitly included, never from a service name", () => {
+    expect(sql).toContain("consume_grooming:=coalesce(apt.include_grooming,false)");
+    expect(sql).toContain("consume_bath:=true");
+    expect(sql).not.toContain("service_text like");
+  });
 });

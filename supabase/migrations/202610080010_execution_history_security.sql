@@ -1,5 +1,16 @@
 begin;
 
+create function public.guard_completed_grooming_choice() returns trigger
+language plpgsql security invoker set search_path='' as $$
+begin
+  if old.status='completed' and new.include_grooming is distinct from old.include_grooming then
+    raise exception 'Trimming/tosa da baixa concluída não pode ser alterado';
+  end if;
+  return new;
+end $$;
+create trigger guard_completed_grooming_choice before update on public.appointments
+for each row execute function public.guard_completed_grooming_choice();
+
 create table public.appointment_package_allocations (
   appointment_id uuid primary key references public.appointments(id),
   organization_id uuid not null references public.organizations(id),
@@ -53,9 +64,9 @@ begin
   select lower(concat_ws(' ',apt.planned_service_name,name,category)) into service_text
     from public.services where id=apt.service_id;
   service_text:=coalesce(service_text,lower(coalesce(apt.planned_service_name,'')));
-  consume_grooming:=apt.include_grooming or service_text like '%tosa%' or service_text like '%trim%';
-  consume_bath:=not consume_grooming or apt.include_grooming or service_text like '%banho%'
-    or service_text like '%higiene%' or service_text like '%combo%';
+  -- Hygiene is included in every visit; additional grooming is an explicit choice.
+  consume_grooming:=coalesce(apt.include_grooming,false);
+  consume_bath:=true;
   if apt.client_package_id is not null then
     -- One allocation at a time per tutor/pet. Never mix credits from two contracts.
     perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(

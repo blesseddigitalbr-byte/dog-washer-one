@@ -109,6 +109,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
   const [selectedPet, setSelectedPet] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState("");
   const [selectedPackage, setSelectedPackage] = useState("");
+  const [includeGrooming, setIncludeGrooming] = useState(false);
   const [executedBy, setExecutedBy] = useState<"professional" | "student">("professional");
   const [selectedProfessional, setSelectedProfessional] = useState("");
   const [selectedStudent, setSelectedStudent] = useState("");
@@ -151,6 +152,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
     setExecutedBy(appointment.student_id ? "student" : "professional");
     setSelectedStudent(appointment.student_id || "");
     setSelectedPackage(appointment.clientPackageId || appointment.client_package_id || "");
+    setIncludeGrooming(Boolean(appointment.includeGrooming ?? appointment.include_grooming));
     setAppointmentDate(localDate);
     setStartTime(appointment.start_time?.slice(0, 5) || `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`);
     setRecurrenceRule(appointment.recurrence_rule || "none");
@@ -251,6 +253,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
         recurrenceRule,
         notes,
         sendEmail: true,
+        includeGrooming,
       };
 
       if (appointment?.id) {
@@ -433,6 +436,10 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
       </div>
 
       {/* Plano (Opcional) */}
+      <label className="flex items-start gap-3 rounded-lg border border-primary/40 p-4">
+        <input type="checkbox" className="mt-1 h-5 w-5 accent-purple-600" checked={includeGrooming} disabled={Boolean(appointment && !["pending", "confirmed"].includes(appointment.status))} onChange={event => setIncludeGrooming(event.target.checked)} />
+        <span><span className="font-medium">Combo Higiene + Trimming/Tosa adicional</span><span className="mt-1 block text-xs text-muted-foreground">No pacote: 1 banho + 1 tosa/trimming. Desmarcado: somente 1 banho. Tosa higiênica já está incluída e não desconta tosa.</span></span>
+      </label>
       <div>
         <Label htmlFor="package" className="text-base font-semibold">
           Plano (Opcional)
