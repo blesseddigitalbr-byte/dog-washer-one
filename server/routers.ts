@@ -1860,7 +1860,9 @@ export const appRouter = router({
       // No data is transmitted to the academic portal by this query.
       const { data, error } = await supabase.from("appointments").select("id, appointment_date, completed_at, duration_minutes, service:service_id(name), professional:professional_id(name), pet:pet_id(name)").eq("unit_id", ctx.user.unitId).eq("organization_id", ctx.user.organizationId).eq("student_id", student.id).eq("status", "completed").order("appointment_date", { ascending: false });
       if (error) throw new Error("Não foi possível carregar o portfólio");
-      return { student, integrationStatus: "pending" as const, entries: data ?? [], plannedPracticeMinutes: (data ?? []).reduce((sum, row) => sum + Number(row.duration_minutes || 0), 0) };
+      const { data: references, error: referenceError } = await supabase.from("academic_practice_outbox").select("appointment_id, delivery_status, portal_reference_id").eq("unit_id", ctx.user.unitId).eq("organization_id", ctx.user.organizationId).eq("student_id", student.id);
+      if (referenceError) throw new Error("Fila acadêmica indisponível. Verifique a migração da integração");
+      return { student, integrationStatus: "pending" as const, entries: (data ?? []).map(entry => ({ ...entry, syncStatus: references?.find(reference => reference.appointment_id === entry.id)?.delivery_status ?? "not_queued" })), plannedPracticeMinutes: (data ?? []).reduce((sum, row) => sum + Number(row.duration_minutes || 0), 0) };
     }),
 
     // Get student attendances/appointments from appointmentStudents

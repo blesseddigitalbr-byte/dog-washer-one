@@ -318,3 +318,12 @@ Solicitado em 07/10/2026. Apenas planejamento; implementação futura, sem alter
 - [ ] Retornar ao DWO os estados registro pendente, avaliação pendente e avaliado, com autenticação e proteção contra eventos duplicados/fora de ordem.
 - [ ] Conectar os dois sistemas e testar ponta a ponta. Nenhuma sincronização externa executada nesta etapa.
 
+# Fila durável de referências acadêmicas
+
+- [x] Aplicar migração 202610080004 após validação transacional com rollback: uma referência por atendimento concluído do aluno, sem criar presença ou avaliação.
+- [x] Guardar referências em awaiting_mapping; acesso de leitura limitado à organização/unidade, sem escrita direta para usuários autenticados.
+- [x] Exibir situação de preparação/envio no histórico de práticas, distinguindo referência entregue de presença registrada.
+- [ ] Implementar vínculo explícito aluno DWO → usuário, curso e sessão do portal. Não inferir identidade pelo nome.
+- [ ] Configurar canal autenticado entre servidores e receptor no portal antes de habilitar qualquer envio.
+- [ ] Validar concorrência, reenvio e retorno de avaliação com dados de homologação. Sincronização externa permanece desligada.
+
