@@ -4,6 +4,20 @@ Atualizado em 07/10/2026. Prioridade: salão. Referência: código local do Emer
 
 ## Prioridade retomada — agenda e contratação de planos (08/10/2026)
 
+### Critérios de liberação e arquitetura segura
+
+- [ ] Só liberar salão após testes de banco e navegador do cadastro à conclusão, não apenas testes que inspecionam código.
+- [ ] Matriz de acesso por perfil: tutor/pet, agenda, contratação, descontos, correção, fiscal e repasses; verificar também acesso direto pela API/Supabase.
+- [ ] Auditar políticas FOR ALL dos saldos e históricos: isolamento de unidade não substitui autorização por papel/ação. Restringir mutações críticas a procedimentos auditados antes de produção.
+- [ ] Concorrência: cancelar/concluir, consumir último crédito, renovar e repetir reversão. Confirmar rollback integral após falha.
+- [ ] Backup, restauração ensaiada, migrações versionadas, retenção e acesso a anexos privados; segredos só no servidor.
+- [ ] Evidência financeira por conta e ID do provedor, origem de pagamento/ciclo/serviço e razão de ajustes; não apagar fatos históricos.
+- [ ] Alertas e trilha de revisão para reversão após repasse ou integração acadêmica. Não afirmar que houve recuperação de dinheiro ou cancelamento externo.
+- [ ] Revisar monitoramento, erros seguros, limites de requisição, LGPD, exclusão/retensão e dependências antes de disponibilização comercial.
+- [x] Implementar reversão de baixa pela gestão com motivo e lançamento único: restaurar somente consumo registrado, preservar validade/histórico e sinalizar revisão financeira/acadêmica.
+- [x] Excluir execução revertida da elegibilidade de apuração e da lista de práticas válidas; apresentar reversão como cancelada na agenda, preservando conclusão original no banco.
+- [ ] Homologar reversão e isolamento com execução real de testes no banco/browser. Não considerar o módulo concluído antes dessas evidências.
+
 ### Critério transversal confirmado pelo usuário
 
 - [x] Aplicar comparação Emergent → DWO em todas as etapas, não somente agenda: cadastro, contratação, cobrança, agendamento, execução, créditos, conciliação, repasse, fiscal, relatórios e integrações.

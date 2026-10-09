@@ -54,12 +54,19 @@ export default function Appointments() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [cancelCandidate, setCancelCandidate] = useState<any>(null);
   const [cancelReason, setCancelReason] = useState("");
+  const [reversalCandidate, setReversalCandidate] = useState<any>(null);
+  const [reversalReason, setReversalReason] = useState("");
 
   // Fetch appointments
   const { data: appointments = [] } = trpc.appointments.list.useQuery();
   const { data: clients = [] } = trpc.clients.list.useQuery();
   const { data: services = [] } = trpc.services.list.useQuery();
   const utils = trpc.useUtils();
+  const reverseMutation = trpc.appointments.reverseExecution.useMutation({ onSuccess: async () => {
+    await Promise.all([utils.appointments.list.invalidate(), utils.clientPackages.list.invalidate(), utils.asaas.reconciliation.invalidate()]);
+    setReversalCandidate(null); setShowForm(false);
+    toast.success("Baixa revertida. Créditos consumidos devolvidos uma única vez; financeiro exige conferência.");
+  }, onError: error => toast.error(error.message) });
   const statusMutation = trpc.appointments.setStatus.useMutation({
     onSuccess: async () => {
       await utils.appointments.list.invalidate();
@@ -579,6 +586,8 @@ export default function Appointments() {
           <div className="overflow-y-auto pr-2">
             {selectedAppointment?.id && <Button variant="outline" className="mb-4" asChild><a href={`/financial?appointment=${encodeURIComponent(selectedAppointment.id)}`}>Preparar cobrança deste atendimento</a></Button>}
             {selectedAppointment?.id && ["pending", "confirmed", "in_progress"].includes(selectedAppointment.status) && <Button variant="outline" className="mb-4 ml-2 text-red-700" onClick={() => { setCancelCandidate(selectedAppointment); setCancelReason(""); }}>Cancelar atendimento</Button>}
+            {selectedAppointment?.status === "completed" && !selectedAppointment.execution_reversed_at && <Button variant="outline" className="mb-4 ml-2 text-red-700" onClick={() => { setReversalCandidate(selectedAppointment); setReversalReason(""); }}>Reverter baixa indevida</Button>}
+            {selectedAppointment?.execution_reversed_at && <p role="status" className="mb-4 rounded-lg border border-amber-300 p-3 text-sm">Baixa revertida. Consumo devolvido; execução original preservada para auditoria. Revisão financeira/acadêmica pode ser necessária.</p>}
             <AppointmentForm
               key={selectedAppointment?.id || "new-appointment"}
               onClose={() => setShowForm(false)}
@@ -589,6 +598,12 @@ export default function Appointments() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!reversalCandidate} onOpenChange={open => !open && setReversalCandidate(null)}>
+        <DialogContent><DialogHeader><DialogTitle>Reverter baixa indevida</DialogTitle><DialogDescription>Uso exclusivo da gestão para corrigir registro incorreto. Devolve apenas o banho/tosa efetivamente descontado, sem renovar validade ou alterar mensalidade. Não estorna cobrança nem recupera repasse. Registros acadêmicos exigem conferência.</DialogDescription></DialogHeader>
+          <label className="text-sm">Motivo obrigatório<Input maxLength={500} value={reversalReason} onChange={event => setReversalReason(event.target.value)} /></label>
+          <div className="flex gap-2"><Button variant="outline" onClick={() => setReversalCandidate(null)}>Voltar</Button><Button disabled={reverseMutation.isPending || reversalReason.trim().length < 3} onClick={() => reverseMutation.mutate({ id: reversalCandidate.id, reason: reversalReason })}>Confirmar reversão</Button></div>
+        </DialogContent>
+      </Dialog>
       <Dialog open={!!cancelCandidate} onOpenChange={open => !open && setCancelCandidate(null)}>
         <DialogContent><DialogHeader><DialogTitle>Cancelar atendimento</DialogTitle><DialogDescription>Cancelar antes da conclusão não consome sessão e não altera mensalidade, cobrança ou pagamento. Uma baixa indevida já concluída exige revisão separada.</DialogDescription></DialogHeader>
           <label className="text-sm">Motivo obrigatório<Input value={cancelReason} maxLength={500} onChange={event => setCancelReason(event.target.value)} /></label>

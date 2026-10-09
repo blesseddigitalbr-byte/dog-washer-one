@@ -8,6 +8,7 @@ export type ServiceAllocation = {
   status: "scheduled" | "confirmed" | "in_progress" | "completed" | "cancelled" | "no_show";
   paymentStatus: "pending" | "confirmed" | "received" | "refunded";
   serviceValueCents: number;
+  executionReversed?: boolean;
 };
 
 export function monthlySettlement(
@@ -32,7 +33,7 @@ export function monthlySettlement(
     if (professionals.size > 1) throw new Error("Fechamento deve pertencer a um único profissional");
     if (!Number.isSafeInteger(service.serviceValueCents) || service.serviceValueCents < 0)
       throw new Error("Valor do serviço inválido");
-    if (service.status !== "completed" || service.paymentStatus !== "received") continue;
+    if (service.executionReversed || service.status !== "completed" || service.paymentStatus !== "received") continue;
     earnedCents += Math.round(service.serviceValueCents * partnerBasisPoints / 10000);
     if (!Number.isSafeInteger(earnedCents)) throw new Error("Valor do fechamento excede o limite");
     eligibleAppointmentIds.push(service.appointmentId);

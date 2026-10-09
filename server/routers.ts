@@ -1083,6 +1083,8 @@ export const appRouter = router({
         if (error) throw error;
         return (appointments || []).map((appointment: any) => ({
           ...appointment,
+          status: appointment.execution_reversed_at ? "cancelled" : appointment.status,
+          originalStatus: appointment.status,
           appointmentDate: appointment.appointment_date,
           clientId: appointment.client_id,
           petId: appointment.pet_id,
@@ -1124,6 +1126,8 @@ export const appRouter = router({
           if (error) throw error;
           return {
             ...appointment,
+            status: appointment.execution_reversed_at ? "cancelled" : appointment.status,
+            originalStatus: appointment.status,
             appointmentDate: appointment.appointment_date,
             clientId: appointment.client_id,
             petId: appointment.pet_id,
@@ -1273,6 +1277,12 @@ export const appRouter = router({
         }
       }),
 
+    reverseExecution: protectedProcedure.input(z.object({ id: z.string().uuid(), reason: z.string().trim().min(3).max(500) })).mutation(async ({ ctx, input }) => {
+      if (!ctx.user || !["owner", "admin", "manager"].includes(ctx.user.role)) throw new Error("Reversão restrita à gestão");
+      const { data, error } = await supabase.rpc("reverse_appointment_execution", { p_id: input.id, p_reason: input.reason });
+      if (error) throw new Error(error.message);
+      return data;
+    }),
     setStatus: protectedProcedure
       .input(z.object({
         id: z.string().uuid(),
@@ -1864,7 +1874,7 @@ export const appRouter = router({
       if (studentError || !student) throw new Error("Aluno não encontrado nesta unidade");
       // Read from the execution source of truth: one entry per completed appointment.
       // No data is transmitted to the academic portal by this query.
-      const { data, error } = await supabase.from("appointments").select("id, appointment_date, completed_at, duration_minutes, service:service_id(name), professional:professional_id(name), pet:pet_id(name)").eq("unit_id", ctx.user.unitId).eq("organization_id", ctx.user.organizationId).eq("student_id", student.id).eq("status", "completed").order("appointment_date", { ascending: false });
+      const { data, error } = await supabase.from("appointments").select("id, appointment_date, completed_at, duration_minutes, service:service_id(name), professional:professional_id(name), pet:pet_id(name)").eq("unit_id", ctx.user.unitId).eq("organization_id", ctx.user.organizationId).eq("student_id", student.id).eq("status", "completed").is("execution_reversed_at", null).order("appointment_date", { ascending: false });
       if (error) throw new Error("Não foi possível carregar o portfólio");
       const { data: references, error: referenceError } = await supabase.from("academic_practice_outbox").select("appointment_id, delivery_status, portal_reference_id").eq("unit_id", ctx.user.unitId).eq("organization_id", ctx.user.organizationId).eq("student_id", student.id);
       if (referenceError) throw new Error("Fila acadêmica indisponível. Verifique a migração da integração");
@@ -2372,7 +2382,7 @@ export const appRouter = router({
         if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
         const { data, error } = await supabase
           .from("visit_history")
-          .select("*, service:service_id(name), professional:professional_id(name), client_package:client_package_id(code, plan:package_id(name))")
+          .select("*, appointment:appointment_id(execution_reversed_at), service:service_id(name), professional:professional_id(name), client_package:client_package_id(code, plan:package_id(name))")
           .eq("unit_id", ctx.user.unitId)
           .eq("pet_id", input.petId)
           .order("visited_at", { ascending: false });
@@ -2382,7 +2392,7 @@ export const appRouter = router({
           date: visit.visited_at,
           service: visit.service?.name || "Serviço",
           professional: visit.professional?.name || "Não informado",
-          status: "completed" as const,
+          status: visit.appointment?.execution_reversed_at ? "cancelled" as const : "completed" as const,
           notes: visit.notes || undefined,
           packageId: visit.client_package_id || undefined,
           packageName: visit.client_package?.plan?.name || visit.client_package?.code || undefined,
