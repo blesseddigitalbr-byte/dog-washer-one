@@ -4,6 +4,13 @@ Atualizado em 07/10/2026. Prioridade: salão. Referência: código local do Emer
 
 ## Prioridade retomada — agenda e contratação de planos (08/10/2026)
 
+### Renovação retroativa e serviços avulsos (09/10/2026)
+
+- [x] Preparar função pura de prévia de alocação retroativa com cobertura inicial explícita, identidade unidade/tutor/pet, atendimento concluído, proteção contra seleção duplicada/consumo existente, saldo por serviço e ordenação cronológica. 14 testes e verificação de tipos aprovados. Ainda não integrada à API/UI ou ao banco.
+- [ ] Integrar seleção de atendimentos pendentes à contratação; persistir cobertura autorizada, motivo e auditoria. Confirmar alocação em transação com trava e idempotência. Nunca mover consumo já registrado sem reversão auditada.
+- [ ] Permitir banho de pacote e tosa avulsa no mesmo atendimento, conferindo cobrança histórica antes de criar outra. Não consumir tosa do pacote quando contratada por fora.
+- [ ] Conciliar histórico importado: renovação semestral após contrato trimestral, preservando contratos antigos e separando parcelas de renovações. Dados pessoais/financeiros de origem não devem ser publicados no GitHub. Nenhuma correção real aplicada nesta etapa.
+
 ### Critérios de liberação e arquitetura segura
 
 - [x] Preparar procedimento transacional 202610090001 para confirmação da simulação: trava, repetição sem nova inclusão, autorização, vínculos, validade/saldo, sobreposição, atendimentos/serviços/itens na mesma transação e proteção de edição de itens confirmados.
