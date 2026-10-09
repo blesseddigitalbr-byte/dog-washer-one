@@ -6,6 +6,12 @@ Atualizado em 07/10/2026. Prioridade: salão. Referência: código local do Emer
 
 ### Critérios de liberação e arquitetura segura
 
+- [x] Configurar app.luxdog.com.br como alias HTTPS do projeto DWO, preservando site principal.
+- [x] Adicionar app.dogwasher.com.br ao mesmo projeto e criar CNAME exclusivo app na Hostinger, preservando site/email; resolução pública confirmada.
+- [ ] Confirmar validação final Vercel/HTTPS do domínio geral após propagação. Alias não implementa central administrativa nem seleção de empresa por hostname.
+- [ ] Homologar autenticação/recuperação de senha nos dois domínios; não duplicar dados, empresas ou credenciais.
+- [ ] Preparar central comercial multiempresa após homologação do salão, com marca/permissões/conta financeira próprias e testes de isolamento.
+
 - [ ] Só liberar salão após testes de banco e navegador do cadastro à conclusão, não apenas testes que inspecionam código.
 - [ ] Matriz de acesso por perfil: tutor/pet, agenda, contratação, descontos, correção, fiscal e repasses; verificar também acesso direto pela API/Supabase.
 - [ ] Auditar políticas FOR ALL dos saldos e históricos: isolamento de unidade não substitui autorização por papel/ação. Restringir mutações críticas a procedimentos auditados antes de produção.
