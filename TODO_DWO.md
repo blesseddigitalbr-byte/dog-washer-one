@@ -6,6 +6,10 @@ Atualizado em 07/10/2026. Prioridade: salão. Referência: código local do Emer
 
 ### Critérios de liberação e arquitetura segura
 
+- [x] Preparar migração 202610080010: histórico de consumo/visita somente leitura direta; baixa privilegiada com autorização explícita, isolamento, validade, repetição e bloqueio de execução revertida.
+- [x] Validar criação da migração 202610080010 no Supabase em transação com rollback, sem persistir alterações; oito testes selecionados, tipos e build aprovados.
+- [ ] Executar cenários reais de baixa/permissão/concorrência e aplicar 202610080010 no banco. Proteção nova ainda não está ativa em produção. Saldo direto de contratos continua exigindo endurecimento separado.
+
 - [x] Configurar app.luxdog.com.br como alias HTTPS do projeto DWO, preservando site principal.
 - [x] Adicionar app.dogwasher.com.br ao mesmo projeto e criar CNAME exclusivo app na Hostinger, preservando site/email; resolução pública confirmada.
 - [ ] Confirmar validação final Vercel/HTTPS do domínio geral após propagação. Alias não implementa central administrativa nem seleção de empresa por hostname.
