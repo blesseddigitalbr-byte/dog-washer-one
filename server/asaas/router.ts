@@ -6,6 +6,7 @@ import { sandboxAsaas, verifiedDraftPayment } from "./client.js";
 import { safeInvoiceUrl } from "./events.js";
 import { reconciliationState } from "../../shared/reconciliation.js";
 import { billingDraftSchema } from "../../shared/billing.js";
+import { providerComparison } from "../../shared/provider-check.js";
 
 const financialProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (!ctx.user || !["owner", "admin", "manager"].includes(ctx.user.role)) {
@@ -15,6 +16,20 @@ const financialProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 export const asaasRouter = router({
+  checkSandboxReceipt: financialProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
+    const org = ctx.user.organizationId, unit = ctx.user.unitId;
+    if (!org || !unit) throw new Error("Selecione uma unidade");
+    const { data: draft } = await supabase.from("billing_drafts").select("*").eq("id", input.id).eq("organization_id", org).eq("unit_id", unit).eq("status", "issued").maybeSingle();
+    if (!draft?.provider_payment_id || !draft.account_id) throw new Error("Cobrança vinculada não encontrada");
+    const { data: account } = await supabase.from("payment_provider_accounts").select("secret_reference").eq("id", draft.account_id).eq("organization_id", org).eq("provider", "asaas").eq("environment", "sandbox").eq("status", "active").maybeSingle();
+    if (!account) throw new Error("Conta sandbox de origem indisponível");
+    const payment = await sandboxAsaas(account.secret_reference)(`payments/${encodeURIComponent(draft.provider_payment_id)}`);
+    const { data: local, error } = await supabase.from("asaas_payments").select("status, net_value").eq("organization_id", org).eq("account_id", draft.account_id).eq("external_id", draft.provider_payment_id).maybeSingle();
+    if (error) throw new Error("Não foi possível conferir o recebimento local");
+    const providerNetCents = payment.netValue == null ? null : Math.round(Number(payment.netValue) * 100);
+    const result = providerComparison({ identityMatches: payment.id === draft.provider_payment_id && verifiedDraftPayment(payment, draft), providerStatus: payment.status, localStatus: local?.status, providerNetCents, localNetCents: local?.net_value == null ? null : Math.round(Number(local.net_value) * 100) });
+    return { id: draft.id, result, checkedAt: new Date().toISOString() };
+  }),
   confirmSandboxPayment: financialProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
     const org = ctx.user.organizationId, unit = ctx.user.unitId;
     if (!org || !unit) throw new Error("Selecione uma unidade");

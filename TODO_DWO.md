@@ -327,3 +327,15 @@ Solicitado em 07/10/2026. Apenas planejamento; implementação futura, sem alter
 - [ ] Configurar canal autenticado entre servidores e receptor no portal antes de habilitar qualquer envio.
 - [ ] Validar concorrência, reenvio e retorno de avaliação com dados de homologação. Sincronização externa permanece desligada.
 
+# Planilha Lux Dog e conferência Asaas — 08/10/2026
+
+- [x] Inspecionar em modo somente leitura o Excel enviado em outubro: 21 abas; cabeçalhos de clientes, pets, pacotes e financeiro confirmados. Linhas pré-preenchidas não foram contadas como registros reais.
+- [x] Identificar extrato histórico EXTRATO_ASAAS_BRUTO com período declarado 01/07/2026–20/07/2026; não considerar saldo ou recebimento atual.
+- [x] Adicionar conferência pontual por GET de cobrança sandbox emitida pelo DWO: comparar identidade, referência, modalidade, bruto, estado e líquido com o recebimento local. Não altera saldo, cobrança ou repasse.
+- [x] Teste de divergências (identidade, estado, líquido, pagamento externo e ausência local), tipos e build aprovados.
+- [ ] Homologar botão de conferência na interface publicada e guardar evidência.
+- [ ] Mapear e limpar dados da planilha; importação e reconciliação de saldos continuam pendentes.
+- [ ] Vincular cobranças históricas por ID Asaas + conta de origem, não somente por nome/valor.
+- [ ] Conectar conta Asaas de produção em modo de consulta/webhook e homologar antes de automatizar recebimentos reais. Implementação atual permanece exclusivamente sandbox.
+- [ ] Pagamentos em outras contas/bancos não devem ser presumidos recebidos no Asaas; conferir extratos de origem separadamente.
+
