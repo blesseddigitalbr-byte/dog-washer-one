@@ -499,9 +499,9 @@ export const appRouter = router({
     // Create a new client with all fields
     create: publicProcedure
       .input(z.object({
-        name: z.string().min(1, "Nome é obrigatório"),
-        email: z.string().email("Email inválido"),
-        phone: z.string().min(1, "Telefone é obrigatório"),
+        name: z.string().trim().min(1, "Nome é obrigatório"),
+        email: z.string().trim().email("Email inválido"),
+        phone: z.string().trim().min(1, "Telefone é obrigatório"),
         cpf: z.string().optional(),
         cep: z.string().optional(),
         logradouro: z.string().optional(),

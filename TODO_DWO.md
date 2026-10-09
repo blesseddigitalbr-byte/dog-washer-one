@@ -362,6 +362,20 @@ Solicitado em 07/10/2026. Apenas planejamento; implementação futura, sem alter
 6. Escola e Greenn (item 10), por último, conforme orientação do usuário.
 # Homologação — confirmação controlada de pagamento
 
+## Revisão de publicação — 09/10/2026
+
+- [x] Tipos aprovados; suíte ampla executada: 35 arquivos aprovados, 149 testes aprovados, 7 arquivos falharam na preparação (incluindo configuração Supabase ausente). Não interpretar como homologação completa.
+- [x] Retirar diagnóstico público privilegiado de saúde: rota antiga retorna 410 sem consultar usuários, resposta básica sem ambiente/uptime, cache desabilitado.
+- [ ] Corrigir isolamento/configuração das sete suítes pendentes e repetir testes completos.
+- [x] Reforçar adminProcedure com autenticação JWT e contexto de organização; cinco testes locais de barreira de autenticação/saúde aprovados e tipos aprovados.
+- [ ] Atualizar testes legados que pressupõem listagens sem login ou gravação direta em banco; não fornecer credenciais reais para executar essas suítes antigas.
+- [x] Atualizar clients.test.ts com quatro testes do roteador real, sem banco/credenciais: clientes, agenda, profissionais e alunos rejeitam acesso anônimo antes de consultar dados. Tipos aprovados.
+- [ ] Recriar cobertura autenticada de listagem/detalhes de clientes com fixtures isoladas; não presumir cinco cadastros reais nem acesso público aos pets.
+- [x] Atualizar validação autenticada de clientes: cinco casos inválidos rejeitados sem acessar banco; nome e telefone apenas com espaços não são aceitos.
+- [ ] Homologar logout na interface e revogação de sessão; testes atualizados distinguem signOut do cliente do reconhecimento da API, sem cookies do legado.
+- [ ] Validar fluxo real de cadastro, agenda, consumo/reversão e financeiro em homologação antes de liberar operação.
+- [ ] Publicação desta revisão ainda não realizada; migração de hospedagem permanece pendente.
+
 - [x] Adicionar simulação de pagamento exclusivamente no Asaas sandbox, com confirmação explícita e validação de unidade, conta, cliente, valor e referência.
 - [x] Validar compilação e tipos após a alteração. A situação financeira continua sendo atualizada pelo webhook, não pelo botão de simulação.
 - [x] Confirmar pagamento fictício de R$ 5,00 e verificar o webhook recebido no DWO: pay_p5iym3vcso3adm2j mudou de pending para received; líquido R$ 4,01. Cobrança avulsa permanece bloqueada para apuração por não possuir atendimento vinculado. Verificado na interface publicada em 08/10/2026.
