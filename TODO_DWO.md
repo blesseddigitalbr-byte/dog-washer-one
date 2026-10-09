@@ -361,4 +361,8 @@ Solicitado em 07/10/2026. Apenas planejamento; implementação futura, sem alter
 - [ ] Confirmar código municipal, ISS, competência, dados fiscais e processo de emissão com a contabilidade.
 - [ ] Implementar e homologar emissão Asaas, estados fiscais, PDF/XML e prevenção de duplicidade com notas externas. Emissão automática continua desabilitada.
 - [ ] Configurar fluxo fiscal separado da escola e empresa responsável; não utilizar configuração do salão.
+- [x] Disponibilizar dois caminhos na tela: preparação para DWO/Asaas (emissão bloqueada) e exportação CSV individual para a contabilidade.
+- [x] Exportar identificação da organização/unidade, tutor, CPF informado, email, descrição, valor e IDs de cobrança/pagamento; proteger CSV contra fórmulas e delimitações maliciosas.
+- [ ] Homologar download na interface e complementar dados do emitente/endereço e formato exigido pelo escritório. Exportação não é envio nem documento fiscal.
+- [ ] Registrar número, data e comprovante da nota emitida externamente, com bloqueio de emissão duplicada, antes de habilitar DWO/Asaas.
 

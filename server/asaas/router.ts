@@ -8,6 +8,7 @@ import { reconciliationState } from "../../shared/reconciliation.js";
 import { billingDraftSchema } from "../../shared/billing.js";
 import { providerComparison } from "../../shared/provider-check.js";
 import { normalizeStatement, statementQuerySchema } from "./statement.js";
+import { invoiceCsv } from "../../shared/invoice-export.js";
 
 const financialProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (!ctx.user || !["owner", "admin", "manager"].includes(ctx.user.role)) {
@@ -17,6 +18,20 @@ const financialProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 export const asaasRouter = router({
+  exportInvoice: financialProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
+    const org = ctx.user.organizationId, unit = ctx.user.unitId;
+    if (!org || !unit) throw new Error("Selecione uma unidade");
+    const { data: note, error } = await supabase.from("invoice_drafts").select("id, billing_draft_id, amount_cents, service_description, effective_date, status").eq("id", input.id).eq("organization_id", org).eq("unit_id", unit).maybeSingle();
+    if (error || !note || note.status !== "awaiting_fiscal_validation") throw new Error("Rascunho indisponível para exportação");
+    const { data: billing } = await supabase.from("billing_drafts").select("client_id, provider_payment_id").eq("id", note.billing_draft_id).eq("organization_id", org).eq("unit_id", unit).maybeSingle();
+    if (!billing) throw new Error("Cobrança vinculada indisponível");
+    const { data: client } = await supabase.from("clientes").select("nome, cpf, email").eq("id", billing.client_id).eq("organization_id", org).eq("unit_id", unit).maybeSingle();
+    if (!client) throw new Error("Dados do tomador indisponíveis");
+    return { filename: `preparacao-fiscal-${note.id}.csv`, csv: invoiceCsv([
+      ["Organização DWO", "Unidade DWO", "Rascunho", "Cobrança DWO", "Pagamento Asaas", "Tomador", "CPF informado", "Email", "Descrição", "Valor da cobrança (R$)", "Data pretendida", "Situação", "Orientação"],
+      [org, unit, note.id, note.billing_draft_id, billing.provider_payment_id, client.nome, client.cpf, client.email, note.service_description, (Number(note.amount_cents) / 100).toFixed(2).replace(".", ","), note.effective_date, "NÃO EMITIDA PELO DWO", "Conferir dados do emitente e tomador, endereço, competência, base tributável, código municipal e ISS antes da emissão. Confirmar ausência de nota já emitida."],
+    ]) };
+  }),
   invoiceDrafts: financialProcedure.query(async ({ ctx }) => {
     if (!ctx.user.organizationId || !ctx.user.unitId) return [];
     const { data, error } = await supabase.from("invoice_drafts").select("id, billing_draft_id, amount_cents, service_description, effective_date, status").eq("organization_id", ctx.user.organizationId).eq("unit_id", ctx.user.unitId).order("created_at", { ascending: false }).limit(100);
