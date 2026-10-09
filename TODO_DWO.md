@@ -307,3 +307,14 @@ Solicitado em 07/10/2026. Apenas planejamento; implementação futura, sem alter
 - [ ] Incorporar fotos autorizadas, avaliação da prática e horas efetivamente validadas pelo supervisor. Duração prevista não equivale a carga horária acadêmica validada.
 - [ ] Testar interface com prática concluída e verificar isolamento entre unidades e exclusão de cancelamentos.
 
+# Sincronização com o portfólio EXISTENTE no Portal Unidogwasher
+
+- [x] Consultar código local portal-github: HistoricoEscolar.tsx, attendance.studentRegister e attendance.review. Portfólio usa attendance_records, com pending_review/reviewed.
+- [x] Corrigir nomenclatura do DWO para histórico de práticas, não portfólio paralelo.
+- [x] Definir contrato de referência operacional que exige registro do aluno e proíbe repasses; testar sequência registro do aluno → avaliação do instrutor.
+- [ ] Conectar identidade DWO (UUID) à identidade do portal (ID numérico), curso e sessão prática.
+- [ ] Implementar recebimento seguro e idempotente de referências no portal, sem criar presença automaticamente.
+- [ ] Preencher a tela do aluno com cão e serviços da referência; aluno completa protocolos e ocorrências antes de submeter.
+- [ ] Retornar ao DWO os estados registro pendente, avaliação pendente e avaliado, com autenticação e proteção contra eventos duplicados/fora de ordem.
+- [ ] Conectar os dois sistemas e testar ponta a ponta. Nenhuma sincronização externa executada nesta etapa.
+

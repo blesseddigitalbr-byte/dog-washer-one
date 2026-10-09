@@ -331,7 +331,7 @@ export default function Students() {
               student={student}
               onEdit={handleOpenDialog}
               onDelete={(id) => setDeleteId(id)}
-            /><Button variant="outline" className="w-full" onClick={() => setPortfolioStudent(student)}>Ver portfólio acadêmico</Button></div>
+            /><Button variant="outline" className="w-full" onClick={() => setPortfolioStudent(student)}>Ver práticas realizadas</Button></div>
           ))
         )}
       </div>

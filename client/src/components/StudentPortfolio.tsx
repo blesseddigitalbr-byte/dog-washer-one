@@ -7,8 +7,9 @@ export function StudentPortfolio({ student, onClose }: { student: { id: string; 
     const row = Array.isArray(value) ? value[0] : value;
     return row && typeof row === "object" && "name" in row ? String(row.name) : "Não informado";
   };
-  return <Dialog open={!!student} onOpenChange={open => !open && onClose()}><DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto"><DialogHeader><DialogTitle>Portfólio acadêmico · {student?.name}</DialogTitle></DialogHeader>
-    <p className="text-sm text-muted-foreground">Somente atendimentos concluídos pelo aluno. Sem split ou repasse. Integração com o portal acadêmico pendente.</p>
+  return <Dialog open={!!student} onOpenChange={open => !open && onClose()}><DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto"><DialogHeader><DialogTitle>Práticas do aluno · {student?.name}</DialogTitle></DialogHeader>
+    <p className="text-sm text-muted-foreground">Histórico operacional, sem split ou repasse. O portfólio acadêmico permanece no portal Unidogwasher. Integração ainda não conectada.</p>
+    <p className="text-sm">No portal, o aluno registra a presença, identifica o cão e completa protocolos e ocorrências. Só depois o registro fica pendente de avaliação pelo instrutor. Concluir no DWO não confirma presença nem aprovação acadêmica.</p>
     {query.isLoading && <p>Carregando práticas...</p>}
     {query.error && <p role="alert">{query.error.message}</p>}
     {query.data && <><p>{query.data.entries.length} atendimento(s) concluído(s) · {(query.data.plannedPracticeMinutes / 60).toFixed(1)} h de duração prevista</p><p className="text-xs text-muted-foreground">A duração prevista não equivale a horas acadêmicas validadas. Fotos, avaliação e validação de carga horária serão incorporadas à integração.</p>
