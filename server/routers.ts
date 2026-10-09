@@ -7,6 +7,7 @@ import { generateClientCode, generatePetCode } from "./codeGenerator.js";
 import { sendAppointmentConfirmationEmail } from "./_core/emailService.js";
 import { asaasRouter } from "./asaas/router.js";
 import { brandingRouter } from "./branding.js";
+import { validateSimulationSelection } from "../shared/simulationValidation.js";
 
 // Business routes are authenticated by default. Database RLS applies the
 // organization and unit boundaries to each request.
@@ -2285,6 +2286,17 @@ export const appRouter = router({
         if (!selectedItems.length) throw new Error("Não há datas válidas para incluir");
         const { data: service } = await supabase.from("services").select("price, duration_minutes").eq("id", simulation.service_id).single();
         const duration = Number(service?.duration_minutes || 60);
+        if (!service) throw new Error("Serviço da simulação não encontrado");
+        let confirmationPackage = null;
+        if (simulation.client_package_id) {
+          const { data: pkg, error: pkgError } = await supabase.from("client_packages")
+            .select("status, contract_date, expiry_date, balance_baths, balance_groomings")
+            .eq("id", simulation.client_package_id).eq("organization_id", ctx.user.organizationId)
+            .eq("unit_id", ctx.user.unitId).eq("client_id", simulation.client_id).eq("pet_id", simulation.pet_id).single();
+          if (pkgError || !pkg) throw new Error("Pacote da simulação indisponível para este tutor/pet");
+          confirmationPackage = pkg;
+        }
+        validateSimulationSelection(selectedItems, duration, confirmationPackage);
         const starts = selectedItems.map((item: any) => new Date(item.scheduled_at));
         const rangeStart = new Date(Math.min(...starts.map((date: Date) => date.getTime())) - 12 * 60 * 60_000).toISOString();
         const rangeEnd = new Date(Math.max(...starts.map((date: Date) => date.getTime())) + duration * 60_000).toISOString();

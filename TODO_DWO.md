@@ -6,6 +6,9 @@ Atualizado em 07/10/2026. Prioridade: salão. Referência: código local do Emer
 
 ### Critérios de liberação e arquitetura segura
 
+- [x] Revalidar antes de confirmar simulação: saldo banho/tosa separado, vigência com fuso São Paulo, pertencimento tutor/pet/unidade, datas inválidas/sobrepostas e item já publicado. Aviso de simulação não autoriza ultrapassar saldo/validade.
+- [ ] Tornar confirmação da simulação transacional/idempotente no banco; fluxo atual grava em etapas e não está liberado como seguro contra concorrência ou falha parcial. Reservas de créditos entre simulações também pendentes.
+
 - [x] Integrar contratação ao simulador por opção Planejar datas após salvar, com tutor/pet/contrato explícitos; adicionar acesso no detalhe do pacote. Não agenda nem envia mensagens automaticamente.
 - [x] Não substituir silenciosamente um contrato explícito ausente pelo primeiro contrato encontrado no simulador.
 - [ ] Homologar contratação → simulação → revisão → agenda, incluindo contrato indisponível, quantidades e prevenção de duplicatas.
