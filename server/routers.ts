@@ -2447,7 +2447,7 @@ export const appRouter = router({
         groomings: z.number().int().min(0),
         price: z.number().min(0),
         contractDate: z.string().date().optional(),
-        expiryDate: z.string().optional(),
+        expiryDate: z.string().date().optional(),
         frequency: z.enum(["weekly", "biweekly", "every_21_days", "monthly", "custom"]).default("weekly"),
         paymentStatus: z.enum(["pending", "paid", "waived"]).default("pending"),
         paymentDate: z.string().date().optional(),
@@ -2460,11 +2460,14 @@ export const appRouter = router({
           ? await supabase.from("packages").select("*").eq("id", input.packageId).eq("unit_id", ctx.user.unitId).eq("status", "active").single()
           : { data: null, error: null };
         if (input.packageId && (planError || !plan)) throw new Error("Plano de referência não encontrado ou inativo");
+        const { data: packagePet, error: petError } = await supabase.from("pets").select("id").eq("id", input.petId).eq("client_id", input.clientId).eq("unit_id", ctx.user.unitId).maybeSingle();
+        if (petError || !packagePet) throw new Error("O pet deve pertencer ao tutor e à unidade selecionados");
         const baths = plan ? Number(plan.total_baths) : input.baths;
         const groomings = plan ? Number(plan.total_groomings) : input.groomings;
         const price = plan ? Number(plan.total_price) : input.price;
         if (baths + groomings < 1) throw new Error("Informe ao menos um serviço no pacote");
         const contractDate = input.contractDate || new Date().toISOString().slice(0, 10);
+        if (input.expiryDate && input.expiryDate < contractDate) throw new Error("Validade não pode ser anterior à contratação");
         let expiryDate = input.expiryDate || null;
         if (plan?.duration_months && !expiryDate) {
           const expiry = new Date(`${contractDate}T12:00:00-03:00`);
@@ -2522,7 +2525,7 @@ export const appRouter = router({
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
         const { data, error } = await supabase.from("client_packages")
-          .update({ status: "cancelled", payment_status: "refunded", updated_at: new Date().toISOString() })
+          .update({ status: "cancelled", updated_at: new Date().toISOString() })
           .eq("id", input.id).eq("unit_id", ctx.user.unitId).select().single();
         if (error) throw new Error(error.message);
         return data;
@@ -2531,48 +2534,12 @@ export const appRouter = router({
       .input(z.object({ id: z.string().uuid(), contractDate: z.string().date().optional() }))
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user?.organizationId || !ctx.user.unitId) throw new Error("Unidade ativa não encontrada");
-        const { data: current, error: currentError } = await supabase.from("client_packages")
-          .select("*, plan:package_id(duration_months)")
-          .eq("id", input.id).eq("unit_id", ctx.user.unitId).single();
-        if (currentError || !current) throw new Error("Pacote não encontrado");
-        const contractDate = input.contractDate || new Date().toISOString().slice(0, 10);
-        let expiryDate: string | null = null;
-        if (current.plan?.duration_months) {
-          const expiry = new Date(`${contractDate}T12:00:00-03:00`);
-          expiry.setMonth(expiry.getMonth() + Number(current.plan.duration_months));
-          expiryDate = expiry.toISOString().slice(0, 10);
-        }
-        const { data: code, error: codeError } = await supabase.rpc("next_client_package_code", {
-          p_organization_id: ctx.user.organizationId,
+        const { data, error } = await supabase.rpc("renew_client_package", {
+          p_id: input.id,
+          p_contract_date: input.contractDate || new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }),
         });
-        if (codeError || !code) throw new Error("Não foi possível gerar o código da renovação");
-        const { data: renewed, error: renewError } = await supabase.from("client_packages").insert({
-          organization_id: ctx.user.organizationId,
-          unit_id: ctx.user.unitId,
-          client_id: current.client_id,
-          pet_id: current.pet_id,
-          package_id: current.package_id,
-          code,
-          contracted_baths: current.contracted_baths,
-          contracted_groomings: current.contracted_groomings,
-          balance_baths: current.contracted_baths,
-          balance_groomings: current.contracted_groomings,
-          price: current.price,
-          contract_date: contractDate,
-          expiry_date: expiryDate,
-          status: "active",
-          frequency: current.frequency || "weekly",
-          payment_status: "pending",
-          payment_date: null,
-          payment_method: null,
-          notes: current.notes,
-        }).select().single();
-        if (renewError) throw new Error(renewError.message);
-        const { error: closeError } = await supabase.from("client_packages")
-          .update({ status: "inactive", updated_at: new Date().toISOString() })
-          .eq("id", current.id).eq("unit_id", ctx.user.unitId);
-        if (closeError) throw new Error(closeError.message);
-        return renewed;
+        if (error) throw new Error(error.message);
+        return data;
       }),
   }),
 

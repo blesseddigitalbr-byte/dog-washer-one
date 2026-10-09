@@ -34,9 +34,11 @@ describe("resumo e financeiro dos pacotes", () => {
     expect(packages).toContain("selectedPackage.balance_baths");
   });
 
-  it("soma somente pagamentos efetivados e exclui cancelados", () => {
-    expect(packages).toContain('pkg.payment_status === "paid" && pkg.status !== "cancelled"');
-    expect(router).toContain('payment_status: "refunded"');
+  it("preserva pagamentos ao cancelar sem presumir estorno", () => {
+    expect(packages).toContain('.filter((pkg: any) => pkg.payment_status === "paid")');
+    const cancellation = router.slice(router.indexOf("    cancel: protectedProcedure", router.indexOf("  clientPackages: router")), router.indexOf("    renew: protectedProcedure", router.indexOf("  clientPackages: router")));
+    expect(cancellation).toContain('status: "cancelled"');
+    expect(cancellation).not.toContain("payment_status");
     expect(migration).toContain("payment_status");
     expect(migration).toContain("payment_date");
     expect(migration).toContain("payment_method");

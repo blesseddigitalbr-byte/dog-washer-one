@@ -28,7 +28,7 @@ export default function Packages() {
   });
   const cancelMutation = trpc.clientPackages.cancel.useMutation({
     onSuccess: () => {
-      toast.success("Pacote cancelado. O histórico foi preservado.");
+      toast.success("Pacote cancelado. Pagamentos e histórico preservados; nenhum estorno foi realizado.");
       setSelectedPackage(null);
       utils.clientPackages.list.invalidate();
     },
@@ -62,7 +62,7 @@ export default function Packages() {
     custom: "Personalizada",
   };
   const realizedRevenue = packages
-    .filter((pkg: any) => pkg.payment_status === "paid" && pkg.status !== "cancelled")
+    .filter((pkg: any) => pkg.payment_status === "paid")
     .reduce((sum: number, pkg: any) => sum + Number(pkg.value || 0), 0);
   const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", {
     style: "currency", currency: "BRL",
@@ -126,7 +126,7 @@ export default function Packages() {
 
         <Card className="border-l-4 border-l-chart-3">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-muted-foreground">Faturamento efetivado</CardTitle>
+            <CardTitle className="text-sm font-semibold text-muted-foreground">Pagamentos registrados</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">

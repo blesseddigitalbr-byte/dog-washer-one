@@ -2,6 +2,19 @@
 
 Atualizado em 07/10/2026. Prioridade: salão. Referência: código local do Emergent e requisitos acordados. Este documento é um backlog, não uma declaração de funcionalidades prontas.
 
+## Prioridade retomada — agenda e contratação de planos (08/10/2026)
+
+- [x] Corrigir cancelamento de pacote: preservar situação financeira sem declarar reembolso inexistente.
+- [x] Somar pagamentos registrados mesmo com contrato cancelado; estorno precisa de confirmação separada.
+- [x] Contratação inicia pendente por padrão; validar pertencimento do pet ao tutor/unidade e validade anterior à contratação.
+- [x] Renovação transacional, uma sucessora por pacote, resistente a repetição; preservar saldo e prazo do pacote anterior sem desativá-lo.
+- [x] Testes selecionados de pacote/agenda aprovados (17); validação de tipos aprovada.
+- [ ] Homologar criação/renovação concorrente na interface e consumo de saldo anterior. Testes atuais incluem inspeção de código, não substituem ponta a ponta.
+- [ ] Implementar ciclo mensal separado da validade dos créditos, expiração em 60 dias e consumo por vencimento; não confundir duração do plano com ciclo de cobrança.
+- [ ] Associar pagamento confirmado ao ciclo, inadimplência/estorno e prestação executada; recorrência Asaas ainda não fechada.
+- [ ] Homologar agenda profissional/aluno, cancelamento sem consumo, combo e conclusão única com cobrança/pacote.
+- [ ] Validar peso financeiro dos serviços e fechamento mensal antes de automatizar repasses de pacotes.
+
 Legenda: `[x]` etapa verificada; `[ ]` trabalho pendente. **Recuperar** = identificado no legado, mas sem equivalência completa validada no DWO. **Aprimorar** = existe parcialmente. **Novo** = requisito adicional. A ausência precisa ser confirmada por comparação detalhada antes de implementar duplicatas.
 
 ## 0. Auditoria e preservação

@@ -22,7 +22,7 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
     contractDate: new Date().toISOString().slice(0, 10),
     expiryDate: "",
     frequency: "weekly" as "weekly" | "biweekly" | "every_21_days" | "monthly" | "custom",
-    paymentStatus: "paid" as "pending" | "paid" | "waived",
+    paymentStatus: "pending" as "pending" | "paid" | "waived",
     paymentDate: new Date().toISOString().slice(0, 10),
     paymentMethod: "",
   });

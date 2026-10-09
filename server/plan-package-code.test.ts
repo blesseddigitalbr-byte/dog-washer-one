@@ -46,8 +46,12 @@ describe("separação entre plano e pacote contratado", () => {
 
   it("renova em um novo ciclo PAC e preserva o registro anterior", () => {
     expect(router).toContain("renew: protectedProcedure");
-    expect(router).toContain("balance_baths: current.contracted_baths");
-    expect(router).toContain("balance_groomings: current.contracted_groomings");
+    expect(router).toContain('rpc("renew_client_package"');
+    const renewal = fs.readFileSync(path.join(root, "supabase/migrations/202610080007_package_renewal_safety.sql"), "utf8");
+    expect(renewal).toContain("for update");
+    expect(renewal).toContain("renewal_source_id uuid unique");
+    expect(renewal).toContain("old_package.contracted_baths,old_package.contracted_groomings");
+    expect(renewal).not.toContain("update public.client_packages");
   });
 
   it("expõe radar operacional e cancelamento sem exclusão física", () => {
