@@ -339,3 +339,14 @@ Solicitado em 07/10/2026. Apenas planejamento; implementação futura, sem alter
 - [ ] Conectar conta Asaas de produção em modo de consulta/webhook e homologar antes de automatizar recebimentos reais. Implementação atual permanece exclusivamente sandbox.
 - [ ] Pagamentos em outras contas/bancos não devem ser presumidos recebidos no Asaas; conferir extratos de origem separadamente.
 
+# Financeiro: saldo, extrato e relatório de conferência automática
+
+- [x] Prioridade confirmada: salão opera somente com Asaas; demais bancos ficam para fase posterior.
+- [x] Implementar consulta direta sandbox de saldo atual e extrato paginado, período até 93 dias, restrita à conta da empresa vinculada ao salão.
+- [x] Separar entradas/saídas por página e tarifas de recebimentos; não tratar totais de página como período completo ou saldo atual como fechamento histórico.
+- [x] Cruzar IDs Asaas do extrato com cobranças DWO da unidade e conta: informar recebimento com valor correspondente, divergência, origem vinculada não verificada ou sem vínculo.
+- [x] Testar normalização, centavos, duplicatas, novos tipos de movimentação e períodos inválidos; tipos e build aprovados.
+- [ ] Homologar consulta publicada contra API sandbox e verificar eventuais formatos/campos ausentes.
+- [ ] Relatório completo persistido, paginação integral, taxas, transferências, repasses, estornos e vínculo operacional ainda pendentes.
+- [ ] Ativar produção somente com credencial segura e homologação de consulta/webhooks; não habilitar saques neste fluxo.
+

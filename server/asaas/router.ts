@@ -7,6 +7,7 @@ import { safeInvoiceUrl } from "./events.js";
 import { reconciliationState } from "../../shared/reconciliation.js";
 import { billingDraftSchema } from "../../shared/billing.js";
 import { providerComparison } from "../../shared/provider-check.js";
+import { normalizeStatement, statementQuerySchema } from "./statement.js";
 
 const financialProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (!ctx.user || !["owner", "admin", "manager"].includes(ctx.user.role)) {
@@ -16,6 +17,27 @@ const financialProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 export const asaasRouter = router({
+  sandboxStatement: financialProcedure.input(statementQuerySchema).query(async ({ ctx, input }) => {
+    const org = ctx.user.organizationId, unit = ctx.user.unitId;
+    if (!org || !unit) throw new Error("Selecione uma unidade");
+    const { data: activeUnit } = await supabase.from("units").select("legal_entity_id, operation_mode").eq("id", unit).eq("organization_id", org).maybeSingle();
+    if (!activeUnit?.legal_entity_id || activeUnit.operation_mode === "school") throw new Error("Selecione uma unidade do salão vinculada à empresa");
+    const { data: accounts, error } = await supabase.from("payment_provider_accounts").select("id, secret_reference").eq("organization_id", org).eq("legal_entity_id", activeUnit.legal_entity_id).eq("provider", "asaas").eq("environment", "sandbox").eq("status", "active");
+    if (error || accounts?.length !== 1) throw new Error("Configure uma única conta Asaas sandbox ativa para a empresa do salão");
+    const api = sandboxAsaas(accounts[0].secret_reference);
+    const parameters = new URLSearchParams({ startDate: input.startDate, finishDate: input.finishDate, offset: String(input.offset), limit: "100", order: "desc" });
+    const [balance, statement] = await Promise.all([api("finance/balance"), api(`financialTransactions?${parameters}`)]);
+    const normalized = normalizeStatement(balance, statement);
+    const paymentIds = Array.from(new Set(normalized.entries.map(entry => entry.paymentId).filter((id): id is string => !!id)));
+    const { data: drafts, error: draftError } = paymentIds.length ? await supabase.from("billing_drafts").select("id, provider_payment_id, amount_cents, appointment_id, client_package_id").eq("organization_id", org).eq("unit_id", unit).eq("account_id", accounts[0].id).eq("status", "issued").in("provider_payment_id", paymentIds) : { data: [], error: null };
+    if (draftError) throw new Error("Não foi possível cruzar o extrato com cobranças da unidade");
+    const entries = normalized.entries.map(entry => {
+      const draft = drafts?.find(row => row.provider_payment_id === entry.paymentId);
+      const match = !draft ? "unlinked" : entry.type !== "PAYMENT_RECEIVED" ? "linked_not_verified" : entry.valueCents === Number(draft.amount_cents) ? "receipt_amount_matched" : "amount_mismatch";
+      return { ...entry, match, linkedDraftId: draft?.id ?? null };
+    });
+    return { ...normalized, entries, accountId: accounts[0].id, environment: "sandbox" as const, checkedAt: new Date().toISOString(), offset: input.offset };
+  }),
   checkSandboxReceipt: financialProcedure.input(z.object({ id: z.string().uuid() })).mutation(async ({ ctx, input }) => {
     const org = ctx.user.organizationId, unit = ctx.user.unitId;
     if (!org || !unit) throw new Error("Selecione uma unidade");
