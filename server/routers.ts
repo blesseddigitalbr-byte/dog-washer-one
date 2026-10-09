@@ -9,6 +9,7 @@ import { asaasRouter } from "./asaas/router.js";
 import { brandingRouter } from "./branding.js";
 import { validateSimulationSelection } from "../shared/simulationValidation.js";
 import { holidayAlerts } from "../shared/holidays.js";
+import { previewRetroactiveAllocation } from "../shared/retroactivePackage.js";
 
 // Business routes are authenticated by default. Database RLS applies the
 // organization and unit boundaries to each request.
@@ -2421,6 +2422,42 @@ export const appRouter = router({
   }),
 
   clientPackages: router({
+    retroactivePreview: protectedProcedure
+      .input(z.object({ id: z.string().uuid(), coverageStart: z.string().date() }))
+      .query(async ({ input, ctx }) => {
+        if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
+        const { data: contract, error } = await supabase.from("client_packages").select("*")
+          .eq("id", input.id).eq("unit_id", ctx.user.unitId).single();
+        if (error || !contract) throw new Error("Contrato não encontrado");
+        // Broad UTC boundary, followed by exact São Paulo date validation below.
+        const { data: visits, error: visitsError } = await supabase.from("appointments")
+          .select("id, unit_id, client_id, pet_id, appointment_date, status, include_grooming, execution_reversed_at, client_package_id, service:service_id(name)")
+          .eq("unit_id", ctx.user.unitId).eq("client_id", contract.client_id).eq("pet_id", contract.pet_id)
+          .eq("status", "completed").gte("appointment_date", `${input.coverageStart}T00:00:00Z`)
+          .order("appointment_date", { ascending: true }).limit(201);
+        if (visitsError) throw new Error("Não foi possível consultar os atendimentos");
+        if ((visits?.length ?? 0) > 200) throw new Error("Mais de 200 atendimentos: restrinja o período de cobertura");
+        const ids = (visits ?? []).map((v: any) => v.id);
+        const sessions = ids.length ? await supabase.from("package_sessions").select("appointment_id").in("appointment_id", ids)
+          : { data: [], error: null };
+        if (sessions.error) throw new Error("Não foi possível conferir os consumos existentes");
+        const consumed = new Set((sessions.data ?? []).map((s: any) => s.appointment_id));
+        const dateFormatter = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" });
+        const prepared = (visits ?? []).map((v: any) => ({
+          id: v.id, unitId: v.unit_id, clientId: v.client_id, petId: v.pet_id,
+          date: dateFormatter.format(new Date(v.appointment_date)),
+          status: v.execution_reversed_at ? "reversed" : v.status,
+          alreadyAllocated: consumed.has(v.id) || Boolean(v.client_package_id),
+          baths: 1, groomings: v.include_grooming ? 1 : 0,
+        }));
+        const preview = previewRetroactiveAllocation({
+          id: contract.id, unitId: contract.unit_id, clientId: contract.client_id, petId: contract.pet_id,
+          contractDate: contract.contract_date, coverageStart: input.coverageStart,
+          expiryDate: contract.expiry_date || "9999-12-31", status: contract.status,
+          balanceBaths: contract.balance_baths, balanceGroomings: contract.balance_groomings,
+        }, prepared);
+        return { ...preview, visits: prepared, readOnly: true as const };
+      }),
     list: protectedProcedure.query(async ({ ctx }) => {
       if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
       const { data, error } = await supabase

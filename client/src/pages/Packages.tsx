@@ -8,6 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Ban, Eye, RefreshCw, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { NewPackageForm } from "@/components/NewPackageForm";
+import { RetroactivePackagePreview } from "@/components/RetroactivePackagePreview";
 import { toast } from "sonner";
 import { packageJourney } from "../../../shared/packageJourney";
 import { useLocation } from "wouter";
@@ -245,6 +246,7 @@ export default function Packages() {
           {selectedPackage && (
             <div className="space-y-5">
               <Button variant="outline" asChild><a href={`/financial?package=${encodeURIComponent(selectedPackage.id)}`}>Preparar cobrança deste pacote</a></Button>
+              <RetroactivePackagePreview key={selectedPackage.id} contract={selectedPackage} />
               <div className="grid grid-cols-2 gap-4 rounded-xl bg-background p-5 md:grid-cols-4">
                 <div><p className="text-xs text-muted-foreground">Plano</p><p className="font-normal">{selectedPackage.plan_name}</p></div>
                 <div><p className="text-xs text-muted-foreground">Pet / raça</p><p className="font-normal">{selectedPackage.pet_name} / {selectedPackage.pet_breed || "Não informada"}</p></div>
