@@ -1285,6 +1285,12 @@ export const appRouter = router({
           throw new Error("Informe o motivo");
         }
 
+        if (input.status === "cancelled") {
+          const { data, error } = await supabase.rpc("cancel_appointment", { p_id: input.id, p_reason: input.reason });
+          if (error) throw new Error(error.message);
+          return data;
+        }
+
         const { data: current, error: currentError } = await supabase
           .from("appointments")
           .select("id, status")

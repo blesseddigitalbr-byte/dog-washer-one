@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { AppointmentForm } from "@/components/AppointmentForm";
 import { trpc } from "@/lib/trpc";
 import { AlertTriangle, ChevronLeft, ChevronRight, Calendar, List } from "lucide-react";
@@ -51,6 +52,8 @@ export default function Appointments() {
   const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [completionCandidate, setCompletionCandidate] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [cancelCandidate, setCancelCandidate] = useState<any>(null);
+  const [cancelReason, setCancelReason] = useState("");
 
   // Fetch appointments
   const { data: appointments = [] } = trpc.appointments.list.useQuery();
@@ -60,6 +63,9 @@ export default function Appointments() {
   const statusMutation = trpc.appointments.setStatus.useMutation({
     onSuccess: async () => {
       await utils.appointments.list.invalidate();
+      await utils.clientPackages.list.invalidate();
+      setCancelCandidate(null);
+      setShowForm(false);
       toast.success("Status atualizado");
     },
     onError: (error) => toast.error(error.message),
@@ -572,6 +578,7 @@ export default function Appointments() {
           </DialogHeader>
           <div className="overflow-y-auto pr-2">
             {selectedAppointment?.id && <Button variant="outline" className="mb-4" asChild><a href={`/financial?appointment=${encodeURIComponent(selectedAppointment.id)}`}>Preparar cobrança deste atendimento</a></Button>}
+            {selectedAppointment?.id && ["pending", "confirmed", "in_progress"].includes(selectedAppointment.status) && <Button variant="outline" className="mb-4 ml-2 text-red-700" onClick={() => { setCancelCandidate(selectedAppointment); setCancelReason(""); }}>Cancelar atendimento</Button>}
             <AppointmentForm
               key={selectedAppointment?.id || "new-appointment"}
               onClose={() => setShowForm(false)}
@@ -582,6 +589,12 @@ export default function Appointments() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!cancelCandidate} onOpenChange={open => !open && setCancelCandidate(null)}>
+        <DialogContent><DialogHeader><DialogTitle>Cancelar atendimento</DialogTitle><DialogDescription>Cancelar antes da conclusão não consome sessão e não altera mensalidade, cobrança ou pagamento. Uma baixa indevida já concluída exige revisão separada.</DialogDescription></DialogHeader>
+          <label className="text-sm">Motivo obrigatório<Input value={cancelReason} maxLength={500} onChange={event => setCancelReason(event.target.value)} /></label>
+          <div className="flex gap-2"><Button variant="outline" onClick={() => setCancelCandidate(null)}>Voltar</Button><Button disabled={statusMutation.isPending || cancelReason.trim().length < 3} onClick={() => statusMutation.mutate({ id: cancelCandidate.id, status: "cancelled", reason: cancelReason })}>Confirmar cancelamento</Button></div>
+        </DialogContent>
+      </Dialog>
       <AlertDialog open={!!completionCandidate} onOpenChange={(open) => !open && setCompletionCandidate(null)}>
         <AlertDialogContent className="max-w-md rounded-2xl border-0 p-0 shadow-2xl">
           <div className="p-7 text-center">

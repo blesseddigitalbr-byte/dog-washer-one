@@ -4,6 +4,19 @@ Atualizado em 07/10/2026. Prioridade: salão. Referência: código local do Emer
 
 ## Prioridade retomada — agenda e contratação de planos (08/10/2026)
 
+### Critério transversal confirmado pelo usuário
+
+- [x] Aplicar comparação Emergent → DWO em todas as etapas, não somente agenda: cadastro, contratação, cobrança, agendamento, execução, créditos, conciliação, repasse, fiscal, relatórios e integrações.
+- [ ] Para cada etapa, documentar ações/campos/regras encontrados, equivalente atual DWO, diferença e evidência de teste; presença de tela/rota não é homologação.
+- [ ] Recuperar vantagens funcionais do legado preservando melhorias de segurança, isolamento e transações do DWO; não ativar código financeiro comentado nem copiar parâmetros fiscais presumidos.
+- [ ] Auditar cancelamento antes de execução versus correção de baixa indevida; reversão exige lançamento único, motivo, autorização e análise de efeitos financeiros/acadêmicos. Não devolver crédito ao cancelar sem consumo.
+- [x] Comparar status no legado: conclusão/cancelamento são finais; o trecho revisado não fornece reversão completa de consumo para copiar.
+- [x] Implementar cancelamento pré-conclusão transacional, com motivo e responsável, repetição sem novo efeito e sem modificar créditos/cobranças/pagamentos.
+- [x] Adicionar botão e confirmação de cancelamento na agenda; consumo incompatível com status bloqueia operação e exige conferência.
+- [ ] Homologar concorrência cancelar/concluir e comportamento publicado; testes de contrato SQL não substituem execução de cenários no banco.
+- [ ] Implementar correção de baixa concluída com reversão única e análise de repasses/fechamentos e registros acadêmicos. Continua bloqueada para não devolver crédito nem desfazer direito financeiro indevidamente.
+- [ ] Revisar o fluxo inteiro após cada recuperação, incluindo exceções, histórico, filtros/totais e interface. Escola permanece por último, salvo regras necessárias a atendimentos por aluno.
+
 - [x] Corrigir cancelamento de pacote: preservar situação financeira sem declarar reembolso inexistente.
 - [x] Somar pagamentos registrados mesmo com contrato cancelado; estorno precisa de confirmação separada.
 - [x] Contratação inicia pendente por padrão; validar pertencimento do pet ao tutor/unidade e validade anterior à contratação.
