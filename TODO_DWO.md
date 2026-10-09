@@ -6,6 +6,10 @@ Atualizado em 07/10/2026. Prioridade: salão. Referência: código local do Emer
 
 ### Critérios de liberação e arquitetura segura
 
+- [x] Separar contratos substituídos da visão atual: pacote vencido/consumido com nova contratação válida do mesmo tutor/pet/unidade aparece só no histórico como encerrado/consumido; retirar do radar de vencidos/sem saldo sem apagar situação original ou financeiro.
+- [x] Testar substituição e exceções (outro tutor/pet/unidade, contrato futuro, cancelado, vencido ou zerado). Disponibilizar botão Mostrar histórico.
+- [ ] Conferir apresentação publicada com uma jornada real de homologação.
+
 - [x] Preparar continuidade de pacotes na baixa: mesma unidade/tutor/pet, validade, saldo integral para combo, menor vencimento primeiro, trava concorrente e registro de pacote solicitado versus consumido. Não juntar saldos nem estender validade.
 - [x] Validar criação da versão ampliada da migração 202610080010 no Supabase com rollback; três testes de contrato SQL, tipos e build aprovados. Não equivale a teste de consumo real.
 - [ ] Homologar consumo, concorrência, reversão e aplicar migração de continuidade. Não converter atendimento de pacote em avulso automaticamente quando faltar saldo.

@@ -9,15 +9,20 @@ import { Plus, Ban, Eye, RefreshCw, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { NewPackageForm } from "@/components/NewPackageForm";
 import { toast } from "sonner";
+import { packageJourney } from "../../../shared/packageJourney";
 
 export default function Packages() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [isNewPackageOpen, setIsNewPackageOpen] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
 
   // Fetch all packages
   const utils = trpc.useUtils();
-  const { data: packages = [], isLoading } = trpc.clientPackages.list.useQuery();
+  const { data: rawPackages = [], isLoading } = trpc.clientPackages.list.useQuery();
+  const today = new Intl.DateTimeFormat("en-CA", {timeZone:"America/Sao_Paulo",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
+  const packages = packageJourney(rawPackages, today);
+  const attentionPackages = packages.filter(pkg => !pkg.archived_after_replacement);
   const renewMutation = trpc.clientPackages.renew.useMutation({
     onSuccess: (renewed: any) => {
       toast.success(`Renovação criada: ${renewed.code}`);
@@ -36,7 +41,7 @@ export default function Packages() {
   });
 
   // Filter packages by search term
-  const filteredPackages = packages.filter((pkg: any) =>
+  const filteredPackages = packages.filter(pkg => showHistory || !pkg.archived_after_replacement).filter((pkg: any) =>
     pkg.pet_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     pkg.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     pkg.id_package?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -44,6 +49,7 @@ export default function Packages() {
 
   // Determine status badge color
   const getStatusBadge = (pkg: any) => {
+    if (pkg.archived_after_replacement) return <Badge variant="outline">{pkg.operational_status === "consumed" ? "Consumido · histórico" : "Encerrado · histórico"}</Badge>;
     if (pkg.operational_status === "cancelled") return <Badge variant="destructive">Cancelado</Badge>;
     if (pkg.operational_status === "inactive") return <Badge variant="outline">Ciclo encerrado</Badge>;
     if (pkg.operational_status === "expired") return <Badge variant="outline">Vencido</Badge>;
@@ -113,11 +119,11 @@ export default function Packages() {
 
         <Card className="border-l-4 border-l-chart-3">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold text-muted-foreground">Pacotes Vencidos</CardTitle>
+            <CardTitle className="text-sm font-semibold text-muted-foreground">Vencidos sem substituição</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {packages.filter((pkg: any) => {
+              {attentionPackages.filter((pkg: any) => {
                 return pkg.operational_status === "expired";
               }).length}
             </div>
@@ -136,15 +142,15 @@ export default function Packages() {
         </Card>
       </div>
 
-      {packages.some((pkg: any) => ["expiring", "expired", "consumed"].includes(pkg.operational_status)) && (
+      {attentionPackages.some((pkg: any) => ["expiring", "expired", "consumed"].includes(pkg.operational_status)) && (
         <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 text-foreground">
           <AlertTriangle className="mt-0.5 h-5 w-5 text-amber-700" />
           <div>
             <p className="font-normal">Radar de pacotes exige atenção</p>
             <p className="text-sm">
-              {packages.filter((pkg: any) => pkg.operational_status === "expiring").length} vencendo em até 7 dias,
-              {" "}{packages.filter((pkg: any) => pkg.operational_status === "expired").length} vencidos e
-              {" "}{packages.filter((pkg: any) => pkg.operational_status === "consumed").length} sem saldo.
+              {attentionPackages.filter((pkg: any) => pkg.operational_status === "expiring").length} vencendo em até 7 dias,
+              {" "}{attentionPackages.filter((pkg: any) => pkg.operational_status === "expired").length} vencidos e
+              {" "}{attentionPackages.filter((pkg: any) => pkg.operational_status === "consumed").length} sem saldo, sem nova contratação válida.
             </p>
           </div>
         </div>
@@ -152,6 +158,7 @@ export default function Packages() {
 
       {/* Search */}
       <div className="flex gap-4">
+        <Button variant="outline" onClick={() => setShowHistory(value => !value)} aria-pressed={showHistory}>{showHistory ? "Ocultar contratos substituídos" : "Mostrar histórico"}</Button>
         <Input
           placeholder="Buscar por pet, cliente ou ID do pacote..."
           value={searchTerm}
