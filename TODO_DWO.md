@@ -2,6 +2,17 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Revisão operacional da interface — 12/10/2026
+
+- [x] Pré-agenda: retirar inclusão automática de datas com avisos; exigir seleção explícita, manter confirmação única e bloquear envio enquanto uma edição está pendente.
+- [x] Distinguir confirmação repetida de novos atendimentos na mensagem de sucesso, sem anunciar nova inclusão quando já confirmada.
+- [x] Cinco testes locais de interface: avisos excluídos por padrão, inclusão explícita, somente avisos sem seleção não confirma, bloqueio pendente/confirmado e conflitos/ignorados não confirmam. Tipos aprovados.
+- [x] Após esta revisão: suíte completa com 256 testes em 49 arquivos aprovada; `pnpm check`, build e `git diff --check` aprovados. Permanecem alertas de tamanho do bundle e descrição dos diálogos.
+- [ ] Teste autenticado completo continua pendente; testes de componente não substituem navegador, banco ou concorrência real.
+- [ ] Publicação Hostinger depende de acesso ao painel e configuração privada do servidor. Não há ferramenta Hostinger/navegador disponível nesta sessão; nenhuma publicação realizada.
+
+Portal acadêmico fora desta entrega: será integrado ao DWO quando concluído no projeto separado, sem bloquear a liberação do salão.
+
 Escopo: somente DWO. Destino Hostinger com Supabase. Procedimento de confirmação instalado no projeto Lux Dog em 12/10 após testes transacionais; cadastros temporários revertidos, sem alterações em dados reais de clientes. Branch `codex/lux-dog-release-safety`; não mesclar na main/publicar antes da homologação completa. Previews automáticos dessa branch, se configurados pela Vercel, não equivalem à publicação final.
 
 ### Confirmação atômica instalada e testes no banco — 12/10/2026

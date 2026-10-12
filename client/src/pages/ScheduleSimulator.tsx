@@ -5,6 +5,7 @@ import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
+import { SimulationConfirmButton } from "@/components/SimulationConfirmButton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -214,7 +215,7 @@ export default function ScheduleSimulator() {
 
   const confirmMutation = trpc.scheduleSimulator.confirm.useMutation({
     onSuccess: async (data) => {
-      toast.success(`${data.created} atendimento(s) incluído(s) na Agenda oficial`);
+      toast.success(data.alreadyConfirmed ? "Esta pré-agenda já foi confirmada. Nenhum atendimento duplicado." : `${data.created} atendimento(s) incluído(s) na Agenda oficial`);
       await utils.appointments.list.invalidate();
       const refreshed = await utils.scheduleSimulator.get.fetch({ id: simulation.id });
       setSimulation(refreshed);
@@ -515,7 +516,7 @@ export default function ScheduleSimulator() {
                 </div>
                 <div className="flex flex-wrap justify-end gap-3 border-t p-5">
                   <Button variant="outline" onClick={() => { setSimulation(null); setMessage(""); }}>Limpar</Button>
-                  <Button className="bg-primary font-black text-white hover:bg-primary" disabled={confirmMutation.isPending || simulation.status === "confirmed"} onClick={() => confirmMutation.mutate({ id: simulation.id, includeWarnings: true })}>{simulation.status === "confirmed" ? "Incluído na Agenda" : "Incluir na Agenda Oficial"}</Button>
+                  <SimulationConfirmButton key={simulation.id} items={simulation.items ?? []} confirmed={simulation.status === "confirmed"} pending={confirmMutation.isPending || updateItemMutation.isPending} onConfirm={includeWarnings => confirmMutation.mutate({ id: simulation.id, includeWarnings })} />
                 </div>
               </section>
             )}
@@ -555,9 +556,6 @@ export default function ScheduleSimulator() {
                     <a href={whatsappUrl} target="_blank" rel="noreferrer"><MessageCircle className="mr-2 h-4 w-4" />Enviar via WhatsApp</a>
                   </Button>
                 )}
-                <Button className="w-full bg-primary font-black text-white hover:bg-primary" disabled={!simulation || confirmMutation.isPending || simulation?.status === "confirmed"} onClick={() => simulation && confirmMutation.mutate({ id: simulation.id, includeWarnings: true })}>
-                  {simulation?.status === "confirmed" ? "Agenda já incluída" : "Incluir na agenda oficial"}
-                </Button>
                 {simulation && (
                   <Button variant="outline" className="w-full bg-white font-black" onClick={() => saveMessageMutation.mutate({ id: simulation.id, content: message })}>
                     Registrar no histórico
