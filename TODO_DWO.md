@@ -4,6 +4,16 @@
 
 Escopo: somente DWO. Destino Hostinger com Supabase. Nada aplicado no banco real nesta etapa. Branch `codex/lux-dog-release-safety`; não mesclar na main/publicar antes da homologação. Previews automáticos dessa branch, se configurados pela Vercel, não equivalem à publicação final.
 
+### Conexão Supabase confirmada — 12/10/2026
+
+- [x] Conectar à conta e confirmar projeto Lux Dog ativo/saudável; não acessar ou modificar o projeto DogWasher_Connect.
+- [x] Configurar URL e chave pública ativa no `.env.local` ignorado pelo Git, preservando configuração anterior. Nenhuma chave secreta copiada ou publicada.
+- [x] Confirmar RLS habilitado nas 40 tabelas públicas e buckets client-photos/pet-photos privados, limite 5 MB e MIME JPEG/PNG/WebP.
+- [x] Consultas HTTP reais sem autenticação: clientes, pets, client_packages e financial_ledgers retornaram zero registros. Isso não prova isolamento entre dois usuários autenticados.
+- [ ] Revisar oito funções SECURITY DEFINER acessíveis a anon, diferenciando auxiliares de políticas, operações autenticadas e triggers; não revogar permissões indiscriminadamente. Advisor também indica proteção contra senhas vazadas desabilitada.
+- [ ] Conciliar histórico de migrations: a lista oficial contém somente versões até julho, embora objetos posteriores existam no banco. Não reaplicar SQL com base apenas no histórico; comparar definições reais primeiro.
+- [ ] Configurar `SUPABASE_SERVICE_ROLE_KEY` exclusivamente no servidor e chave Asaas Sandbox no ambiente privado. A conexão oficial atual não disponibiliza essas chaves nem acesso ao painel Hostinger. Backend completo e homologação autenticada ainda pendentes.
+
 - [x] Corrigir inicialização Node para respeitar PORT atribuído pela hospedagem, escutar em 0.0.0.0 e retornar falha explícita sem mudar silenciosamente a porta.
 - [x] Substituir testes antigos de agenda que aceitavam erros arbitrários como sucesso por testes isolados da API: autenticação, conclusão pelo procedimento atômico, erro de saldo, transições inválidas, unidade, atendimento ausente e cancelamento com motivo.
 - [ ] Homologar criação/edição, conflito de horários, contratação, simulação e consumo real no banco de testes; mocks não provam transação, RLS nem concorrência.
