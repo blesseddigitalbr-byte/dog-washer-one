@@ -1,4 +1,11 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+const codeFixture = vi.hoisted(() => ({ client: 0, pet: 0 }));
+vi.mock("./_core/supabase.js", () => ({ supabase: { from: (table: string) => ({
+  select: () => ({ order: () => ({ limit: async () => {
+    const n = table === "clientes" ? codeFixture.client++ : codeFixture.pet++;
+    return { data: [{ [table === "clientes" ? "id_cliente" : "id_pet"]: `${table === "clientes" ? "CLI" : "PET"}-${String(n).padStart(4, "0")}` }], error: null };
+  } }) }),
+}) } }));
 import { generateClientCode, generatePetCode } from "./codeGenerator";
 
 describe("Ajustes Críticos - GroomerFlow", () => {
@@ -81,7 +88,7 @@ describe("Ajustes Críticos - GroomerFlow", () => {
 
   describe("4. Serviços - Validações", () => {
     it("nome do serviço deve ser obrigatório", () => {
-      const isValid = (name: string) => name && name.length > 0;
+      const isValid = (name: string) => Boolean(name && name.length > 0);
       
       expect(isValid("Banho")).toBe(true);
       expect(isValid("")).toBe(false);

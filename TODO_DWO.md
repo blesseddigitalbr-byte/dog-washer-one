@@ -1,5 +1,23 @@
 # DWO — plano de recuperação e checklist funcional
 
+## Liberação Lux Dog — meta 16/10/2026
+
+Escopo: somente DWO. Destino Hostinger com Supabase. Nada aplicado no banco real nesta etapa. Branch `codex/lux-dog-release-safety`; não mesclar na main/publicar antes da homologação. Previews automáticos dessa branch, se configurados pela Vercel, não equivalem à publicação final.
+
+- [x] Corrigir inicialização Node para respeitar PORT atribuído pela hospedagem, escutar em 0.0.0.0 e retornar falha explícita sem mudar silenciosamente a porta.
+- [x] Substituir testes antigos de agenda que aceitavam erros arbitrários como sucesso por testes isolados da API: autenticação, conclusão pelo procedimento atômico, erro de saldo, transições inválidas, unidade, atendimento ausente e cancelamento com motivo.
+- [ ] Homologar criação/edição, conflito de horários, contratação, simulação e consumo real no banco de testes; mocks não provam transação, RLS nem concorrência.
+- [x] Resolver suítes legadas restantes de alunos operacionais DWO e upload com banco/armazenamento simulados, sem usar dados reais. Nenhum trabalho no portal acadêmico.
+- [x] Reforçar upload de foto de pet: limite do conteúdo codificado, conferência de assinatura PNG/JPEG/WebP, limpeza após falha de URL assinada e comprovação de atualização do registro. Assinatura não substitui decodificação completa/antimalware; RLS e armazenamento reais ainda exigem homologação.
+- [x] Validação local em 12/10/2026: `pnpm check`, `pnpm build` e `pnpm exec vitest run` aprovados, 242 testes em 47 arquivos. Há testes unitários, mocks e contratos estáticos: não equivalem a teste ponta a ponta real.
+- [ ] Reduzir bundle principal (1.074 kB minificado) e corrigir descrições acessíveis dos diálogos; alertas atuais não impedem build, mas fazem parte do acabamento.
+- [ ] Validar backup de banco e armazenamento e ensaio de restauração antes de importar dados reais.
+- [ ] Confirmar servidor Node, build, variáveis e domínio HTTPS no painel Hostinger, sem alterar a hospedagem de outros projetos.
+- [ ] Testar cobrança avulsa e pacote no Asaas Sandbox, webhook repetido, estorno, conciliação, execução e crédito de parceiro de teste. Nenhuma transferência real.
+- [ ] Corrigir importação histórica em prévia: vínculos dos pets/pacotes, renovação retroativa e tosa avulsa sem nova cobrança de serviço já pago.
+- [ ] Fazer teste autenticado ponta a ponta na interface e comprovar isolamento por organização/unidade antes da liberação.
+- [ ] Publicar apenas fluxos homologados; repasse/NF automáticos permanecem desabilitados quando não validados. Credenciais, fiscal e homologação externa seguem pendentes.
+
 Atualizado em 07/10/2026. Prioridade: salão. Referência: código local do Emergent e requisitos acordados. Este documento é um backlog, não uma declaração de funcionalidades prontas.
 
 ## Prioridade retomada — agenda e contratação de planos (08/10/2026)
@@ -9,7 +27,7 @@ Atualizado em 07/10/2026. Prioridade: salão. Referência: código local do Emer
 - [x] Preparar função pura de prévia de alocação retroativa com cobertura inicial explícita, identidade unidade/tutor/pet, atendimento concluído, proteção contra seleção duplicada/consumo existente, saldo por serviço e ordenação cronológica. 14 testes e verificação de tipos aprovados. Ainda não integrada à API/UI ou ao banco.
 - [x] Integrar consulta autenticada e prévia somente leitura ao detalhe do pacote. Busca limitada a 200 atendimentos, filtros unidade/tutor/pet, conferência de consumos existentes, data no fuso São Paulo e falha fechada em erro de consulta. Quatro testes de API aprovados; tipos e build aprovados. Não confirma alocação nem corrige dados reais.
 - [ ] Homologar consulta e interface com sessão real, resolver acesso seguro ao Supabase e validar confirmação no banco antes de habilitar desconto. Ambiente local sem credenciais Supabase configuradas nesta execução.
-- [ ] Corrigir quatro suítes legadas de testes (adjustments, appointments, students, upload), com isolamento de banco e expectativas atuais de autenticação; execução completa em 09/10/2026: 184 testes passaram em 42 arquivos, quatro arquivos falharam na preparação. Build e tipos passaram. Não declarar suíte completa aprovada.
+- [x] Corrigir quatro suítes legadas de testes (adjustments, appointments, students, upload), com isolamento de banco e expectativas atuais de autenticação. Histórico de 09/10: quatro arquivos falhavam na preparação. Resolvido em 12/10: suíte completa local com 242 testes/47 arquivos aprovada; sem prova de integração real ou concorrência.
 - [ ] Integrar seleção de atendimentos pendentes à contratação; persistir cobertura autorizada, motivo e auditoria. Confirmar alocação em transação com trava e idempotência. Nunca mover consumo já registrado sem reversão auditada.
 - [ ] Permitir banho de pacote e tosa avulsa no mesmo atendimento, conferindo cobrança histórica antes de criar outra. Não consumir tosa do pacote quando contratada por fora.
 - [ ] Conciliar histórico importado: renovação semestral após contrato trimestral, preservando contratos antigos e separando parcelas de renovações. Dados pessoais/financeiros de origem não devem ser publicados no GitHub. Nenhuma correção real aplicada nesta etapa.

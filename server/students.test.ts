@@ -1,4 +1,34 @@
-import { describe, it, expect } from "vitest";
+// @vitest-environment node
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { randomUUID } from "node:crypto";
+const fixture = vi.hoisted(() => ({ rows: [] as any[] }));
+vi.mock("./_core/supabase.js", () => ({
+  withTenantSupabase: async (_jwt: string, operation: () => unknown) => operation(),
+  supabaseAdmin: {},
+  supabase: { from: (table: string) => {
+    if (table !== "students") throw new Error("Unexpected fixture table");
+    const filters: [string, unknown][] = []; let mode = "read"; let payload: any;
+    const execute = () => {
+      let rows = fixture.rows.filter(row => filters.every(([key, value]) => row[key] === value));
+      if (mode === "insert") {
+        rows = payload.map((row: any) => ({ ...row, id: randomUUID(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() }));
+        fixture.rows.push(...rows);
+      }
+      if (mode === "update") rows.forEach(row => Object.assign(row, payload));
+      if (mode === "delete") fixture.rows = fixture.rows.filter(row => !rows.includes(row));
+      return { data: rows, error: null };
+    };
+    const q: any = {
+      select: () => q, order: () => q,
+      eq: (key: string, value: unknown) => { filters.push([key, value]); return q; },
+      insert: (value: any) => { mode = "insert"; payload = value; return q; },
+      update: (value: any) => { mode = "update"; payload = value; return q; },
+      delete: () => { mode = "delete"; return q; },
+      single: async () => { const result = execute(); return { ...result, data: result.data[0] ?? null }; },
+      then: (resolve: any) => Promise.resolve(execute()).then(resolve),
+    }; return q;
+  } },
+}));
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
 
@@ -7,9 +37,12 @@ import type { TrpcContext } from "./_core/context";
  * Valida CRUD completo e validação de permissões
  */
 
+beforeEach(() => { fixture.rows = []; });
+// Isolated API mapping tests, not a database/RLS or academic portal integration test.
 function createPublicContext(): TrpcContext {
   return {
-    user: null,
+    user: { id: "test", email: "test@example.invalid", name: null, displayName: null, phone: null, role: "staff", organizationId: "550e8400-e29b-41d4-a716-446655440000", unitId: "550e8400-e29b-41d4-a716-446655440001" },
+    accessToken: "fake-jwt",
     req: {
       protocol: "https",
       headers: {},
@@ -268,7 +301,7 @@ describe("Students Router", () => {
       });
 
       expect(validation.valid).toBe(false);
-      expect(validation.reason).toContain("não autorizado");
+      expect(validation.reason).toBe("Aguardando documentação");
     });
 
     it("deve rejeitar aluno com status acadêmico inativo", async () => {
@@ -361,7 +394,7 @@ describe("Students Router", () => {
       });
 
       expect(validation.valid).toBe(false);
-      expect(validation.reason).toContain("não autorizado");
+      expect(validation.reason).toBe("Documentação incompleta");
     });
   });
 

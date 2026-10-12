@@ -836,7 +836,7 @@ export const appRouter = router({
     uploadPhoto: publicProcedure
       .input(z.object({
         petId: z.string().uuid(),
-        base64: z.string(),
+        base64: z.string().max(7 * 1024 * 1024),
         fileName: z.string(),
         mimeType: z.string(),
       }))
@@ -859,6 +859,12 @@ export const appRouter = router({
           if (!buffer.length || buffer.length > 5 * 1024 * 1024) {
             throw new Error("A imagem deve ter no máximo 5 MB");
           }
+          const validSignature = input.mimeType === "image/png"
+            ? buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
+            : input.mimeType === "image/jpeg"
+              ? buffer.subarray(0, 3).equals(Buffer.from([255, 216, 255]))
+              : buffer.subarray(0, 4).toString() === "RIFF" && buffer.subarray(8, 12).toString() === "WEBP";
+          if (!validSignature) throw new Error("Conteúdo incompatível com o formato da imagem");
 
           const timestamp = Date.now();
           const safeName = input.fileName
@@ -878,19 +884,24 @@ export const appRouter = router({
           const { data: signed, error: signedError } = await supabaseAdmin.storage
             .from("pet-photos")
             .createSignedUrl(fileKey, 60 * 60);
-          if (signedError) throw signedError;
+          if (signedError || !signed?.signedUrl) {
+            await supabaseAdmin.storage.from("pet-photos").remove([fileKey]);
+            throw signedError ?? new Error("Não foi possível acessar a foto enviada");
+          }
 
-          const { error: updateError } = await supabase
+          const { data: updatedPet, error: updateError } = await supabase
             .from("pets")
             .update({
               photo_storage_key: fileKey,
               photo: null,
               updated_at: new Date().toISOString(),
             })
-            .eq("id", input.petId);
-          if (updateError) {
+            .eq("id", input.petId)
+            .select("id")
+            .maybeSingle();
+          if (updateError || !updatedPet) {
             await supabaseAdmin.storage.from("pet-photos").remove([fileKey]);
-            throw updateError;
+            throw updateError ?? new Error("Pet indisponível para atualizar a foto");
           }
 
           return { url: signed.signedUrl, key: fileKey, success: true };
