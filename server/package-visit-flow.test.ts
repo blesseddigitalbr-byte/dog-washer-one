@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 const read = (file: string) => readFileSync(path.resolve(process.cwd(), file), "utf8");
 const migration = read("supabase/migrations/202607200002_client_packages_and_visit_history.sql");
 const simulatorServiceMigration = read("supabase/migrations/202608010001_appointment_simulator_service_details.sql");
+const atomicSimulation = read("supabase/migrations/202610090001_atomic_simulation_confirmation.sql");
 const router = read("server/routers.ts");
 const form = read("client/src/components/AppointmentForm.tsx");
 const appointments = read("client/src/pages/Appointments.tsx");
@@ -25,8 +26,8 @@ describe("package balance and visit history", () => {
     expect(simulatorServiceMigration).toContain("add column if not exists include_grooming");
     expect(simulatorServiceMigration).toContain("add column if not exists planned_service_name");
     expect(simulatorServiceMigration).toContain("when apt.include_grooming is true");
-    expect(router).toContain("include_grooming: Boolean(item.include_grooming)");
-    expect(router).toContain("planned_service_name: item.final_service_name || null");
+    expect(atomicSimulation).toContain("coalesce(item.include_grooming,false),item.final_service_name");
+    expect(router).toContain('rpc("confirm_schedule_simulation"');
   });
   it("links a client package to an appointment and returns appointments to the UI", () => {
     expect(form).toContain("clientPackageId");

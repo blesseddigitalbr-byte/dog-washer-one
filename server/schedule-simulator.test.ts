@@ -29,14 +29,14 @@ describe("Simulador de Agenda", () => {
   });
 
   it("revalida alterações e a agenda antes da confirmação", () => {
-    expect(router).toContain("A agenda mudou após a simulação");
+    expect(router).toContain('supabase.rpc("confirm_schedule_simulation"');
     expect(router).toContain("Profissional indisponível neste horário");
     expect(router).toContain("Pet já possui atendimento nesta data e horário");
   });
 
   it("cria agenda oficial somente na confirmação", () => {
     expect(router).toContain("confirm: protectedProcedure");
-    expect(router).toContain('.from("appointments").insert(appointmentsPayload)');
+    expect(router).toContain('supabase.rpc("confirm_schedule_simulation"');
     expect(page).toContain("Incluir na Agenda Oficial");
   });
 

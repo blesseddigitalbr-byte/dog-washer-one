@@ -7,7 +7,6 @@ import { generateClientCode, generatePetCode } from "./codeGenerator.js";
 import { sendAppointmentConfirmationEmail } from "./_core/emailService.js";
 import { asaasRouter } from "./asaas/router.js";
 import { brandingRouter } from "./branding.js";
-import { validateSimulationSelection } from "../shared/simulationValidation.js";
 import { holidayAlerts } from "../shared/holidays.js";
 import { previewRetroactiveAllocation } from "../shared/retroactivePackage.js";
 
@@ -2289,98 +2288,20 @@ export const appRouter = router({
       .input(z.object({ id: z.string().uuid(), includeWarnings: z.boolean().default(true) }))
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user?.organizationId || !ctx.user.unitId) throw new Error("Unidade ativa não encontrada");
-        const { data: simulation, error } = await supabase
-          .from("schedule_simulations")
-          .select("*, items:schedule_simulation_items(*)")
-          .eq("id", input.id)
-          .eq("unit_id", ctx.user.unitId)
-          .eq("status", "draft")
-          .single();
-        if (error || !simulation) throw new Error("Simulação não encontrada ou já confirmada");
-        const selectedItems = (simulation.items ?? []).filter((item: any) =>
-          item.status === "valid" || (input.includeWarnings && item.status === "warning"),
-        );
-        if (!selectedItems.length) throw new Error("Não há datas válidas para incluir");
-        const { data: service } = await supabase.from("services").select("price, duration_minutes").eq("id", simulation.service_id).single();
-        const duration = Number(service?.duration_minutes || 60);
-        if (!service) throw new Error("Serviço da simulação não encontrado");
-        let confirmationPackage = null;
-        if (simulation.client_package_id) {
-          const { data: pkg, error: pkgError } = await supabase.from("client_packages")
-            .select("status, contract_date, expiry_date, balance_baths, balance_groomings")
-            .eq("id", simulation.client_package_id).eq("organization_id", ctx.user.organizationId)
-            .eq("unit_id", ctx.user.unitId).eq("client_id", simulation.client_id).eq("pet_id", simulation.pet_id).single();
-          if (pkgError || !pkg) throw new Error("Pacote da simulação indisponível para este tutor/pet");
-          confirmationPackage = pkg;
-        }
-        validateSimulationSelection(selectedItems, duration, confirmationPackage);
-        const starts = selectedItems.map((item: any) => new Date(item.scheduled_at));
-        const rangeStart = new Date(Math.min(...starts.map((date: Date) => date.getTime())) - 12 * 60 * 60_000).toISOString();
-        const rangeEnd = new Date(Math.max(...starts.map((date: Date) => date.getTime())) + duration * 60_000).toISOString();
-        const { data: currentAppointments, error: validationError } = await supabase
-          .from("appointments")
-          .select("pet_id, professional_id, appointment_date, duration_minutes")
-          .eq("unit_id", ctx.user.unitId)
-          .not("status", "in", '("cancelled","no_show")')
-          .gte("appointment_date", rangeStart)
-          .lte("appointment_date", rangeEnd);
-        if (validationError) throw validationError;
-        for (const item of selectedItems) {
-          const newStart = new Date(item.scheduled_at);
-          const newEnd = new Date(newStart.getTime() + duration * 60_000);
-          const conflict = (currentAppointments ?? []).some((appointment: any) => {
-            const existingStart = new Date(appointment.appointment_date);
-            const existingEnd = new Date(existingStart.getTime() + Number(appointment.duration_minutes || 60) * 60_000);
-            return (
-              (appointment.pet_id === simulation.pet_id && existingStart.getTime() === newStart.getTime()) ||
-              (appointment.professional_id === simulation.professional_id && newStart < existingEnd && newEnd > existingStart)
-            );
-          });
-          if (conflict) throw new Error("A agenda mudou após a simulação. Revise os conflitos antes de confirmar.");
-        }
-        const appointmentsPayload = selectedItems.map((item: any) => {
-          const startsAt = new Date(item.scheduled_at);
-          const endsAt = new Date(startsAt.getTime() + duration * 60_000);
-          return {
-            organization_id: ctx.user!.organizationId,
-            unit_id: ctx.user!.unitId,
-            client_id: simulation.client_id,
-            pet_id: simulation.pet_id,
-            service_id: simulation.service_id,
-            professional_id: simulation.professional_id,
-            client_package_id: item.client_package_id,
-            appointment_type: simulation.appointment_type,
-            appointment_date: item.scheduled_at,
-            start_time: startsAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Sao_Paulo" }),
-            end_time: endsAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "America/Sao_Paulo" }),
-            duration_minutes: duration,
-            total_price: Number(service?.price || 0),
-            recurrence_rule: simulation.frequency,
-            status: "pending",
-            include_grooming: Boolean(item.include_grooming),
-            planned_service_name: item.final_service_name || null,
-            notes: simulation.notes,
-            created_by: ctx.user!.id,
-          };
+        const { data, error } = await supabase.rpc("confirm_schedule_simulation", {
+          p_id: input.id,
+          p_include_warnings: input.includeWarnings,
         });
-        const { data: created, error: createError } = await supabase.from("appointments").insert(appointmentsPayload).select();
-        if (createError) throw new Error(createError.message);
-        const appointmentServices = (created ?? []).map((appointment: any) => ({
-          appointment_id: appointment.id,
-          service_id: simulation.service_id,
-          unit_price: Number(service?.price || 0),
-          duration_minutes: duration,
-        }));
-        const { error: servicesError } = await supabase.from("appointment_services").insert(appointmentServices);
-        if (servicesError) {
-          await supabase.from("appointments").delete().in("id", (created ?? []).map((item: any) => item.id));
-          throw new Error(servicesError.message);
+        if (error) {
+          if (error.code === "PGRST202" || error.code === "42883") {
+            throw new Error("Confirmação segura indisponível: procedimento do banco ainda não homologado. Nenhum agendamento foi criado.");
+          }
+          throw new Error(error.message || "Não foi possível confirmar a agenda");
         }
-        await Promise.all((created ?? []).map((appointment: any, index: number) =>
-          supabase.from("schedule_simulation_items").update({ status: "created", appointment_id: appointment.id }).eq("id", selectedItems[index].id),
-        ));
-        await supabase.from("schedule_simulations").update({ status: "confirmed", confirmed_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", input.id);
-        return { created: created?.length ?? 0 };
+        return z.object({
+          created: z.number().int().nonnegative(),
+          alreadyConfirmed: z.boolean(),
+        }).parse(data);
       }),
 
     saveMessage: protectedProcedure

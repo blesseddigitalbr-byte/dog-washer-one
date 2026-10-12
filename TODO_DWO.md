@@ -19,7 +19,7 @@ Escopo: somente DWO. Destino Hostinger com Supabase. Nada aplicado no banco real
 - [ ] Homologar criação/edição, conflito de horários, contratação, simulação e consumo real no banco de testes; mocks não provam transação, RLS nem concorrência.
 - [x] Resolver suítes legadas restantes de alunos operacionais DWO e upload com banco/armazenamento simulados, sem usar dados reais. Nenhum trabalho no portal acadêmico.
 - [x] Reforçar upload de foto de pet: limite do conteúdo codificado, conferência de assinatura PNG/JPEG/WebP, limpeza após falha de URL assinada e comprovação de atualização do registro. Assinatura não substitui decodificação completa/antimalware; RLS e armazenamento reais ainda exigem homologação.
-- [x] Validação local em 12/10/2026: `pnpm check`, `pnpm build` e `pnpm exec vitest run` aprovados, 242 testes em 47 arquivos. Há testes unitários, mocks e contratos estáticos: não equivalem a teste ponta a ponta real.
+- [x] Validação local em 12/10/2026: `pnpm check`, `pnpm build` e `pnpm exec vitest run` aprovados, 250 testes em 48 arquivos após refatoração da confirmação do simulador. Há testes unitários, mocks e contratos estáticos: não equivalem a teste ponta a ponta real.
 - [ ] Reduzir bundle principal (1.074 kB minificado) e corrigir descrições acessíveis dos diálogos; alertas atuais não impedem build, mas fazem parte do acabamento.
 - [ ] Validar backup de banco e armazenamento e ensaio de restauração antes de importar dados reais.
 - [ ] Confirmar servidor Node, build, variáveis e domínio HTTPS no painel Hostinger, sem alterar a hospedagem de outros projetos.
@@ -46,14 +46,15 @@ Atualizado em 07/10/2026. Prioridade: salão. Referência: código local do Emer
 
 - [x] Preparar procedimento transacional 202610090001 para confirmação da simulação: trava, repetição sem nova inclusão, autorização, vínculos, validade/saldo, sobreposição, atendimentos/serviços/itens na mesma transação e proteção de edição de itens confirmados.
 - [x] Validar criação de 202610090001 no Supabase com rollback, sem persistência; dois testes de contrato SQL e tipos aprovados. Vercel Ready confirmado para 8fa7979 (alertas de feriados); conferência visual autenticada ainda pendente.
-- [ ] Executar cenários reais, falha parcial, concorrência e repetição de 202610090001; aplicar e substituir escrita multietapas da API somente após homologação. Ainda não ativo. Reserva entre contratos/simulações e acesso direto às tabelas exigem validações adicionais.
+- [x] Preparar API de confirmação com uma única chamada RPC, validar resposta e falhar sem fallback multietapas quando procedimento estiver ausente. Oito testes isolados de API; mudança somente na branch de desenvolvimento, não publicada.
+- [ ] Executar cenários reais, falha parcial, concorrência e repetição de 202610090001; aplicar e publicar somente após homologação. Consulta real em 12/10 confirmou que confirm_schedule_simulation não existe no projeto Lux Dog. Reserva entre contratos/simulações e acesso direto às tabelas exigem validações adicionais.
 
 - [x] Implementar alertas de feriados nacionais fixos e DF (30/11 e móveis verificados de 2026), em geração/edição do simulador, com sugestão de próxima data sem feriado conhecido. Não alterar datas automaticamente nem presumir disponibilidade.
 - [ ] Configuração persistida por unidade de feriados municipais/estaduais, datas móveis de outros anos, expediente/fechamentos e autorização de abertura em feriado. Cobertura local ainda não é completa.
 - [ ] Homologar alertas publicados e política de confirmação. Avisos continuam permitindo revisão/inclusão e não bloqueiam automaticamente expediente.
 
 - [x] Revalidar antes de confirmar simulação: saldo banho/tosa separado, vigência com fuso São Paulo, pertencimento tutor/pet/unidade, datas inválidas/sobrepostas e item já publicado. Aviso de simulação não autoriza ultrapassar saldo/validade.
-- [ ] Tornar confirmação da simulação transacional/idempotente no banco; fluxo atual grava em etapas e não está liberado como seguro contra concorrência ou falha parcial. Reservas de créditos entre simulações também pendentes.
+- [ ] Tornar confirmação da simulação transacional/idempotente no banco; a branch removeu gravação em etapas da API, mas o procedimento precisa ser homologado e instalado antes de publicar. Na ausência dele, a API bloqueia confirmação. Reservas de créditos entre simulações também pendentes.
 
 - [x] Integrar contratação ao simulador por opção Planejar datas após salvar, com tutor/pet/contrato explícitos; adicionar acesso no detalhe do pacote. Não agenda nem envia mensagens automaticamente.
 - [x] Não substituir silenciosamente um contrato explícito ausente pelo primeiro contrato encontrado no simulador.
