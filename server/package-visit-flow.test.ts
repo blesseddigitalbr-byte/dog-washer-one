@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 const read = (file: string) => readFileSync(path.resolve(process.cwd(), file), "utf8");
 const migration = read("supabase/migrations/202607200002_client_packages_and_visit_history.sql");
 const simulatorServiceMigration = read("supabase/migrations/202608010001_appointment_simulator_service_details.sql");
-const atomicSimulation = read("supabase/migrations/202610090001_atomic_simulation_confirmation.sql");
+const atomicSimulation = read("supabase/migrations/20261012194057_atomic_simulation_confirmation_homologated.sql");
 const router = read("server/routers.ts");
 const form = read("client/src/components/AppointmentForm.tsx");
 const appointments = read("client/src/pages/Appointments.tsx");

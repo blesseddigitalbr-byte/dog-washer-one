@@ -1,3 +1,4 @@
+-- Version matches the recorded Lux Dog migration; supersedes the uninstalled 202610090001 draft.
 begin;
 -- Serialize edits with confirmation. Confirmed items remain traceable and immutable.
 create function public.guard_simulation_item_edit() returns trigger
@@ -25,6 +26,7 @@ declare
   pkg public.client_packages;
   apt_id uuid;
   selected_count integer; grooming_count integer; created_count integer:=0;
+  reserved_baths integer; reserved_groomings integer;
   previous_end timestamptz;
 begin
   if not exists(select 1 from public.profiles where id=auth.uid() and active
@@ -38,21 +40,29 @@ begin
   if sim.status<>'draft' then raise exception 'Simulação não está aberta'; end if;
   if not exists(select 1 from public.pets where id=sim.pet_id and client_id=sim.client_id
     and unit_id=sim.unit_id and organization_id=sim.organization_id) then raise exception 'Pet e tutor incompatíveis'; end if;
-  select * into svc from public.services where id=sim.service_id and unit_id=sim.unit_id;
+  select * into svc from public.services where id=sim.service_id and unit_id=sim.unit_id
+    and organization_id=sim.organization_id and status='active';
   if svc.id is null or svc.duration_minutes is null or svc.duration_minutes<=0 then raise exception 'Serviço ou duração inválidos'; end if;
-  if not exists(select 1 from public.professionals where id=sim.professional_id and unit_id=sim.unit_id)
+  if not exists(select 1 from public.professionals where id=sim.professional_id and unit_id=sim.unit_id
+    and organization_id=sim.organization_id and status='active' and is_active)
     then raise exception 'Profissional inválido'; end if;
   perform 1 from public.schedule_simulation_items where simulation_id=sim.id for update;
   select count(*),count(*) filter(where include_grooming) into selected_count,grooming_count
     from public.schedule_simulation_items where simulation_id=sim.id
       and (status='valid' or (p_include_warnings and status='warning'));
   if selected_count=0 then raise exception 'Nenhuma data válida selecionada'; end if;
+  if selected_count>200 then raise exception 'Limite de 200 datas por confirmação'; end if;
   if sim.client_package_id is not null then
     select * into pkg from public.client_packages where id=sim.client_package_id
       and organization_id=sim.organization_id and unit_id=sim.unit_id
       and client_id=sim.client_id and pet_id=sim.pet_id for update;
     if pkg.id is null or pkg.status<>'active' then raise exception 'Pacote não está ativo para este tutor/pet'; end if;
-    if selected_count>pkg.balance_baths or grooming_count>pkg.balance_groomings then raise exception 'Saldo insuficiente para as datas selecionadas'; end if;
+    select count(*),count(*) filter(where include_grooming) into reserved_baths,reserved_groomings
+      from public.appointments where client_package_id=pkg.id
+        and organization_id=sim.organization_id and unit_id=sim.unit_id
+        and status in ('pending','confirmed','in_progress');
+    if selected_count+reserved_baths>pkg.balance_baths or grooming_count+reserved_groomings>pkg.balance_groomings
+      then raise exception 'Saldo insuficiente considerando sessões já agendadas'; end if;
   end if;
   -- Match the agenda guard lock, so batches do not race for the same professional.
   perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(sim.unit_id::text || ':' || sim.professional_id::text,0));
