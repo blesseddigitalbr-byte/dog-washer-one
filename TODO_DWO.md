@@ -2,6 +2,21 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Assistente de agenda e atendimento — evolução solicitada em 12/10/2026
+
+- [x] Preparar regras puras do padrão acordado: identidade organização/unidade/tutor/pet, data âncora, horário válido e frequência semanal/quinzenal/21 dias. Cálculo por dia de calendário independente do fuso do navegador, sugestões identificadas como São Paulo.
+- [x] Separar alteração pontual (preserva padrão) e definitiva (novo padrão), sempre exigindo revisão; não gravar agendamentos automaticamente. Testes de exceções, calendário, limites e entradas inválidas.
+- [ ] Persistir padrão no contrato/jornada com vigência, executor, versão e auditoria; integrar contratação e revisão do simulador. Funções preparadas ainda não estão conectadas à interface ou banco.
+- [ ] Assistente somente leitura: próxima sessão ausente, retorno habitual, saldo/validade, duração, disponibilidade, feriados e dias com capacidade livre. Não inferir disponibilidade somente pela ausência de visitas.
+- [ ] Priorizar ocupação por capacidade real e exibir motivo de cada sugestão; sugestões não são reservas nem garantia de créditos.
+- [ ] Atendimento assistido: resumo autorizado e rascunhos de mensagens; nunca presumir pagamento, assinatura ou informações de saúde. Aprovação humana antes de envio.
+- [ ] Escolher e habilitar provedor de IA somente após definir custo, privacidade, acesso por unidade e tratamento de dados pessoais. Sem envio externo nesta fase.
+- [ ] Agente de WhatsApp: integração oficial WhatsApp Business, número autorizado, webhooks autenticados/idempotentes, atendimento com histórico limitado ao tutor verificado e encaminhamento para recepção. Respeitar consentimento, modelos/janela de atendimento e custos vigentes.
+- [ ] Agente pode sugerir horários e preparar atendimento; confirmação deve usar validações transacionais do DWO. Não alterar pacote, conceder desconto, confirmar pagamento, reembolsar ou executar repasse por texto livre.
+- [ ] Homologar identificação do tutor, concorrência de reservas, pedidos ambíguos, proteção contra instruções maliciosas, indisponibilidade, cancelamentos e transferência para humano antes de ativar mensagens reais.
+
+Esta evolução não bloqueia o lançamento básico do salão. Portal acadêmico permanece fora do escopo.
+
 ### Baixa, continuidade de pacotes e reversão no banco — 12/10/2026
 
 - [x] Comparar rotina instalada e schema real: detectada inferência indevida por nome e referência a `package_sessions.service_id`, coluna inexistente. Primeira tentativa de instalação abortou integralmente no teste, sem mudança persistida.
