@@ -1,3 +1,4 @@
+-- Official migration version returned by Supabase after transactional homologation.
 begin;
 
 create function public.guard_completed_grooming_choice() returns trigger
@@ -25,6 +26,7 @@ alter table public.appointment_package_allocations force row level security;
 create policy package_allocation_read on public.appointment_package_allocations for select to authenticated
 using(organization_id=public.current_organization_id() and unit_id=public.current_unit_id());
 revoke insert,update,delete on public.appointment_package_allocations from authenticated,anon;
+grant select on public.appointment_package_allocations to authenticated;
 
 -- History is written only by the authorized execution procedure, never by clients.
 revoke insert, update, delete on public.package_sessions, public.visit_history from authenticated, anon;
@@ -102,8 +104,8 @@ begin
       and contract_date <= (now() at time zone 'America/Sao_Paulo')::date
       and (not consume_bath or balance_baths>0) and (not consume_grooming or balance_groomings>0);
     if not found then raise exception 'Pacote inválido, fora da validade ou sem saldo para os serviços'; end if;
-    insert into public.package_sessions(package_id,client_package_id,appointment_id,service_id,session_type)
-    select package_id,id,apt.id,apt.service_id,
+    insert into public.package_sessions(package_id,client_package_id,appointment_id,session_type)
+    select package_id,id,apt.id,
       case when consume_bath and consume_grooming then 'bath_grooming' when consume_grooming then 'grooming' else 'bath' end
     from public.client_packages where id=apt.client_package_id;
     update public.client_packages set status='consumed',updated_at=now()

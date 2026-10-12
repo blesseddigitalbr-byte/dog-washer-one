@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-const sql = readFileSync("supabase/migrations/202610080010_execution_history_security.sql", "utf8");
+const sql = readFileSync("supabase/migrations/20261012201351_package_execution_security_homologated.sql", "utf8");
 describe("execution migration contract (not database homologation)", () => {
   it("protects history and explicitly authorizes the privileged procedure", () => {
     expect(sql).toContain("revoke insert, update, delete on public.package_sessions, public.visit_history");
@@ -27,5 +27,10 @@ describe("execution migration contract (not database homologation)", () => {
     expect(sql).toContain("consume_grooming:=coalesce(apt.include_grooming,false)");
     expect(sql).toContain("consume_bath:=true");
     expect(sql).not.toContain("service_text like");
+  });
+  it("matches the real consumption schema without a nonexistent service_id column", () => {
+    expect(sql).toContain("insert into public.package_sessions(package_id,client_package_id,appointment_id,session_type)");
+    expect(sql).not.toContain("appointment_id,service_id,session_type)");
+    expect(sql).toContain("grant select on public.appointment_package_allocations to authenticated");
   });
 });

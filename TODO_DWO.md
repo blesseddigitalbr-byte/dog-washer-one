@@ -2,6 +2,19 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Baixa, continuidade de pacotes e reversão no banco — 12/10/2026
+
+- [x] Comparar rotina instalada e schema real: detectada inferência indevida por nome e referência a `package_sessions.service_id`, coluna inexistente. Primeira tentativa de instalação abortou integralmente no teste, sem mudança persistida.
+- [x] Corrigir e instalar a migration oficial `20261012201351_package_execution_security_homologated`; substitui o rascunho 202610080010. Não reaplicar o rascunho antigo.
+- [x] Homologar com contexto `authenticated`: banho com tosa higiênica consome somente banho; combo explícito consome um banho e uma tosa; contrato anterior consumido/vencido direciona a baixa para renovação elegível do mesmo tutor/pet/unidade.
+- [x] Registrar contrato solicitado e consumido; repetir conclusão sem novo desconto; falta de saldo rejeitada sem histórico parcial; reversão repetida restaura exatamente um banho e uma tosa no contrato consumido.
+- [x] Rejeitar nova conclusão de baixa revertida, alteração da escolha de tosa após conclusão, identidade ausente e execução anônima. Históricos sem escrita direta; tabela de alocações com RLS e leitura autenticada.
+- [x] Repetir testes SQL após instalação, com resultado `passed` e zero clientes temporários restantes. Script repetível em `supabase/tests/package_execution_homologation.sql`; sem cobranças, transferências ou mensagens.
+- [x] Validação local após instalação: 257 testes/49 arquivos, tipos, build e diff aprovados; nenhum arquivo de outro projeto alterado.
+- [ ] Ação necessária para homologação da aplicação completa: configurar chaves privadas Supabase/Asaas Sandbox somente no servidor/ambiente local ignorado, e fornecer acesso operacional ao painel Hostinger. Em 12/10, ambas ausentes do ambiente local; navegador indisponível nesta sessão. Não enviar segredos no chat/GitHub.
+- [ ] Validar concorrência por conexões independentes, outro usuário/organização e jornada autenticada na interface. Não equivale a homologação completa do financeiro ou publicação Hostinger.
+- [ ] Revisar alerta do advisor para a nova função SECURITY DEFINER: uso intencional para escrever históricos protegidos, com autorização explícita e contexto restrito; faltam testes cruzados de identidades. Permanecem oito funções antigas acessíveis a anon e proteção contra senhas vazadas desabilitada.
+
 ### Revisão operacional da interface — 12/10/2026
 
 - [x] Pré-agenda: retirar inclusão automática de datas com avisos; exigir seleção explícita, manter confirmação única e bloquear envio enquanto uma edição está pendente.
@@ -87,7 +100,7 @@ Atualizado em 07/10/2026. Prioridade: salão. Referência: código local do Emer
 - [x] Adicionar opção explícita Combo Higiene + Trimming/Tosa na agenda, persistir include_grooming em criação/edição e preservar seleção ao reabrir.
 - [x] Corrigir baixa preparada: todo atendimento consome banho; somente include_grooming consome tosa/trimming. Tosa higiênica não deve ser inferida pelo nome.
 - [x] Remover inferência por palavra tosa/trimming da escolha de saldo no simulador: banho como base e crédito adicional quando solicitado.
-- [ ] Homologar agenda/simulador e aplicar migração 202610080010. Rotina atualmente publicada no banco ainda usa inferência por nome; não considerar correção de baixa ativa.
+- [x] Instalar correção de baixa sem inferência por nome e testar consumo real no banco em 12/10, versão oficial 20261012201351. Interface e concorrência permanecem pendentes.
 
 - [x] Separar contratos substituídos da visão atual: pacote vencido/consumido com nova contratação válida do mesmo tutor/pet/unidade aparece só no histórico como encerrado/consumido; retirar do radar de vencidos/sem saldo sem apagar situação original ou financeiro.
 - [x] Testar substituição e exceções (outro tutor/pet/unidade, contrato futuro, cancelado, vencido ou zerado). Disponibilizar botão Mostrar histórico.
@@ -101,7 +114,7 @@ Atualizado em 07/10/2026. Prioridade: salão. Referência: código local do Emer
 
 - [x] Preparar migração 202610080010: histórico de consumo/visita somente leitura direta; baixa privilegiada com autorização explícita, isolamento, validade, repetição e bloqueio de execução revertida.
 - [x] Validar criação da migração 202610080010 no Supabase em transação com rollback, sem persistir alterações; oito testes selecionados, tipos e build aprovados.
-- [ ] Executar cenários reais de baixa/permissão/concorrência e aplicar 202610080010 no banco. Proteção nova ainda não está ativa em produção. Saldo direto de contratos continua exigindo endurecimento separado.
+- [x] Aplicar versão homologada da proteção de baixa/histórico no banco com testes reais e rollback de fixtures (20261012201351). Concorrência e saldo direto de contratos continuam exigindo endurecimento separado.
 
 - [x] Configurar app.luxdog.com.br como alias HTTPS do projeto DWO, preservando site principal.
 - [x] Adicionar app.dogwasher.com.br ao mesmo projeto e criar CNAME exclusivo app na Hostinger, preservando site/email; resolução pública confirmada.
