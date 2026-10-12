@@ -2,6 +2,13 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Preparação Hostinger — 12/10/2026
+
+- [x] Conferir entrypoint Node, build frontend/backend e variáveis exigidas; registrar configuração atual e gates em DEPLOYMENT_CONFIG.md, distinguindo do guia legado Manus/outro banco.
+- [x] Buscar integração de hospedagem: resultado disponível somente Hostinger Mail, sem controle Node/hPanel. Nenhuma instalação de plugin irrelevante nem alteração em outros projetos.
+- [ ] Ação da proprietária: abrir a criação/configuração da aplicação Node exclusiva do DWO na Hostinger e enviar captura dos campos sem segredos, confirmando suporte Node e repositório. Não substituir site/portal existentes.
+- [ ] Aplicar configuração privada, obter URL de homologação e executar smoke test autenticado. Nenhum deploy/alteração DNS/importação realizada nesta etapa.
+
 ### Assistente de agenda e atendimento — evolução solicitada em 12/10/2026
 
 - [x] Preparar regras puras do padrão acordado: identidade organização/unidade/tutor/pet, data âncora, horário válido e frequência semanal/quinzenal/21 dias. Cálculo por dia de calendário independente do fuso do navegador, sugestões identificadas como São Paulo.

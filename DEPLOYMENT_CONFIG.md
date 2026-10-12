@@ -1,4 +1,55 @@
-# 🔧 DEPLOYMENT CONFIGURATION - DATABASE_URL
+# DWO — configuração de homologação Hostinger (12/10/2026)
+
+## Configuração atual
+
+Somente o repositório `blesseddigitalbr-byte/dog-washer-one`, branch
+`codex/lux-dog-release-safety`. Criar uma aplicação Node isolada em endereço
+temporário de homologação; não substituir o site Lux Dog nem o portal acadêmico.
+Se a Hostinger oferecer somente hospedagem estática/PHP, parar: o DWO exige Node.
+
+- Diretório raiz: raiz do repositório (contém package.json), não a pasta `app` do computador local.
+- Instalação: `pnpm install --frozen-lockfile`, com pnpm 10.4.1 disponível no build.
+- Build: `pnpm build` (dependências de desenvolvimento necessárias nesta etapa).
+- Início: `node dist/index.js`, com `NODE_ENV=production`.
+- Saída: servidor `dist/index.js` e frontend `dist/public`, ambos na mesma aplicação.
+- Porta: respeitar `PORT` fornecida pela hospedagem, escuta em 0.0.0.0.
+- Runtime Node: selecionar versão compatível com o lockfile e validar instalação/build no painel; não presumir compatibilidade apenas pela lista de versões.
+
+## Variáveis
+
+Frontend, disponíveis DURANTE o build: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`.
+Servidor: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`.
+Usar somente o projeto Lux Dog aprovado. Nunca prefixar chave privada com `VITE_`.
+Asaas de teste: `ASAAS_LUX_DOG_SANDBOX_API_KEY` e
+`ASAAS_LUX_DOG_SANDBOX_WEBHOOK_TOKEN`, correspondentes à conta sandbox configurada.
+Inserir valores somente nas configurações privadas; não enviar no chat/GitHub/logs.
+Não copiar variáveis de outro projeto nem substituir o conjunto completo sem preservar configurações necessárias.
+
+## Gates antes de liberar
+
+1. Confirmar plano Node e configuração da aplicação isolada, build, logs e HTTPS.
+2. Verificar `/api/health`, login/logout, recarga de `/clients` e acesso negado sem login.
+3. Homologar com tutor/pet/profissional/contrato fictícios: agenda, baixa, renovação,
+   reversão e concorrência. Registrar resultado, limpar fixtures sem apagar históricos reais.
+4. Testar Asaas exclusivamente sandbox e webhooks repetidos. Repasse/NF não homologados continuam bloqueados.
+5. Validar backup/restauração e prévia da importação antes de gravar dados reais.
+6. Só depois revisar domínio final e liberação. Manter a instalação anterior como caminho de retorno;
+   retorno de código não significa reversão automática de migrations/dados.
+
+Status: configurações acima preparadas, NÃO aplicadas ao painel nesta sessão.
+A busca de integrações encontrou somente Hostinger Mail, que não administra hospedagem;
+nenhum acesso Node da Hostinger disponível. Chaves privadas locais ainda ausentes.
+
+Referências oficiais:
+- https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/
+- https://www.hostinger.com/support/how-to-add-environment-variables-during-node-js-application-deployment/
+
+---
+
+# Histórico legado — Manus (não utilizar na implantação atual)
+
+As informações abaixo são antigas, referem-se a outro ambiente e não comprovam
+o estado atual. Não executar orientações de diagnóstico que imprimem variáveis secretas.
 
 ## Onde o Backend Lê DATABASE_URL?
 
