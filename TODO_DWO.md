@@ -4,6 +4,9 @@
 
 ### Preparação Hostinger — 12/10/2026
 
+- [x] Preparar identidade pública Lux Dog para domínio temporário exato e app.luxdog.com.br: login, título e favicon SVG compacto; assinatura `by Dog Washer` preta abaixo da logo no login/sidebar. Outros hosts mantêm DWO; hostname não autoriza dados.
+- [x] Tipos/build e seis testes selecionados de marca aprovados. Mudança salva na branch; publicação automática e conferência visual pós-deploy ainda pendentes.
+
 - [x] Proprietária concluiu implantação no endereço temporário `https://olivedrab-emu-744435.hostingersite.com`. Conferência HTTP independente em 12/10: `/` e `/clients` retornam HTML 200; `/api/health` retorna JSON 200 com `service=DWO`, `status=running`.
 - [ ] Conferir login autenticado, assets/console, branding Lux Dog, build log/commit implantado, variáveis privadas em runtime e fluxo operacional. Health básico não comprova banco, Asaas ou segurança entre usuários.
 - [ ] Não alterar DNS de app.luxdog.com.br nem importar clientes reais antes dos gates de homologação.

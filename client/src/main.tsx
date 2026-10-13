@@ -7,6 +7,15 @@ import superjson from "superjson";
 import App from "./App";
 import { supabase } from "./lib/supabase";
 import "./index.css";
+import { loginBrand } from "../../shared/loginBrand";
+
+const publicBrand = loginBrand(window.location.hostname);
+document.title = publicBrand.name;
+const favicon = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+if (favicon) {
+  favicon.href = publicBrand.favicon;
+  favicon.type = publicBrand.lux ? "image/svg+xml" : "image/png";
+}
 
 const queryClient = new QueryClient();
 

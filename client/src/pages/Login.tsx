@@ -28,7 +28,7 @@ export default function Login() {
             <div className="relative mx-auto h-28 w-28 overflow-hidden rounded-full bg-white">
               <img src={brand.logo} alt="Lux Dog" className="absolute left-1/2 top-1/2 w-[525px] max-w-none" style={{ transform: "translate(-50%, -32.5%)" }} />
             </div>
-            <p className="mt-3 text-xs font-medium text-purple-600">by Dog Washer</p>
+            <p className="mt-2 text-xs font-normal text-black">by Dog Washer</p>
           </> : <img
             src="/brand/dwo-horizontal.png"
             alt="DWO — Dog Washer One"
