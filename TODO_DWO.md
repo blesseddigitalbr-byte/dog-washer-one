@@ -2,6 +2,17 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Blessed e organização fictícia de isolamento — 12/10/2026
+
+- [x] Cadastrar empresa Blessed com razão social/CNPJ fornecidos pela proprietária, entidade school e unidade BLESSED-ESCOLA na organização atual; criar área/controle financeiro próprios. Não copiar configuração fiscal nem criar conta Asaas. Dados cadastrais reais não incluídos no GitHub.
+- [x] Criar organização separada `DWO QA — Isolamento SaaS`, identificada como fictícia, com empresa/unidade/controle financeiro fictícios e referência sandbox pendente sem credencial nem wallet. Nenhum vínculo com contas reais ou chamada ao provedor.
+- [x] Testar RLS com role authenticated e identidade existente: empresa Blessed da própria organização visível; empresa/unidade/conta financeira/ledger de QA invisíveis; atualização e inserção cruzadas rejeitadas. Verificação posterior repetida com contexto de organização comprovado.
+- [x] Primeira tentativa de seed com cliente sem identidade rejeitada pelo trigger; transação desfeita. Seed final não cria clientes nem altera perfis, usuários ou permissões existentes.
+- [ ] Criar usuário de homologação na organização QA via Auth/admin oficial e cadastrar tutor/pet/agenda/pacote; não inserir usuários manualmente em auth.users nem reutilizar identidade real na organização fictícia.
+- [ ] Testar dois logins reais, direção inversa QA→Lux Dog, permissões por papel, arquivos, agenda, pacotes, cobranças, webhooks e concorrência. Testes SQL atuais não comprovam a homologação completa de SaaS/API/interface.
+- [ ] Configurar conta Asaas sandbox separada e webhook de teste para QA somente quando disponível. Conta QA permanece pending; pagamentos/repasse desabilitados.
+- [ ] CNPJ da Blessed cadastrado conforme informação recebida; dados fiscais/nota/contratos continuam pendentes de confirmação específica. Portal acadêmico não acessado ou alterado.
+
 ### Preparação Hostinger — 12/10/2026
 
 - [x] Preparar identidade pública Lux Dog para domínio temporário exato e app.luxdog.com.br: login, título e favicon SVG compacto; assinatura `by Dog Washer` preta abaixo da logo no login/sidebar. Outros hosts mantêm DWO; hostname não autoriza dados.
