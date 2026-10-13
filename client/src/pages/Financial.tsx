@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { AsaasStatement } from "@/components/AsaasStatement";
 import { InvoicePreparation } from "@/components/InvoicePreparation";
+import FinancialSummary from "@/components/FinancialSummary";
+import Splits from "./Splits";
 
 const money = (cents: number) => (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const selectClass = "h-10 w-full rounded-md border bg-background px-3 text-sm";
@@ -64,7 +66,8 @@ export default function Financial() {
     save.mutate({ id: requestId, origin, originId: origin === "standalone" ? undefined : originId, clientId: actualClient, amountCents, billingType, dueDate, description });
   };
   return <div className="space-y-6">
-    <div><h1 className="text-2xl font-semibold">Financeiro do salão</h1><p className="text-muted-foreground">Preparação de cobranças vinculadas a clientes, atendimentos e pacotes.</p></div>
+    <div><h1 className="text-2xl font-semibold">Gestão financeira</h1><p className="text-muted-foreground">Indicadores, cobranças, relatórios e conciliação da unidade ativa.</p></div>
+    <FinancialSummary rows={reconciliation.data} error={reconciliation.error?.message} loading={reconciliation.isLoading} />
     <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">Homologação: salve o rascunho e escolha “Emitir no sandbox”. Nenhuma cobrança real será criada. Emitir não confirma pagamento, não consome sessões e não gera repasse. Cobranças sem confirmação ficam para revisão, sem repetição automática.</div>
     {options.error && <p role="alert">{options.error.message}</p>}
     <Card><CardHeader><CardTitle>Preparar cobrança</CardTitle></CardHeader><CardContent>
@@ -105,7 +108,7 @@ export default function Financial() {
     </CardContent></Card>
       <AsaasStatement />
       <InvoicePreparation />
-      <Button variant="outline" asChild><a href="/splits">Ver splits e repasses</a></Button>
+      <details className="rounded-xl border p-4"><summary className="cursor-pointer font-semibold">Splits e repasses</summary><Splits /></details>
     <Card><CardHeader><CardTitle>Conciliação: recebimento e serviço</CardTitle></CardHeader><CardContent>
       <p className="mb-3 text-sm text-muted-foreground">Apto à apuração não significa repasse efetuado. Cartão confirmado não é recebimento disponível.</p>
       <Button variant="outline" disabled={reconciliation.isFetching} onClick={() => reconciliation.refetch()}>Atualizar conciliação</Button>

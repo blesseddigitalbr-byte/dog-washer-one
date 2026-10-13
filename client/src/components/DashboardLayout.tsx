@@ -87,7 +87,6 @@ export default function DashboardLayout({
         { icon: <Package className="w-5 h-5" />, label: "Produtos", path: "/products", comingSoon: true },
         { icon: <Package className="w-5 h-5" />, label: "Planos", path: "/plans" },
         { icon: <TrendingUp className="w-5 h-5" />, label: "Financeiro", path: "/financial" },
-        { icon: <Zap className="w-5 h-5" />, label: "Splits e Repasses", path: "/splits" },
         { icon: <Users2 className="w-5 h-5" />, label: "Equipe", path: "/team" },
         { icon: <LayoutDashboard className="w-5 h-5" />, label: "Unidades", path: "/units" },
         { icon: <BarChart3 className="w-5 h-5" />, label: "Relatórios", path: "/reports", comingSoon: true },
@@ -98,7 +97,7 @@ export default function DashboardLayout({
       items: [
         { icon: <Users2 className="w-5 h-5" />, label: "Usuários e acessos", path: "/users" },
         { icon: <UserCircle className="w-5 h-5" />, label: "Meu Perfil", path: "/profile" },
-        { icon: <Zap className="w-5 h-5" />, label: "Integrações", path: "/integrations" },
+        { icon: <Zap className="w-5 h-5" />, label: "Configurações financeiras", path: "/integrations" },
         { icon: <Settings className="w-5 h-5" />, label: "Configurações", path: "/settings", comingSoon: true },
         { icon: <Settings className="w-5 h-5" />, label: "Marca e módulos", path: "/branding" },
       ],

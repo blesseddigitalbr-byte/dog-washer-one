@@ -4,15 +4,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 const money = (v: unknown) => Number(v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const labels: Record<string,string> = { DONE:"Crédito confirmado", PENDING:"Pendente", AWAITING_CREDIT:"Aguardando crédito", CANCELLED:"Cancelado", REFUSED:"Recusado", REFUNDED:"Estornado" };
 export default function Splits() {
+  const { user } = useAuth();
   const [tab, setTab] = useState("reconciliation");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const query = trpc.asaas.splits.useQuery(undefined, { retry:false });
-  const accounts = trpc.asaas.overview.useQuery(undefined, { retry:false });
+  const accounts = trpc.asaas.overview.useQuery(undefined, { retry:false, enabled: ["owner", "admin"].includes(user?.role ?? "") });
   const filtered = query.data?.filter(s => (status === "all" || s.status === status) && [s.partner_name,s.payment_id,s.split_id].some(v => String(v).toLowerCase().includes(search.toLowerCase())));
   return <div className="mx-auto max-w-[1440px] space-y-6 px-4 py-6 sm:px-6">
     <div className="flex flex-wrap items-center justify-between gap-4"><div><h1 className="text-2xl font-semibold">Splits e Repasses</h1><p className="text-muted-foreground">Conciliação dos créditos aos parceiros.</p></div><Button variant="outline" disabled={query.isFetching} onClick={() => { query.refetch(); accounts.refetch(); }}>Atualizar registros</Button></div>

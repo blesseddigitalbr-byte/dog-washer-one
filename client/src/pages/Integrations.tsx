@@ -13,7 +13,7 @@ export default function Integrations() {
   const query = trpc.asaas.overview.useQuery(undefined, { retry: false });
   return <div className="space-y-6">
     <div className="flex items-center justify-between gap-4">
-      <div><h1 className="text-2xl font-semibold">Integração Asaas</h1><p className="text-muted-foreground">Cobranças e eventos recebidos, sem expor credenciais.</p></div>
+      <div><h1 className="text-2xl font-semibold">Configurações financeiras</h1><p className="text-muted-foreground">Contas por CNPJ e diagnóstico da integração Asaas. Credenciais e alterações de regras permanecem restritas ao servidor; este painel não edita regras de split.</p></div>
       <Button variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}>Atualizar</Button>
     </div>
     {query.isLoading && <p>Carregando integração...</p>}

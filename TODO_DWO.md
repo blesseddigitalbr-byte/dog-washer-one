@@ -2,6 +2,13 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Organização financeira e resumo — 12/10/2026
+
+- [x] Gestão financeira recebe KPIs e gráfico por situação e relatório filtrável usando conciliação existente da unidade ativa. Amostra limitada a 100 cobranças emitidas; recebido/confirmado/pendente/vencido separados; não representa saldo disponível nem histórico completo.
+- [x] Splits incorporado em seção do Financeiro; retirado do menu principal. Diagnóstico de contas Asaas renomeado Configurações financeiras em Sistema (owner/admin); edição efetiva de regras/credenciais não implementada.
+- [ ] Série temporal, filtros de período, despesas, fluxo de caixa completo, edição fiscal/split e relatórios completos dependem de dados e backend adicionais; não declarar prontos.
+- [ ] Importação de planilha deve ser módulo administrativo em Sistema com prévia, validação, deduplicação, destino explícito empresa/unidade e backup; nenhum dado real importado nesta entrega.
+
 - [x] Organização do menu ajustada conforme correção da usuária: serviços/produtos/planos em Gestão, Equipe permanece como item próprio de Gestão; Sistema mantém configurações, usuários, integrações, marca e perfil. Permissões existentes preservadas. Produtos continua sinalizado como em breve.
 
 ### Publicação completa e bloqueios por perfil — 12/10/2026
