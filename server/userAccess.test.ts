@@ -1,10 +1,10 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { TrpcContext, CurrentUser } from "./_core/context";
-const mocks = vi.hoisted(() => ({ from: vi.fn(), rpc: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn(), calls: [] as string[] }));
+const mocks = vi.hoisted(() => ({ from: vi.fn(), rpc: vi.fn(), create: vi.fn(), update: vi.fn(), remove: vi.fn(), get: vi.fn(), reset: vi.fn(), calls: [] as string[] }));
 vi.mock("./_core/supabase.js", () => ({
   withTenantSupabase: (_token: string, op: () => unknown) => op(),
-  supabaseAdmin: { from: mocks.from, rpc: mocks.rpc, auth: { admin: { createUser: mocks.create, updateUserById: mocks.update, deleteUser: mocks.remove } } },
+  supabaseAdmin: { from: mocks.from, rpc: mocks.rpc, auth: { resetPasswordForEmail: mocks.reset, admin: { getUserById: mocks.get, createUser: mocks.create, updateUserById: mocks.update, deleteUser: mocks.remove } } },
 }));
 import { userAccessRouter, createPlatformUserSchema } from "./userAccess";
 const actor = "668700cd-b04b-4aca-baa6-6509d1fb5790", unit = "d0000000-0000-4000-8000-000000000003", org = "d0000000-0000-4000-8000-000000000001", target = "62b24bca-6a6e-40db-afd4-3448401fe9fd";
@@ -14,7 +14,7 @@ function caller(role: CurrentUser["role"] | null = "owner") {
 }
 function chain(result: any) {
   const query: any = {};
-  for (const name of ["select", "eq", "in", "order", "limit", "update"]) query[name] = vi.fn(() => query);
+  for (const name of ["select", "eq", "in", "order", "limit", "update", "maybeSingle"]) query[name] = vi.fn(() => query);
   query.then = (resolve: any, reject: any) => Promise.resolve(result).then(resolve, reject);
   return query;
 }
@@ -25,6 +25,41 @@ beforeEach(() => {
   mocks.rpc.mockImplementation(async () => { mocks.calls.push("bind"); return { data: target, error: null }; });
   mocks.update.mockImplementation(async () => { mocks.calls.push("activate"); return { error: null }; });
   mocks.remove.mockResolvedValue({ error: null });
+  mocks.get.mockResolvedValue({ data: { user: { id: target, email: "saved@example.invalid" } }, error: null });
+  mocks.reset.mockResolvedValue({ error: null });
+});
+describe("account editing and recovery", () => {
+  it.each(["staff", "manager", "student"] as const)("blocks editing and reset for %s", async role => {
+    await expect(caller(role).updateEmail({ id: target, email: "new@example.invalid", verifiedEmail: true })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(caller(role).resetPassword({ id: target, confirmed: true })).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(mocks.get).not.toHaveBeenCalled();
+  });
+  it("rejects foreign or absent targets before accessing Auth", async () => {
+    mocks.from.mockReturnValue(chain({ data: null, error: null }));
+    await expect(caller().resetPassword({ id: target, confirmed: true })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(mocks.get).not.toHaveBeenCalled(); expect(mocks.reset).not.toHaveBeenCalled();
+  });
+  it("does not let an admin change another admin", async () => {
+    mocks.from.mockReturnValue(chain({ data: { id: target, role: "admin" }, error: null }));
+    await expect(caller("admin").details({ id: target })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+  it("updates only the email of a same-org account", async () => {
+    const q = chain({ data: { id: target, role: "staff" }, error: null }); mocks.from.mockReturnValue(q);
+    await caller().updateEmail({ id: target, email: "NEW@example.invalid", verifiedEmail: true });
+    expect(q.eq).toHaveBeenCalledWith("organization_id", org);
+    expect(mocks.update).toHaveBeenCalledWith(target, { email: "new@example.invalid", email_confirm: true });
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+  it("sends recovery only to the saved Auth email with a fixed redirect", async () => {
+    mocks.from.mockReturnValue(chain({ data: { id: target, role: "staff" }, error: null }));
+    expect(await caller().resetPassword({ id: target, confirmed: true })).toEqual({ requested: true });
+    expect(mocks.reset).toHaveBeenCalledWith("saved@example.invalid", { redirectTo: "https://olivedrab-emu-744435.hostingersite.com/reset-password" });
+  });
+  it("reports email delivery errors without exposing provider details", async () => {
+    mocks.from.mockReturnValue(chain({ data: { id: target, role: "staff" }, error: null }));
+    mocks.reset.mockResolvedValue({ error: { message: "private-provider-detail" } });
+    await expect(caller().resetPassword({ id: target, confirmed: true })).rejects.toMatchObject({ code: "BAD_REQUEST" });
+  });
 });
 describe("platform user access", () => {
   it.each([null, "staff", "manager", "student"] as const)("denies creation to %s", async role => {

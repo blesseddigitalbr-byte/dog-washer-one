@@ -24,9 +24,12 @@ import Splits from "./pages/Splits";
 import Financial from "./pages/Financial";
 import Branding from "./pages/Branding";
 import UserAccess from "./pages/UserAccess";
+import ResetPassword from "./pages/ResetPassword";
 
 function Router() {
   const { user, loading } = useAuth();
+
+  if (window.location.pathname === "/reset-password") return <ResetPassword />;
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center">Carregando...</div>;

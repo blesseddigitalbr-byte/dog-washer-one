@@ -19,7 +19,35 @@ export const createPlatformUserSchema = z.object({
   verifiedEmail: z.literal(true),
 }).refine(input => input.unitIds.includes(input.defaultUnitId), "Unidade inicial precisa estar autorizada");
 
+async function editableUser(actor: { id: string; organizationId: string | null; role: string }, id: string) {
+  const { data, error } = await supabaseAdmin.from("profiles").select("id, role, active")
+    .eq("organization_id", actor.organizationId).eq("id", id).maybeSingle();
+  if (error) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Não foi possível conferir o usuário" });
+  if (!data) throw new TRPCError({ code: "NOT_FOUND", message: "Usuário não encontrado" });
+  if (id === actor.id || data.role === "owner" || data.role === "student" || (data.role === "admin" && actor.role !== "owner"))
+    throw new TRPCError({ code: "FORBIDDEN", message: "Alteração não autorizada para esta conta" });
+  const result = await supabaseAdmin.auth.admin.getUserById(id);
+  if (result.error || !result.data.user?.email) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Não foi possível consultar o login" });
+  return result.data.user;
+}
+
 export const userAccessRouter = router({
+  details: administrator.input(z.object({ id: z.string().uuid() })).query(async ({ ctx, input }) => {
+    const user = await editableUser(ctx.user, input.id);
+    return { id: user.id, email: user.email! };
+  }),
+  updateEmail: administrator.input(z.object({ id: z.string().uuid(), email: z.string().trim().email().max(254).transform(v => v.toLowerCase()), verifiedEmail: z.literal(true) })).mutation(async ({ ctx, input }) => {
+    await editableUser(ctx.user, input.id);
+    const result = await supabaseAdmin.auth.admin.updateUserById(input.id, { email: input.email, email_confirm: true });
+    if (result.error) throw new TRPCError({ code: "BAD_REQUEST", message: "Email não atualizado. Confira o endereço; ele pode já estar em uso." });
+    return { id: input.id };
+  }),
+  resetPassword: administrator.input(z.object({ id: z.string().uuid(), confirmed: z.literal(true) })).mutation(async ({ ctx, input }) => {
+    const user = await editableUser(ctx.user, input.id);
+    const result = await supabaseAdmin.auth.resetPasswordForEmail(user.email!, { redirectTo: "https://olivedrab-emu-744435.hostingersite.com/reset-password" });
+    if (result.error) throw new TRPCError({ code: "BAD_REQUEST", message: "Envio não concluído. Confira a configuração de email e aguarde antes de tentar novamente." });
+    return { requested: true };
+  }),
   list: administrator.query(async ({ ctx }) => {
     const { data, error } = await supabaseAdmin.from("profiles")
       .select("id, full_name, role, active, unit_id")

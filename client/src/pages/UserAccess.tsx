@@ -4,6 +4,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import UserAccountEditor from "@/components/UserAccountEditor";
 
 const roles = { owner: "Proprietária", admin: "Administrador", manager: "Gestão", staff: "Operação", student: "Aluno operacional" };
 export default function UserAccess() {
@@ -20,6 +21,7 @@ export default function UserAccess() {
   const [unitIds, setUnitIds] = useState<string[]>([]);
   const [defaultUnitId, setDefaultUnitId] = useState("");
   const [verifiedEmail, setVerifiedEmail] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const create = trpc.userAccess.create.useMutation({
     onSuccess: async () => {
       setPassword(""); setShowPassword(false); setName(""); setEmail(""); setVerifiedEmail(false);
@@ -51,6 +53,6 @@ export default function UserAccess() {
       <label className="flex gap-2 items-start"><input type="checkbox" checked={verifiedEmail} onChange={e => setVerifiedEmail(e.target.checked)} />Conferi a identidade e o email do usuário e autorizo os acessos selecionados.</label>
       <Button type="submit" disabled={create.isPending || !verifiedEmail || !unitIds.length}>{create.isPending ? "Cadastrando..." : "Cadastrar usuário"}</Button>
     </form>
-    <section className="rounded-xl border bg-white p-6"><h2 className="text-lg font-semibold mb-4">Usuários cadastrados</h2>{list.isLoading && <p>Carregando...</p>}{list.error && <p role="alert">{list.error.message}</p>}<ul className="divide-y">{list.data?.map(person => <li key={person.id} className="py-3 flex flex-wrap justify-between gap-2"><span>{person.full_name || "Sem nome"}</span><span>{roles[person.role as keyof typeof roles] ?? person.role} · {person.active ? "Ativo" : "Inativo"}</span></li>)}</ul><p className="mt-3 text-xs text-muted-foreground">Até 200 usuários. Alteração de papéis, desativação e convites serão tratados separadamente.</p></section>
+    <section className="rounded-xl border bg-white p-6"><h2 className="text-lg font-semibold mb-4">Usuários cadastrados</h2>{list.isLoading && <p>Carregando...</p>}{list.error && <p role="alert">{list.error.message}</p>}<ul className="divide-y">{list.data?.map(person => <li key={person.id} className="py-3 flex flex-wrap justify-between gap-2"><span>{person.full_name || "Sem nome"}</span><span>{roles[person.role as keyof typeof roles] ?? person.role} · {person.active ? "Ativo" : "Inativo"}</span>{person.id !== user?.id && ["staff", "manager", ...(user?.role === "owner" ? ["admin"] : [])].includes(person.role) && <Button type="button" variant="outline" onClick={() => setEditingId(person.id)}>Editar / recuperar senha</Button>}</li>)}</ul>{editingId && <UserAccountEditor key={editingId} id={editingId} close={() => setEditingId(null)} />}<p className="mt-3 text-xs text-muted-foreground">Até 200 usuários. Edição de email preserva perfil e unidades. Alteração de papéis, desativação e convites serão tratados separadamente.</p></section>
   </main>;
 }

@@ -2,6 +2,13 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Edição de email e recuperação — 12/10/2026
+
+- [x] Administração pode corrigir email da conta existente, com confirmação explícita de titularidade, preservando papéis/unidades. Operação/gestão não podem; administradores não alteram outros administradores; proprietária/conta própria/alunos não são editáveis por este fluxo.
+- [x] Recuperação usa email salvo no Auth e redirect fixo para /reset-password; não retorna tokens nem senhas. Tela define nova senha com confirmação e encerra sessão após sucesso.
+- [ ] Homologar envio e recebimento real; configurar SMTP e autorizar https://olivedrab-emu-744435.hostingersite.com/reset-password em Supabase Authentication → URL Configuration → Redirect URLs. Nenhum email real foi enviado automaticamente nesta implementação.
+- [ ] Edição de nome/perfis/unidades, desativação e auditoria específica de alterações de email são entregas adicionais; não estão incluídas na correção de email.
+
 ### Visibilidade de senha — 12/10/2026
 
 - [x] Mostrar/ocultar senha no login e no cadastro de usuários, inicialmente oculta, botão sem envio do formulário. Cinco testes das telas, TypeScript e build aprovados.
