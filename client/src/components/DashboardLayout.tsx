@@ -98,6 +98,7 @@ export default function DashboardLayout({
     {
       title: "SISTEMA",
       items: [
+        ...(["owner", "admin"].includes(user?.role ?? "") ? [{ icon: <Users2 className="w-5 h-5" />, label: "Usuários e acessos", path: "/users" }] : []),
         { icon: <UserCircle className="w-5 h-5" />, label: "Meu Perfil", path: "/profile" },
         { icon: <Zap className="w-5 h-5" />, label: "Integrações", path: "/integrations" },
         { icon: <Zap className="w-5 h-5" />, label: "Splits e Repasses", path: "/splits" },

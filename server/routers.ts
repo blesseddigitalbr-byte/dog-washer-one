@@ -7,6 +7,7 @@ import { generateClientCode, generatePetCode } from "./codeGenerator.js";
 import { sendAppointmentConfirmationEmail } from "./_core/emailService.js";
 import { asaasRouter } from "./asaas/router.js";
 import { brandingRouter } from "./branding.js";
+import { userAccessRouter } from "./userAccess.js";
 import { holidayAlerts } from "../shared/holidays.js";
 import { previewRetroactiveAllocation } from "../shared/retroactivePackage.js";
 
@@ -43,6 +44,7 @@ async function clientPhotoUrl(client: any) {
 }
 
 export const appRouter = router({
+  userAccess: userAccessRouter,
   asaas: asaasRouter,
   branding: brandingRouter,
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly

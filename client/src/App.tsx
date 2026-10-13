@@ -23,6 +23,7 @@ import Integrations from "./pages/Integrations";
 import Splits from "./pages/Splits";
 import Financial from "./pages/Financial";
 import Branding from "./pages/Branding";
+import UserAccess from "./pages/UserAccess";
 
 function Router() {
   const { user, loading } = useAuth();
@@ -54,6 +55,7 @@ function Router() {
             <Route path="/splits" component={Splits} />
             <Route path="/financial" component={Financial} />
             <Route path="/branding" component={Branding} />
+            <Route path="/users" component={UserAccess} />
             <Route path="/404" component={NotFound} />
             <Route component={NotFound} />
           </Switch>

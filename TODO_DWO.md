@@ -2,6 +2,17 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Usuários cadastrados pelo DWO — 12/10/2026
+
+- [x] Implementar menu Sistema → Usuários e acessos (/users), exclusivo owner/admin, separado dos profissionais da equipe. Lista limitada à organização atual e cadastro com nome/email/senha inicial/perfil/unidades/unidade inicial.
+- [x] Papéis existentes: Operação (staff), Gestão (manager, financeiro/reversões) e Administrador (admin). Só owner pode criar admin; nenhum papel owner é criado pela tela. Não cadastrar alunos do portal acadêmico.
+- [x] Auth criado exclusivamente pela API administrativa no servidor, bloqueado durante provisionamento; email conferido explicitamente pela administração, sem convite automático. Nunca reutilizar/transferir login existente. Senha não retornada, persistida no perfil ou registrada em logs; apenas Auth mantém hash.
+- [x] Migration oficial 20261013010631 instalada: provisionamento atômico SECURITY INVOKER exclusivo service_role, revalidação de ator/unidades/papel/perfil novo e auditoria com RLS. Falha de vinculação/ativação tenta desativar perfil, rebloquear Auth e excluir somente a conta nova; falhas de limpeza exigem revisão.
+- [x] Teste SQL com rollback: nega acesso anon/authenticated ao RPC, elevação de perfil por coluna, owner via cadastro, unidade de outra organização, ator não administrador, admin criando admin e reassociação de perfil existente; vínculo e auditoria aprovados. Nenhuma conta Auth real criada no teste.
+- [x] TypeScript/build e suíte completa: 287 testes em 53 arquivos aprovados (13 novos testes de API e 3 da tela). Advisor sem novo alerta da função/tabela; alertas anteriores permanecem. Registro de provisionamento não guarda senha/email.
+- [ ] Homologar criação Auth + primeiro login de conta temporária pela Hostinger. Testes de API usam mocks; SQL usa perfil QA em transação revertida. Não equivale a criação Auth ponta a ponta.
+- [ ] Evoluções separadas: alterar papel/unidades, desativar usuário, convite por email, troca obrigatória da senha inicial e perfis granulares personalizados. Perfis atuais reutilizam permissões existentes; homologação geral de RBAC permanece pendente.
+
 ### Gate atual de lançamento — revisão 12/10/2026
 
 Status: homologação parcial, NÃO liberar produção/importação real ainda. Esta seção prevalece sobre anotações históricas abaixo.
