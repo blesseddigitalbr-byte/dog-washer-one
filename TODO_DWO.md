@@ -2,6 +2,12 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Diagnóstico do envio de recuperação — 12/10/2026
+
+- [x] Logs Auth consultados: /recover aceito às 22:38 e 22:40 (Brasília); pedidos seguintes 22:43–22:48 retornaram 429 email rate limit exceeded. Falha atual confirmada como limite de envio, não endereço de email.
+- [x] DWO diferencia limite 429 e destinatário não autorizado, sem expor detalhes privados do provedor.
+- [ ] SMTP próprio com remetente Lux Dog e template em português; depende de credenciais/configuração no painel indisponíveis nesta conexão. Não houve novo envio real durante o diagnóstico.
+
 ### Edição de email e recuperação — 12/10/2026
 
 - [x] Administração pode corrigir email da conta existente, com confirmação explícita de titularidade, preservando papéis/unidades. Operação/gestão não podem; administradores não alteram outros administradores; proprietária/conta própria/alunos não são editáveis por este fluxo.

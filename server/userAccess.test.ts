@@ -29,6 +29,11 @@ beforeEach(() => {
   mocks.reset.mockResolvedValue({ error: null });
 });
 describe("account editing and recovery", () => {
+  it("identifies provider email quota without exposing raw details", async () => {
+    mocks.from.mockReturnValue(chain({ data: { id: target, role: "staff" }, error: null }));
+    mocks.reset.mockResolvedValue({ error: { status: 429, code: "over_email_send_rate_limit", message: "private-detail" } });
+    await expect(caller().resetPassword({ id: target, confirmed: true })).rejects.toMatchObject({ code: "TOO_MANY_REQUESTS", message: expect.stringContaining("Limite de envio") });
+  });
   it.each(["staff", "manager", "student"] as const)("blocks editing and reset for %s", async role => {
     await expect(caller(role).updateEmail({ id: target, email: "new@example.invalid", verifiedEmail: true })).rejects.toMatchObject({ code: "FORBIDDEN" });
     await expect(caller(role).resetPassword({ id: target, confirmed: true })).rejects.toMatchObject({ code: "FORBIDDEN" });

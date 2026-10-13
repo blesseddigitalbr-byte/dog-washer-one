@@ -45,7 +45,13 @@ export const userAccessRouter = router({
   resetPassword: administrator.input(z.object({ id: z.string().uuid(), confirmed: z.literal(true) })).mutation(async ({ ctx, input }) => {
     const user = await editableUser(ctx.user, input.id);
     const result = await supabaseAdmin.auth.resetPasswordForEmail(user.email!, { redirectTo: "https://olivedrab-emu-744435.hostingersite.com/reset-password" });
-    if (result.error) throw new TRPCError({ code: "BAD_REQUEST", message: "Envio não concluído. Confira a configuração de email e aguarde antes de tentar novamente." });
+    if (result.error) {
+      if (result.error.status === 429 || ["over_email_send_rate_limit", "over_request_rate_limit"].includes(result.error.code ?? ""))
+        throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "Limite de envio de emails atingido no Supabase. Não repita agora: aguarde a liberação da cota ou configure SMTP próprio. Nenhum novo link foi enviado." });
+      if (result.error.code === "email_address_not_authorized")
+        throw new TRPCError({ code: "BAD_REQUEST", message: "O serviço padrão não autoriza envio para este destinatário. A administração precisa configurar SMTP próprio." });
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Envio não concluído. Confira a configuração de email e aguarde antes de tentar novamente." });
+    }
     return { requested: true };
   }),
   list: administrator.query(async ({ ctx }) => {
