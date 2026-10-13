@@ -36,9 +36,12 @@ Não copiar variáveis de outro projeto nem substituir o conjunto completo sem p
 6. Só depois revisar domínio final e liberação. Manter a instalação anterior como caminho de retorno;
    retorno de código não significa reversão automática de migrations/dados.
 
-Status: configurações acima preparadas, NÃO aplicadas ao painel nesta sessão.
-A busca de integrações encontrou somente Hostinger Mail, que não administra hospedagem;
-nenhum acesso Node da Hostinger disponível. Chaves privadas locais ainda ausentes.
+Status atualizado em 12/10/2026: proprietária concluiu implantação na Hostinger em
+https://olivedrab-emu-744435.hostingersite.com, com Node 22.x, pnpm e entrada dist/index.js.
+HTTP público, busca publicada e capturas autenticadas foram conferidos. Acesso direto
+ao painel Node/navegador não está disponível neste chat; chaves privadas locais ausentes.
+Gates pendentes estão consolidados no início de TODO_DWO.md. Não considerar deployment
+concluído como autorização para importar dados ou habilitar financeiro de produção.
 
 Referências oficiais:
 - https://www.hostinger.com/support/how-to-deploy-a-nodejs-website-in-hostinger/

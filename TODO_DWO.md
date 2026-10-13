@@ -2,6 +2,24 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Gate atual de lançamento — revisão 12/10/2026
+
+Status: homologação parcial, NÃO liberar produção/importação real ainda. Esta seção prevalece sobre anotações históricas abaixo.
+
+- [x] Capturas autenticadas: busca TESTE QA encontra o tutor na QA; busca meriely na QA não encontra cliente; busca TESTE QA na Lux Dog não encontra cliente. Nome longo do pet contido no cartão.
+- [x] Repetição nesta revisão: TypeScript, build e 271 testes/51 arquivos aprovados. Alertas remanescentes: bundle grande e descrição acessível de diálogos.
+- [x] Repetição SQL com rollback: confirmação atômica, avisos explícitos, conflitos/validade/reservas, baixa/renovação/saldo/reversão e isolamento bidirecional em 19 tabelas.
+- [x] Novo teste SQL: identidade QA com ID conhecido de atendimento de outra organização não consegue concluir; staff não consegue reverter baixa; saldo permanece inalterado. Fixtures integralmente revertidas.
+- [x] Auditoria somente leitura: nenhuma tabela pública sem RLS; buckets client-photos, pet-photos e contracts privados; contas de pagamento somente sandbox (QA pending).
+- [x] HTTP Hostinger: raiz, rota clients e health 200; clients.list, workspace.context e asaas.externalInvoices sem sessão 401; webhook com identificador inválido 404. Busca no bundle publicada; verificação limitada de padrões sb_secret/$aact não encontrou correspondência (não equivale a auditoria completa de segredos).
+- [ ] Jornada HTTP autenticada completa, CRUD, anexo privado e tentativas diretas por ID/papel; não há sessão operacional controlável/credenciais de teste no ambiente deste chat. Não solicitar senhas ou tokens pelo chat.
+- [ ] Concorrência real por conexões independentes: última sessão, confirmação versus agenda manual, conclusão/cancelamento e reversão. Testes sequenciais/transacionais não cobrem corridas.
+- [ ] Conta sandbox de QA separada, credencial privada e webhook configurados; emitir/pagar/repetir evento/conferir estorno e conciliação sem usar contas reais. Adaptador atual deliberadamente não habilita produção Asaas.
+- [ ] Backup de banco/anexos e restauração ensaiada em ambiente isolado. Não restaurar/resetar banco real para testes.
+- [ ] Revisar oito funções SECURITY DEFINER executáveis por anon e nove por authenticated; proteção de senhas vazadas desabilitada. Advisor é alerta, não comprovação de exploração. Não revogar auxiliares de RLS indiscriminadamente. Referências: https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable e https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection.
+- [ ] Validar separação financeira Lux Dog/Blessed dentro da mesma organização, prévia de importação, domínio final/HTTPS, retorno de versão e monitoramento. Portal acadêmico fora do escopo.
+
+
 ### Consulta de clientes e apresentação — 12/10/2026
 
 - [x] Adicionar busca por tutor, pet e códigos exibidos CLI/PET, sem consultar dados fora da lista autorizada; busca ignora acentos/maiúsculas e reinicia paginação.

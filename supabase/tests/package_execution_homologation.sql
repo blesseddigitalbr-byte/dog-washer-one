@@ -39,6 +39,23 @@ begin
         now()-interval '4 hours',60,'in_progress',next_package,true),
       (failed_visit,actor.organization_id,actor.unit_id,client_id,pet_id,service_id,professional_id,
         now()-interval '2 hours',60,'in_progress',next_package,false);
+    -- A different existing tenant must not complete even a known appointment ID.
+    perform set_config('request.jwt.claims',jsonb_build_object('sub','62b24bca-6a6e-40db-afd4-3448401fe9fd','role','authenticated')::text,true);
+    if public.current_organization_id()=actor.organization_id then raise exception 'Cross-tenant fixture requires a different actor'; end if;
+    rejected:=false;
+    begin perform public.complete_appointment(bath_visit);
+    exception when others then
+      if sqlerrm<>'Agendamento não encontrado' then raise; end if; rejected:=true;
+    end;
+    if not rejected then raise exception 'Cross-tenant completion permitted'; end if;
+    rejected:=false;
+    begin perform public.reverse_appointment_execution(bath_visit,'QA forbidden staff reversal');
+    exception when others then
+      if sqlerrm<>'Reversão restrita à gestão' then raise; end if; rejected:=true;
+    end;
+    if not rejected then raise exception 'Staff reversal permitted'; end if;
+    perform set_config('request.jwt.claims',jsonb_build_object('sub',actor.id,'role','authenticated')::text,true);
+    if not exists(select 1 from public.client_packages where id=next_package and balance_baths=2 and balance_groomings=1) then raise exception 'Rejected call altered balance'; end if;
     perform public.complete_appointment(bath_visit);
     if not exists(select 1 from public.client_packages where id=next_package and balance_baths=1 and balance_groomings=1) then
       raise exception 'Hygienic trim incorrectly consumed grooming or renewal failed'; end if;
