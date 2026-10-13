@@ -2,6 +2,14 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Validação inicial da importação e insumos — 12/10/2026
+
+- [x] Validador somente leitura com SHA-256, candidatos, IDs duplicados e relações tutor/pet/pacote. Fonte b3cc656b9bab9dd731254fedc26a8168d0ea4b06b672a1d8403f64a05c0321f7.
+- [x] Encontradas 9 células negativas de saldo em PACOTES: K3, K10, L10, K11, L11, K16, L16, L21, L22. FINANCEIROPACOTES linhas 38/39 referenciam pacote ausente entre os candidatos. Não corrigido nem importado; investigar histórico antes de atribuir créditos ou cobranças.
+- [ ] Comparação com banco, datas/CPF/telefone, agenda e confirmação transacional da importação continuam pendentes. Esta prévia local não é a tela administrativa.
+- [x] Regra pura de insumos para compra/consumo/perda, quantidade fracionária, custo em centavos e rejeição de estoque negativo. Testes iniciais aprovados.
+- [ ] Catálogo de insumos, persistência transacional, unidades de medida, auditoria, entrada/baixa e UI ainda não implementados; não liberar menu como pronto.
+
 ### Fonte de importação recebida — 12/10/2026
 
 - [x] Inspeção somente leitura do XLSX atualizado fornecido pela usuária; 21 abas. Original preservado, nenhum dado pessoal copiado para Git e nenhuma gravação no banco/portal.
