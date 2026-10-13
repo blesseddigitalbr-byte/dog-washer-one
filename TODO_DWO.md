@@ -2,6 +2,15 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Publicação completa e bloqueios por perfil — 12/10/2026
+
+- [x] Usuária confirmou recuperação por email e login como Pedro (Operação).
+- [x] Menu mantém itens sem permissão desabilitados com cadeado; rota direta também bloqueada antes de montar a tela. Splits e repasses movidos para Gestão e limitados à gestão financeira; integrações/configurações/marca/usuários restritos a owner/admin. API Asaas overview agora também bloqueia manager.
+- [x] Matriz de navegação com negação por padrão testada; não substitui RLS/API. Asaas splits já exigia owner/admin/manager no servidor.
+- [ ] Revisar toda exposição financeira nas telas operacionais e consultas diretas: screenshot de Pacotes ainda mostra pagamentos a Operação. Esta entrega de bloqueios de áreas não resolve esse vazamento de campo; não declarar RBAC completo.
+- [ ] Inventariar melhorias Emergent em RESGATE_EMERGENT.md e distinguir implementadas de backlog antes de declarar publicação integral.
+- [ ] Publicar funcionalidades homologadas no domínio final app.luxdog.com.br, confirmar HTTPS/recuperação/rollback. Asaas mantém sandbox; produção financeira exige homologação separada e configuração aprovada.
+
 ### Diagnóstico do envio de recuperação — 12/10/2026
 
 - [x] Logs Auth consultados: /recover aceito às 22:38 e 22:40 (Brasília); pedidos seguintes 22:43–22:48 retornaram 429 email rate limit exceeded. Falha atual confirmada como limite de envio, não endereço de email.

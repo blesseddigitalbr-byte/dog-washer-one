@@ -1,7 +1,8 @@
 import { TooltipProvider } from "@/components/ui/tooltip";
 import DashboardLayout from "@/components/DashboardLayout";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
+import { canAccessRoute } from "../../shared/accessPolicy";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
@@ -27,6 +28,7 @@ import UserAccess from "./pages/UserAccess";
 import ResetPassword from "./pages/ResetPassword";
 
 function Router() {
+  const [location] = useLocation();
   const { user, loading } = useAuth();
 
   if (window.location.pathname === "/reset-password") return <ResetPassword />;
@@ -36,6 +38,8 @@ function Router() {
   }
 
   if (!user) return <Login />;
+
+  if (!canAccessRoute(user.role, location)) return <DashboardLayout><main className="p-8" role="alert"><h1 className="text-2xl font-semibold">Acesso bloqueado</h1><p className="mt-3">Seu perfil não permite acessar esta área. Solicite autorização à administração.</p></main></DashboardLayout>;
 
   return (
     <Switch>

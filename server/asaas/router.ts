@@ -247,7 +247,8 @@ export const asaasRouter = router({
     if (error) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "A conciliação precisa da migração de splits aplicada no banco." });
     return data ?? [];
   }),
-  overview: financialProcedure.query(async () => {
+  overview: financialProcedure.query(async ({ ctx }) => {
+    if (!["owner", "admin"].includes(ctx.user.role)) throw new TRPCError({ code: "FORBIDDEN", message: "Integrações restritas à administração" });
     const [accounts, events, payments] = await Promise.all([
       supabase.from("payment_provider_accounts").select("id, environment, status, legal_entity_id").eq("provider", "asaas"),
       supabase.from("asaas_webhook_events").select("event_id, event_type, payment_id, processing_status, created_at").order("created_at", { ascending: false }).limit(100),

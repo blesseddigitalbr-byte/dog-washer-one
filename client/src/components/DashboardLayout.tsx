@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import UnitSwitcher from "@/components/UnitSwitcher";
 import { trpc } from "@/lib/trpc";
 import { neutralBrand, brandSignature } from "../../../shared/branding";
+import { canAccessRoute } from "../../../shared/accessPolicy";
 import type { CSSProperties } from "react";
 import {
   LayoutDashboard,
@@ -24,6 +25,7 @@ import {
   X,
   ArrowLeft,
   ArrowRight,
+  LockKeyhole,
   CalendarRange,
 } from "lucide-react";
 
@@ -90,6 +92,7 @@ export default function DashboardLayout({
       title: "GESTÃO",
       items: [
         { icon: <TrendingUp className="w-5 h-5" />, label: "Financeiro", path: "/financial" },
+        { icon: <Zap className="w-5 h-5" />, label: "Splits e Repasses", path: "/splits" },
         { icon: <Users2 className="w-5 h-5" />, label: "Equipe", path: "/team" },
         { icon: <LayoutDashboard className="w-5 h-5" />, label: "Unidades", path: "/units" },
         { icon: <BarChart3 className="w-5 h-5" />, label: "Relatórios", path: "/reports", comingSoon: true },
@@ -98,10 +101,9 @@ export default function DashboardLayout({
     {
       title: "SISTEMA",
       items: [
-        ...(["owner", "admin"].includes(user?.role ?? "") ? [{ icon: <Users2 className="w-5 h-5" />, label: "Usuários e acessos", path: "/users" }] : []),
+        { icon: <Users2 className="w-5 h-5" />, label: "Usuários e acessos", path: "/users" },
         { icon: <UserCircle className="w-5 h-5" />, label: "Meu Perfil", path: "/profile" },
         { icon: <Zap className="w-5 h-5" />, label: "Integrações", path: "/integrations" },
-        { icon: <Zap className="w-5 h-5" />, label: "Splits e Repasses", path: "/splits" },
         { icon: <Settings className="w-5 h-5" />, label: "Configurações", path: "/settings", comingSoon: true },
         { icon: <Settings className="w-5 h-5" />, label: "Marca e módulos", path: "/branding" },
       ],
@@ -117,6 +119,7 @@ export default function DashboardLayout({
   };
 
   const handleMenuClick = (path: string, comingSoon?: boolean) => {
+    if (!canAccessRoute(user?.role, path)) return;
     if (comingSoon) {
       toast.info("Em breve");
       return;
@@ -185,18 +188,20 @@ export default function DashboardLayout({
                       key={item.label}
             onClick={() => handleMenuClick(item.path, item.comingSoon)}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-all ${
-                item.comingSoon
+                item.comingSoon || !canAccessRoute(user?.role, item.path)
                   ? "text-sidebar-foreground/50 cursor-not-allowed"
                   : location === item.path
                   ? "bg-sidebar-accent text-sidebar-primary-foreground font-semibold border-l-4 border-sidebar-accent"
                   : "text-sidebar-foreground hover:bg-sidebar-accent/20 hover:text-sidebar-accent"
               }`}
-              disabled={item.comingSoon}
+              disabled={item.comingSoon || !canAccessRoute(user?.role, item.path)}
+              title={!canAccessRoute(user?.role, item.path) ? "Bloqueado para seu perfil" : undefined}
                     >
                       {item.icon}
                       {sidebarOpen && (
                         <span className="flex-1 text-left">{item.label}</span>
                       )}
+                      {!canAccessRoute(user?.role, item.path) && <LockKeyhole className="h-4 w-4 shrink-0" aria-label="Acesso bloqueado" />}
                     </button>
                   ))}
                 </div>
