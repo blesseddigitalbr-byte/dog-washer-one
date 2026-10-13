@@ -7,6 +7,7 @@ export default function Login() {
   useEffect(() => { document.title = `${brand.name} | Entrar`; }, [brand.name]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -55,13 +56,16 @@ export default function Login() {
             Senha
             <input
               className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-[#C9A24E] focus:ring-2 focus:ring-[#D8B768]/40"
-              type="password"
+              id="login-password"
+              type={showPassword ? "text" : "password"}
               autoComplete="current-password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               required
             />
           </label>
+
+          <button type="button" className="text-sm text-slate-700 underline" aria-controls="login-password" aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? "Ocultar senha" : "Mostrar senha"}</button>
 
           {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
 

@@ -15,13 +15,14 @@ export default function UserAccess() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<"admin" | "manager" | "staff">("staff");
   const [unitIds, setUnitIds] = useState<string[]>([]);
   const [defaultUnitId, setDefaultUnitId] = useState("");
   const [verifiedEmail, setVerifiedEmail] = useState(false);
   const create = trpc.userAccess.create.useMutation({
     onSuccess: async () => {
-      setPassword(""); setName(""); setEmail(""); setVerifiedEmail(false);
+      setPassword(""); setShowPassword(false); setName(""); setEmail(""); setVerifiedEmail(false);
       toast.success("Usuário cadastrado com os acessos selecionados");
       await utils.userAccess.list.invalidate();
     }, onError: error => { setPassword(""); toast.error(error.message); },
@@ -38,7 +39,8 @@ export default function UserAccess() {
       <h2 className="text-lg font-semibold">Cadastrar usuário</h2>
       <label className="block">Nome<Input value={name} onChange={e => setName(e.target.value)} required minLength={2} maxLength={120} /></label>
       <label className="block">Email<Input type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="off" /></label>
-      <label className="block">Senha inicial<Input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={12} maxLength={128} autoComplete="new-password" /></label>
+      <label className="block" htmlFor="initial-password">Senha inicial</label>
+      <div className="flex items-center gap-2"><Input id="initial-password" type={showPassword ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required minLength={12} maxLength={128} autoComplete="new-password" /><Button type="button" variant="outline" aria-controls="initial-password" aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? "Ocultar senha" : "Mostrar senha"}</Button></div>
       <p className="text-sm text-muted-foreground">Pelo menos 12 caracteres. Compartilhe somente por canal privado seguro. Não enviamos convite automático; a senha não é exibida nem salva no cadastro do DWO.</p>
       <label className="block">Perfil<select className="block w-full rounded-md border p-2" value={role} onChange={e => setRole(e.target.value as typeof role)}><option value="staff">Operação — sem gestão financeira ou cadastro de usuários</option><option value="manager">Gestão — inclui financeiro e reversões; sem cadastro de usuários</option>{user?.role === "owner" && <option value="admin">Administrador — inclui gestão e cadastro de operação/gestão</option>}</select></label>
       <fieldset className="space-y-2"><legend className="font-medium">Unidades autorizadas</legend>{workspace.data?.units.map(unit => <label key={unit.id} className="flex gap-2 items-center"><input type="checkbox" checked={unitIds.includes(unit.id)} onChange={e => {

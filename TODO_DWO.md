@@ -2,6 +2,11 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Visibilidade de senha — 12/10/2026
+
+- [x] Mostrar/ocultar senha no login e no cadastro de usuários, inicialmente oculta, botão sem envio do formulário. Cinco testes das telas, TypeScript e build aprovados.
+- [ ] Confirmar atualização automática na Hostinger e conferir visualmente. Redefinição da senha esquecida permanece pendente; nenhuma senha antiga pode ser consultada.
+
 ### Segurança operacional e preparação do teste HTTP — 12/10/2026
 
 - [x] Usuários e acessos publicado: bundle público contém a nova tela; userAccess.list sem sessão retorna 401. Primeiro cadastro/login pela proprietária continua pendente.

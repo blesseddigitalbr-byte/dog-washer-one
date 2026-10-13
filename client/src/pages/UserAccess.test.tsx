@@ -10,6 +10,18 @@ vi.mock("@/lib/trpc", () => ({ trpc: {
 import UserAccess from "./UserAccess";
 beforeEach(() => { cleanup(); state.role = "owner"; state.pending = false; state.mutate.mockReset(); });
 describe("user access form", () => {
+  it("toggles password visibility without changing its value or submitting", () => {
+    render(<UserAccess />);
+    const input = screen.getByLabelText("Senha inicial") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "Test-password-only!" } });
+    expect(input.type).toBe("password");
+    fireEvent.click(screen.getByRole("button", { name: "Mostrar senha" }));
+    expect(input.type).toBe("text");
+    expect(input.value).toBe("Test-password-only!");
+    fireEvent.click(screen.getByRole("button", { name: "Ocultar senha" }));
+    expect(input.type).toBe("password");
+    expect(state.mutate).not.toHaveBeenCalled();
+  });
   it("blocks operation staff from the form", () => {
     state.role = "staff"; render(<UserAccess />);
     expect(screen.getByText("Acesso restrito à administração.")).toBeTruthy();
