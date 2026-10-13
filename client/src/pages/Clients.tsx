@@ -1,4 +1,6 @@
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { matchesClientSearch } from "../../../shared/clientSearch";
 import { useState } from "react";
 import { Plus, MoreVertical, AlertCircle, Edit2, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { trpc } from "@/lib/trpc";
@@ -16,6 +18,7 @@ const ITEMS_PER_PAGE = 12;
 
 export default function ClientsPage() {
   const [filter, setFilter] = useState("todos");
+  const [search, setSearch] = useState("");
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [clientFormOpen, setClientFormOpen] = useState(false);
   const [editingClient, setEditingClient] = useState<any>(null);
@@ -53,7 +56,11 @@ export default function ClientsPage() {
     { id: "inativos", label: "Inativos (30d)", icon: "⚠" },
   ];
 
-  const filteredClients = clients.filter((client: any) => {
+  let precedingPets = 0;
+  const filteredClients = clients.filter((client: any, index: number) => {
+    const matches = matchesClientSearch(client, search, index, precedingPets);
+    precedingPets += client.pets?.length || 0;
+    if (!matches) return false;
     if (filter === "vips") return client.is_vip || client.pets?.some((pet: any) => pet.is_vip);
     if (filter === "modelo") return client.is_model_dog || client.pets?.some((pet: any) => pet.is_model_dog);
     return true;
@@ -152,6 +159,10 @@ export default function ClientsPage() {
           </div>
 
           {/* Filters - Pill Format */}
+          <div className="mt-6 max-w-lg">
+            <label htmlFor="client-search" className="block text-sm font-medium mb-2">Consultar clientes e pets</label>
+            <Input id="client-search" type="search" placeholder="Buscar tutor, pet ou código (CLI / PET)" value={search} onChange={event => { setSearch(event.target.value); setCurrentPage(1); }} />
+          </div>
           <div className="flex gap-3 flex-wrap mt-6">
             {filters.map((f) => (
               <button
@@ -217,7 +228,7 @@ export default function ClientsPage() {
               className="bg-accent hover:bg-accent/90 text-foreground rounded-full px-6 h-11 font-semibold"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Adicionar Primeiro Cliente
+              {search || filter !== "todos" ? "Adicionar Novo Cliente" : "Adicionar Primeiro Cliente"}
             </Button>
           </div>
         )}
@@ -228,7 +239,7 @@ export default function ClientsPage() {
             {paginatedClients.map((client) => (
               <div
                 key={client.id}
-                className="bg-white rounded-lg p-5 shadow-sm border border-border hover:shadow-md transition-all duration-200 relative group border-l-4 border-l-chart-3 flex flex-col"
+                className="min-w-0 bg-white rounded-lg p-5 shadow-sm border border-border hover:shadow-md transition-all duration-200 relative group border-l-4 border-l-chart-3 flex flex-col"
               >
                 {/* Menu Button */}
                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -304,7 +315,7 @@ export default function ClientsPage() {
                         return (
                           <div
                             key={pet.id}
-                            className="flex flex-col items-center gap-1 p-2 bg-accent/10 rounded-lg hover:bg-accent/20 transition-colors cursor-pointer"
+                            className="min-w-0 flex flex-col items-center gap-1 p-2 bg-accent/10 rounded-lg hover:bg-accent/20 transition-colors cursor-pointer"
                             title={`${pet.name} (${pet.breed})`}
                           >
                             {pet.foto_url ? (
@@ -318,9 +329,9 @@ export default function ClientsPage() {
                                 {pet.name.charAt(0).toUpperCase()}
                               </span>
                             )}
-                            <div className="flex flex-col items-center text-center">
-                              <span className="text-xs font-semibold text-primary truncate w-full leading-tight">{pet.name}</span>
-                              <span className="text-xs font-bold text-primary/60 mt-0.5">PET-{String(globalPetIndex).padStart(4, '0')}</span>
+                            <div className="min-w-0 w-full flex flex-col items-center text-center">
+                              <span className="text-xs font-semibold text-primary w-full leading-tight break-words [overflow-wrap:anywhere]">{pet.name}</span>
+                              <span className="text-xs font-bold text-primary/60 mt-0.5 max-w-full break-all">PET-{String(globalPetIndex).padStart(4, '0')}</span>
                             </div>
                           </div>
                         );

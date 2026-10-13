@@ -2,6 +2,13 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Consulta de clientes e apresentação — 12/10/2026
+
+- [x] Adicionar busca por tutor, pet e códigos exibidos CLI/PET, sem consultar dados fora da lista autorizada; busca ignora acentos/maiúsculas e reinicia paginação.
+- [x] Conter nomes longos dos pets nos cartões com quebra de linha e largura limitada.
+- [x] Evidência visual fornecida: usuário QA acessou sua organização, cadastrou tutor/pet de teste, viu pacotes vazios e financeiro restrito. Captura da Lux Dog mostra dois clientes sem o tutor TESTE QA. Evidência parcial, não comprova isolamento integral de API/financeiro.
+- [ ] Conferir busca e nomes longos na Hostinger após implantação; concluir testes cruzados de acesso pela API antes de liberar produção.
+
 ### Blessed e organização fictícia de isolamento — 12/10/2026
 
 - [x] Proprietária criou usuário de homologação via Auth oficial e confirmou email. Perfil inicialmente sem organização/unidade ou acessos; vinculado exclusivamente à organização/unidade QA com papel staff e uma associação de acesso. Sem alterar senha, usuário real, sessão real ou conceder admin.
