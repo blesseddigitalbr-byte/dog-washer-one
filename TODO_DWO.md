@@ -4,6 +4,10 @@
 
 ### Preparação Hostinger — 12/10/2026
 
+- [x] Proprietária concluiu implantação no endereço temporário `https://olivedrab-emu-744435.hostingersite.com`. Conferência HTTP independente em 12/10: `/` e `/clients` retornam HTML 200; `/api/health` retorna JSON 200 com `service=DWO`, `status=running`.
+- [ ] Conferir login autenticado, assets/console, branding Lux Dog, build log/commit implantado, variáveis privadas em runtime e fluxo operacional. Health básico não comprova banco, Asaas ou segurança entre usuários.
+- [ ] Não alterar DNS de app.luxdog.com.br nem importar clientes reais antes dos gates de homologação.
+
 - [x] Conferir entrypoint Node, build frontend/backend e variáveis exigidas; registrar configuração atual e gates em DEPLOYMENT_CONFIG.md, distinguindo do guia legado Manus/outro banco.
 - [x] Buscar integração de hospedagem: resultado disponível somente Hostinger Mail, sem controle Node/hPanel. Nenhuma instalação de plugin irrelevante nem alteração em outros projetos.
 - [ ] Ação da proprietária: abrir a criação/configuração da aplicação Node exclusiva do DWO na Hostinger e enviar captura dos campos sem segredos, confirmando suporte Node e repositório. Não substituir site/portal existentes.
