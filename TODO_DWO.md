@@ -2,6 +2,8 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+- [x] Organização do menu ajustada conforme correção da usuária: serviços/produtos/planos em Gestão, Equipe permanece como item próprio de Gestão; Sistema mantém configurações, usuários, integrações, marca e perfil. Permissões existentes preservadas. Produtos continua sinalizado como em breve.
+
 ### Publicação completa e bloqueios por perfil — 12/10/2026
 
 - [x] Usuária confirmou recuperação por email e login como Pedro (Operação).
