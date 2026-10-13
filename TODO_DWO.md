@@ -4,6 +4,10 @@
 
 ### Blessed e organização fictícia de isolamento — 12/10/2026
 
+- [x] Proprietária criou usuário de homologação via Auth oficial e confirmou email. Perfil inicialmente sem organização/unidade ou acessos; vinculado exclusivamente à organização/unidade QA com papel staff e uma associação de acesso. Sem alterar senha, usuário real, sessão real ou conceder admin.
+- [x] Testar direção QA→Lux Dog/Blessed no banco com identidade QA e role authenticated: contexto e unidade própria comprovados; clientes, pets, unidades, empresas, contas e ledgers reais invisíveis nas tabelas testadas. Teste com rollback; sem envio de convite adicional.
+- [ ] Entrar no endereço temporário com usuário QA em janela privada e conferir interface/API; testes SQL de identidade não equivalem a login real nem cobrem todos os fluxos financeiros/arquivos.
+
 - [x] Cadastrar empresa Blessed com razão social/CNPJ fornecidos pela proprietária, entidade school e unidade BLESSED-ESCOLA na organização atual; criar área/controle financeiro próprios. Não copiar configuração fiscal nem criar conta Asaas. Dados cadastrais reais não incluídos no GitHub.
 - [x] Criar organização separada `DWO QA — Isolamento SaaS`, identificada como fictícia, com empresa/unidade/controle financeiro fictícios e referência sandbox pendente sem credencial nem wallet. Nenhum vínculo com contas reais ou chamada ao provedor.
 - [x] Testar RLS com role authenticated e identidade existente: empresa Blessed da própria organização visível; empresa/unidade/conta financeira/ledger de QA invisíveis; atualização e inserção cruzadas rejeitadas. Verificação posterior repetida com contexto de organização comprovado.
