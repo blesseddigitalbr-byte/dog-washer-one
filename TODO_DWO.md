@@ -7,7 +7,10 @@
 - [x] Adicionar busca por tutor, pet e códigos exibidos CLI/PET, sem consultar dados fora da lista autorizada; busca ignora acentos/maiúsculas e reinicia paginação.
 - [x] Conter nomes longos dos pets nos cartões com quebra de linha e largura limitada.
 - [x] Evidência visual fornecida: usuário QA acessou sua organização, cadastrou tutor/pet de teste, viu pacotes vazios e financeiro restrito. Captura da Lux Dog mostra dois clientes sem o tutor TESTE QA. Evidência parcial, não comprova isolamento integral de API/financeiro.
-- [ ] Conferir busca e nomes longos na Hostinger após implantação; concluir testes cruzados de acesso pela API antes de liberar produção.
+- [x] Atualização publicada no endereço temporário: bundle público contém busca e CSS de quebra; captura enviada pela proprietária confirma campo visível e pet sem transbordamento. Busca digitada ainda precisa de conferência na sessão autenticada.
+- [x] Executar teste SQL bidirecional com identidades reais existentes e role authenticated em 19 tabelas: clientes próprios visíveis, registros de outras organizações invisíveis ou acesso à tabela negado; update de cliente externo sem efeito; switch_active_unit de outra organização rejeitado. Transação com rollback, nenhuma mudança persistida. Script em supabase/tests/tenant_isolation_bidirectional.sql.
+- [ ] Concluir testes cruzados HTTP com sessões autenticadas e busca digitada; testes SQL não substituem ponta a ponta de login/API nem comprovam separação financeira entre unidades da mesma organização.
+- [x] Regressão local completa: 271 testes em 51 arquivos passaram. HTTP público na Hostinger: health 200; clients.list e workspace.context sem sessão retornam 401. Não houve login automatizado nem acesso às credenciais da proprietária.
 
 ### Blessed e organização fictícia de isolamento — 12/10/2026
 
