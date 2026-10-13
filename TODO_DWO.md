@@ -2,6 +2,14 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Fonte de importação recebida — 12/10/2026
+
+- [x] Inspeção somente leitura do XLSX atualizado fornecido pela usuária; 21 abas. Original preservado, nenhum dado pessoal copiado para Git e nenhuma gravação no banco/portal.
+- [x] Inventário por coluna mínima: 67 clientes (nome), 98 pets (nome), 685 linhas de agenda (data), 36 pacotes (pet/tutor) e 38 linhas FINANCEIROPACOTES (pet/tutor). São candidatos, não validação de unicidade/consistência. PETS e FINANCEIROPACOTES possuem mais de 50 mil linhas físicas por fórmulas; não importar por dimensão.
+- [x] Identificar fontes financeiras adicionais: EXTRATO_ASAAS_BRUTO, MOVIMENTACOES, CONTAS_A_PAGAR, SALDOS_CONTAS, METAS_FINANCEIRAS e CONFIG_FINANCEIRO. Preservar origem e IDs para não contar extrato e cobrança como duas receitas.
+- [ ] Validar duplicados, IDs posicionais, CPF/telefone numéricos com zeros à esquerda, datas e horários, tutor/pet/pacote, saldos e cobertura retroativa. Comparar fonte bruta com cadastro normalizado sem sobrescrever divergências.
+- [ ] Preparar importação transacional/idempotente em lotes com preview, registro da versão/hash e destino fixo Lux Dog; backup/restauração e revisão antes de executar. Não emitir cobranças, notas, mensagens ou eventos Calendar durante importação histórica.
+
 ### Organização financeira e resumo — 12/10/2026
 
 - [x] Gestão financeira recebe KPIs e gráfico por situação e relatório filtrável usando conciliação existente da unidade ativa. Amostra limitada a 100 cobranças emitidas; recebido/confirmado/pendente/vencido separados; não representa saldo disponível nem histórico completo.
