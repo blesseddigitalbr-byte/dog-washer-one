@@ -2,6 +2,20 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Segurança operacional e preparação do teste HTTP — 12/10/2026
+
+- [x] Usuários e acessos publicado: bundle público contém a nova tela; userAccess.list sem sessão retorna 401. Primeiro cadastro/login pela proprietária continua pendente.
+- [x] Instalar 20261013011925: revogar execução anônima de sete funções operacionais; manter auxiliares RLS e operações autorizadas para authenticated, gatilho Auth para supabase_auth_admin e servidor. Testes de agenda/baixa/reversão executados na instalação com rollback de fixtures.
+- [x] Isolamento bidirecional repetido após a restrição e aprovado. Advisor anon reduziu de oito para um alerta (enqueue_academic_practice, gatilho acadêmico não alterado); sete alertas authenticated remanescentes precisam análise por finalidade. Senhas vazadas ainda sem proteção. Referência: https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable.
+- [x] Instalar 20261013012210: configuração de contas/ledgers somente leitura para gestão, limitada à unidade/entidade atual; escrita direta autenticada/anon revogada. Staff não lê mesmo na mesma organização/unidade. Nenhum pagamento/saldo alterado.
+- [x] Primeira instalação financeira abortada por controle positivo: Lux Dog não possui ledger; nenhuma alteração parcial persistiu. Teste final usa ledger sintético com rollback, sem criar ledger real ou inventar movimentações.
+- [x] Preparar cabeçalhos HTTP contra framing/sniffing, referrer e cache de API, preservando câmera e conexões Supabase; testes automatizados. Confirmar cabeçalhos no endereço publicado após deploy.
+- [x] Leituras de clientes passam a sinalizar falha do banco, em vez de retornar lista vazia/null e produzir evidência falsa de isolamento.
+- [x] Preparar scripts/live-auth-smoke.mjs: duas contas temporárias staff, identidade/workspace, controle positivo, privilégios negados e leitura cruzada por ID. Não cria cadastros/cobranças/mensagens; somente sessões e consultas.
+- [ ] Executar o script após configurar .env.test.local (ignorado): DWO_TEST_LUX_EMAIL/PASSWORD e DWO_TEST_QA_EMAIL/PASSWORD. Modelo sem valores em .env.test.example. Execução atual aborta antes da rede por credenciais ausentes. Nunca enviar senhas/tokens no chat/GitHub.
+- [ ] Gates restantes: concorrência com conexões independentes, cadastro/login/anexos reais de teste, backup/restauração isolada, Asaas QA/webhook, configuração de ledger real e prévia de importação. Não trocar domínio nem habilitar financeiro de produção antes da homologação.
+- [x] Validação final desta revisão: 294 testes em 55 arquivos passaram; TypeScript/build e sintaxe do smoke script aprovados. Teste financeiro SQL repetido após instalação e aprovado com rollback. Atualização dos cabeçalhos aguarda verificação no deploy.
+
 ### Usuários cadastrados pelo DWO — 12/10/2026
 
 - [x] Implementar menu Sistema → Usuários e acessos (/users), exclusivo owner/admin, separado dos profissionais da equipe. Lista limitada à organização atual e cadastro com nome/email/senha inicial/perfil/unidades/unidade inicial.

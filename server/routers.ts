@@ -444,7 +444,7 @@ export const appRouter = router({
         }));
       } catch (error) {
         console.error("Error fetching clients:", error);
-        return [];
+        throw new Error("Não foi possível carregar os clientes. Tente novamente ou procure a administração.");
       }
     }),
 
@@ -494,7 +494,7 @@ export const appRouter = router({
           };
         } catch (error) {
           console.error("Error fetching client:", error);
-          return null;
+        throw new Error("Não foi possível carregar o cliente. Tente novamente ou procure a administração.");
         }
       }),
 

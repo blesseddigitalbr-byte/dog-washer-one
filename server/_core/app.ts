@@ -5,11 +5,13 @@ import { createContext } from "./context.js";
 import healthRouter from "./healthRouter.js";
 import { registerUploadRoutes } from "./uploadHandler.js";
 import { registerAsaasWebhook } from "../asaas/webhook.js";
+import { securityHeaders } from "./securityHeaders.js";
 
 export function createApiApp() {
   const app = express();
 
   app.disable("x-powered-by");
+  app.use(securityHeaders);
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
