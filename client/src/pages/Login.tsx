@@ -10,15 +10,36 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [recovering, setRecovering] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(false);
+  useEffect(() => {
+    if (!cooldown) return;
+    const timer = window.setTimeout(() => setCooldown(false), 60_000);
+    return () => window.clearTimeout(timer);
+  }, [cooldown]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    if (loading || (recovering && cooldown)) return;
     setLoading(true);
     setError(null);
-
-    const result = await supabase.auth.signInWithPassword({ email, password });
-    if (result.error) setError("E-mail ou senha inválidos.");
-    setLoading(false);
+    setMessage(null);
+    try {
+      if (recovering) {
+        const allowed = ["https://olivedrab-emu-744435.hostingersite.com", "https://app.luxdog.com.br"];
+        const origin = allowed.includes(window.location.origin) ? window.location.origin : allowed[0];
+        const result = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo: `${origin}/reset-password` });
+        setCooldown(true);
+        if (result.error) setError(result.error.status === 429 ? "Limite de envio atingido. Aguarde antes de tentar novamente." : "Não foi possível solicitar a recuperação. Tente novamente mais tarde.");
+        else setMessage("Se este email estiver cadastrado, você receberá um link para criar uma nova senha. Confira também o spam.");
+      } else {
+        const result = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+        if (result.error) setError("E-mail ou senha inválidos.");
+      }
+    } catch {
+      setError("Não foi possível conectar. Verifique sua conexão e tente novamente.");
+    } finally { setLoading(false); }
   }
 
   return (
@@ -40,6 +61,7 @@ export default function Login() {
           </p>
         </div>
 
+        {recovering && <h1 className="mb-4 text-lg font-semibold">Recuperar senha</h1>}
         <form className="space-y-5" onSubmit={handleSubmit}>
           <label className="block text-sm font-medium text-slate-700">
             E-mail
@@ -52,7 +74,7 @@ export default function Login() {
               required
             />
           </label>
-          <label className="block text-sm font-medium text-slate-700">
+          {!recovering && <label className="block text-sm font-medium text-slate-700">
             Senha
             <input
               className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 outline-none focus:border-[#C9A24E] focus:ring-2 focus:ring-[#D8B768]/40"
@@ -63,20 +85,25 @@ export default function Login() {
               onChange={(event) => setPassword(event.target.value)}
               required
             />
-          </label>
+          </label>}
 
-          <button type="button" className="text-sm text-slate-700 underline" aria-controls="login-password" aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? "Ocultar senha" : "Mostrar senha"}</button>
+          {!recovering && <div className="flex flex-wrap justify-between gap-3">
+            <button type="button" className="text-sm text-slate-700 underline" aria-controls="login-password" aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? "Ocultar senha" : "Mostrar senha"}</button>
+            <button type="button" disabled={loading} className="text-sm text-slate-700 underline" onClick={() => {setRecovering(true);setError(null);setMessage(null);setPassword("");}}>Esqueci minha senha</button>
+          </div>}
 
           {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+          {message && <p role="status" className="text-sm text-slate-700">{message}</p>}
 
           <button
             className="w-full rounded-lg bg-[#113A7A] px-4 py-3 font-medium text-white transition hover:bg-[#07111E] disabled:opacity-60"
             style={{ background: brand.lux ? `linear-gradient(110deg, ${brand.secondary}, ${brand.primary})` : brand.primary }}
             type="submit"
-            disabled={loading}
+            disabled={loading || (recovering && cooldown)}
           >
-            {loading ? "Entrando..." : "Entrar"}
+            {recovering ? loading ? "Solicitando..." : cooldown ? "Aguarde antes de reenviar" : "Enviar link de recuperação" : loading ? "Entrando..." : "Entrar"}
           </button>
+          {recovering && <button type="button" disabled={loading} className="text-sm text-slate-700 underline" onClick={() => {setRecovering(false);setError(null);setMessage(null);}}>Voltar para entrar</button>}
         </form>
       </section>
     </main>

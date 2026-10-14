@@ -2,6 +2,11 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Recuperação no login — 14/10/2026
+
+- [x] Adicionado Esqueci minha senha ao login com formulário somente email, resposta sem confirmação de existência da conta, erro sanitizado e intervalo de 60 segundos para reenvio. Redirect HTTPS apenas Hostinger ou app.luxdog.com.br; ambientes locais usam Hostinger, não localhost.
+- [x] Seis testes de login/recuperação aprovados. Teste de recebimento do email e redefinição real ainda depende da usuária; nenhum email enviado automaticamente nesta implementação.
+
 ### Lote de revisão carregado — 14/10/2026
 
 - [x] 239 registros reais carregados exclusivamente no staging privado Lux Dog (67 CLIENTES, 98 PETS, 36 PACOTES, 38 FINANCEIROPACOTES), idempotentes por unidade/hash/aba/linha. Nenhuma escrita em cadastro operacional, saldos, ledger, cobrança, mensagens ou portal acadêmico. Hash original confirmado.
