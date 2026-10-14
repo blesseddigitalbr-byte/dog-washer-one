@@ -6,7 +6,10 @@
 
 - [x] API/tela de pacotes removem situação, data e método de pagamento para Operação; cadastro operacional não aceita baixa, isenção ou metadados financeiros. Preços comerciais permanecem para orçamento. Renovação de contrato restrita à gestão.
 - [x] Consulta financeira dedicada verifica perfil ativo owner/admin/manager e organização/unidade autorizadas; implementação privilegiada em schema privado e wrapper público SECURITY INVOKER, sem anon. Ensaios de owner e staff com rollback aprovados; 12 testes adicionais de API/política.
-- [ ] Aplicar bloqueio por coluna e trigger de escrita direta após publicação compatível, seguido de testes reais pela Data API. Não declarar essa proteção completa até concluir.
+- [x] Migração 20261014225244 aplicada após deploy compatível: colunas payment_status/date/method sem SELECT direto authenticated; leitura financeira por RPC com verificação de perfil/organização/unidade. Trigger impede inserção/alteração de metadados de pagamento por Operação; renovação privilegiada interna restrita à gestão.
+- [x] Ensaios SQL com rollback: acesso positivo proprietária, staff sem leitura por coluna/RPC e sem renovação; criação pending permitida e inserção/alteração paid negadas. Nenhuma alteração permanente de contratos ou saldo.
+- [x] Smoke HTTP real com Pedro e Heloísa aprovado após migração: lista de pacotes preservada sem campos de pagamento; leitura direta Data API e RPC financeiro negados, isolamento bidirecional e demais bloqueios aprovados. TypeScript/build e suíte completa de 354 testes aprovados.
+- [ ] Continuam pendentes backup/restauração, homologação de Admin via navegador, auditoria das demais superfícies financeiras e fluxo financeiro/fiscal produtivo. Não confundir este fechamento de pagamentos de pacotes com liberação global.
 
 ### Smoke autenticado real — 14/10/2026
 

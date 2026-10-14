@@ -49,6 +49,11 @@ try {
     phase = `${session.prefix}: package payment redaction`;
     const packages = await query("clientPackages.list",session.token);
     if(packages.status!==200 || !Array.isArray(packages.data) || packages.data.some(row=>["payment_status","payment_date","payment_method"].some(field=>Object.hasOwn(row,field)))) throw new Error("Package payment redaction failed");
+    phase = `${session.prefix}: direct Data API payment restrictions`;
+    const direct=await session.client.from("client_packages").select("payment_status,payment_date,payment_method").limit(1);
+    if(direct.error?.code!=="42501")throw new Error("Direct payment columns not blocked");
+    const paymentRpc=await session.client.rpc("client_package_payment_details");
+    if(paymentRpc.error?.code!=="42501")throw new Error("Payment RPC not blocked");
     for (const procedure of ["userAccess.list", "asaas.externalInvoices", "importReview.list"]) {
       phase = `${session.prefix}: restriction ${procedure}`;
       if ((await query(procedure, session.token)).status !== 403) throw new Error("Staff privileged endpoint accessible");
@@ -62,7 +67,7 @@ try {
     const read = await query("clients.getById", own.session.token, { id: foreign.clients[0].id });
     if (read.status !== 200 || read.data !== null) throw new Error("Cross-tenant direct ID read exposed or unexpectedly failed");
   }
-  console.log("PASS: two test logins, expected roles/workspaces, positive client controls, staff restrictions and bidirectional direct-ID read denial. No financial operations executed.");
+  console.log("PASS: two test logins, expected roles/workspaces, positive client controls, staff restrictions, package payment redaction, direct Data API payment denial and bidirectional direct-ID read denial. No financial operations executed.");
 } catch {
   // Do not print responses, account emails, tokens, passwords or provider errors.
   console.error(`FAIL: authenticated smoke check at ${phase}. No credentials or provider responses displayed.`);
