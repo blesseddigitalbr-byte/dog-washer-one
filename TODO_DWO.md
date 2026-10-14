@@ -2,6 +2,16 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Avanço e revisão de prazo — 14/10/2026
+
+- [x] Implementada comparação conservadora de clientes entre planilha e snapshot privado da unidade Lux Dog: CPF com dígitos verificadores, email normalizado, telefone/nome apenas como evidência fraca. Não usar códigos posicionais da planilha como identidade do banco. Sete testes automatizados aprovados.
+- [x] Comparação executada em modo somente leitura: 67 candidatos da fonte contra 2 clientes existentes, 66 sem correspondência e 1 conflito de identidade na linha 5 de CLIENTES. Nenhuma fusão, duplicação ou sobrescrita executada. Dados pessoais não salvos no Git.
+- [x] Fonte original mantém SHA-256 b3cc656b9bab9dd731254fedc26a8168d0ea4b06b672a1d8403f64a05c0321f7. Quantidades não finitas/fracionárias agora rejeitadas na prévia de créditos.
+- [ ] Deduplicação dos pets, histórico da agenda e identificação por registro do caso de dona Giselly ainda pendentes. Preservar renovação semestral após trimestral e tosa avulsa já paga; não inferir correção de saldo.
+- [ ] Backup/restauração não verificados: conexão atual fornece consultas/migrações, não exportação de backup; pg_dump/pg_restore/CLI ausentes. Não executar restore_project no banco real como ensaio.
+- [ ] Campos de ajuste administrativo com original imutável, motivo obrigatório e histórico auditável ainda não implementados/publicados. Importação transacional real ainda não executada.
+- [ ] Meta 16/10 em risco para escopo completo: módulos de importação/estoque, financeiro completo, homologação Asaas/fiscal e recuperação continuam abertos. Não considerar publicação de código como homologação funcional.
+
 ### Validação inicial da importação e insumos — 12/10/2026
 
 - [x] Validador somente leitura com SHA-256, candidatos, IDs duplicados e relações tutor/pet/pacote. Fonte b3cc656b9bab9dd731254fedc26a8168d0ea4b06b672a1d8403f64a05c0321f7.

@@ -1,9 +1,10 @@
 """Read-only import checks. Reports row locations/counts, never personal values."""
-import sys, json, zipfile, posixpath, hashlib, re
+import sys, json, zipfile, posixpath, hashlib, re, math
 from collections import Counter
 import xml.etree.ElementTree as ET
+from import_identity import compare_clients
 N = {'m': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
-def validate(path):
+def validate(path, existing=None):
     with open(path, 'rb') as f: digest = hashlib.file_digest(f, 'sha256').hexdigest() if hasattr(hashlib, 'file_digest') else hashlib.sha256(f.read()).hexdigest()
     sheets = {}
     with zipfile.ZipFile(path) as z:
@@ -45,10 +46,18 @@ def validate(path):
         for col in ['G','H','I','J','K','L']:
             try:
                 number = float(r.get(col, ''))
-                if number < 0: issue('PACOTES',r['row'],'negative_quantity_'+col)
+                if not math.isfinite(number) or not number.is_integer(): issue('PACOTES',r['row'],'missing_or_invalid_quantity_'+col)
+                elif number < 0: issue('PACOTES',r['row'],'negative_quantity_'+col)
             except ValueError: issue('PACOTES',r['row'],'missing_or_invalid_quantity_'+col)
     for r in sheets.get('FINANCEIROPACOTES', []):
         if r.get('D') and r['D'] not in packages: issue('FINANCEIROPACOTES',r['row'],'unknown_package_id')
-    return {'source_sha256':digest,'mode':'preview_only','candidate_counts':{k:len(v) for k,v in sheets.items()},'issues':issues,'limitations':['No database duplicate comparison yet','Cached formula values are not recalculation proof','Dates, CPF, agenda history and financial amounts require further checks','No database or external writes performed']}
+    result = {'source_sha256':digest,'mode':'preview_only','candidate_counts':{k:len(v) for k,v in sheets.items()},'issues':issues,'limitations':['Cached formula values are not recalculation proof','Dates, CPF, agenda history and financial amounts require further checks','No database or external writes performed']}
+    if existing is not None:
+        result['client_comparison'] = compare_clients(sheets.get('CLIENTES', []), existing)
+    else:
+        result['limitations'].append('No database duplicate comparison yet')
+    return result
 if __name__ == '__main__':
-    print(json.dumps(validate(sys.argv[1]), ensure_ascii=True))
+    # Optional private snapshot via stdin: never persist customer data in the repo.
+    existing = json.load(sys.stdin)['clients'] if '--compare-stdin' in sys.argv else None
+    print(json.dumps(validate(sys.argv[1], existing), ensure_ascii=True))

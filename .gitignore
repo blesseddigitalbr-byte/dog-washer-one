@@ -1,4 +1,6 @@
 # Dependencies
+__pycache__/
+*.pyc
 **/node_modules
 .pnpm-store/
 
