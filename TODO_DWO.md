@@ -2,6 +2,15 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Revisão administrativa implementada — 14/10/2026
+
+- [x] Sistema → Revisão da importação (/imports): campos originais e ajustes separados, motivo obrigatório e revisão versionada, paginação de 50 linhas. Restrita a owner/admin na rota e API, com verificação de acesso à unidade.
+- [x] Migração 20261014215136: staging isolado sem escrita em clientes/pets/pacotes/financeiro. Valores originais sem privilégio UPDATE para service_role; auditoria append-only. RPC SECURITY INVOKER apenas service_role verifica novamente perfil ativo, papel, organização e acesso à unidade; trava a linha e rejeita versão obsoleta.
+- [x] Ensaio SQL com rollback: original preservado, auditoria criada, conflito de versão rejeitado, usuário de outra organização bloqueado. 11 testes de API administrativa adicionados.
+- [x] TypeScript e build aprovados; suíte completa com 334 testes em 61 arquivos aprovada, seguida de 3 testes adicionais da tela (original/ajustado, motivo obrigatório, erro e lote vazio). Publicação visual/autenticada na Hostinger ainda precisa de smoke test.
+- [ ] Ainda não carregados os dados reais da planilha no staging; tela vazia informa essa condição. Não existe confirmação de importação definitiva nesta entrega. Ajustes não equivalem a aprovação de vínculos/saldos, nem geram créditos ou cobranças.
+- [ ] Backup/restauração isolada, deduplicação completa, aplicação transacional da carga e homologação financeira continuam requisitos para a liberação. Aviso de RLS sem política nas duas novas tabelas é intencional: acesso direto anon/authenticated revogado; somente backend autorizado.
+
 ### Avanço e revisão de prazo — 14/10/2026
 
 - [x] Implementada comparação conservadora de clientes entre planilha e snapshot privado da unidade Lux Dog: CPF com dígitos verificadores, email normalizado, telefone/nome apenas como evidência fraca. Não usar códigos posicionais da planilha como identidade do banco. Sete testes automatizados aprovados.

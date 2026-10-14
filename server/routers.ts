@@ -8,6 +8,7 @@ import { sendAppointmentConfirmationEmail } from "./_core/emailService.js";
 import { asaasRouter } from "./asaas/router.js";
 import { brandingRouter } from "./branding.js";
 import { userAccessRouter } from "./userAccess.js";
+import { importReviewRouter } from "./importReview.js";
 import { holidayAlerts } from "../shared/holidays.js";
 import { previewRetroactiveAllocation } from "../shared/retroactivePackage.js";
 
@@ -44,6 +45,7 @@ async function clientPhotoUrl(client: any) {
 }
 
 export const appRouter = router({
+  importReview: importReviewRouter,
   userAccess: userAccessRouter,
   asaas: asaasRouter,
   branding: brandingRouter,

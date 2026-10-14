@@ -1,4 +1,4 @@
-const administrative = new Set(["/users", "/settings", "/branding", "/integrations"]);
+const administrative = new Set(["/users", "/settings", "/branding", "/integrations", "/imports"]);
 const management = new Set(["/financial", "/splits", "/team", "/reports", "/services", "/plans", "/products"]);
 const operational = new Set(["/", "/schedule", "/appointments", "/schedule-simulator", "/clients", "/packages", "/students", "/units", "/profile"]);
 export function canAccessRoute(role: string | null | undefined, path: string): boolean {

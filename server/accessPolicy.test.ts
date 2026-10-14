@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { canAccessRoute } from "../shared/accessPolicy";
 describe("route access policy", () => {
+  it("restricts import review to administrators",()=>{for(const role of ["staff","manager","student"])expect(canAccessRoute(role,"/imports")).toBe(false);for(const role of ["owner","admin"])expect(canAccessRoute(role,"/imports")).toBe(true);});
   it.each(["/financial", "/splits", "/integrations", "/branding", "/settings", "/users", "/team", "/services", "/plans"])("blocks operation at %s", path => {
     expect(canAccessRoute("staff", path)).toBe(false);
   });
