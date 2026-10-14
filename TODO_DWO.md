@@ -2,6 +2,17 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Pagamentos de pacotes por perfil — 14/10/2026
+
+- [x] API/tela de pacotes removem situação, data e método de pagamento para Operação; cadastro operacional não aceita baixa, isenção ou metadados financeiros. Preços comerciais permanecem para orçamento. Renovação de contrato restrita à gestão.
+- [x] Consulta financeira dedicada verifica perfil ativo owner/admin/manager e organização/unidade autorizadas; implementação privilegiada em schema privado e wrapper público SECURITY INVOKER, sem anon. Ensaios de owner e staff com rollback aprovados; 12 testes adicionais de API/política.
+- [ ] Aplicar bloqueio por coluna e trigger de escrita direta após publicação compatível, seguido de testes reais pela Data API. Não declarar essa proteção completa até concluir.
+
+### Smoke autenticado real — 14/10/2026
+
+- [x] Teste HTTP no app publicado aprovado com contas Operação Lux Dog e QA: ambos os logins, perfil/organização, contextos e controles positivos de clientes. Acesso a usuários/financeiro bloqueado com HTTP 403; leitura direta de cliente por ID de outra organização retorna null nas duas direções. Nenhuma operação financeira executada. Credenciais apenas em arquivo local ignorado pelo Git.
+- [ ] Este teste não substitui homologação de Admin, escrita/anexos, backup/restauração ou financeiro produtivo.
+
 ### Recuperação no login — 14/10/2026
 
 - [x] Adicionado Esqueci minha senha ao login com formulário somente email, resposta sem confirmação de existência da conta, erro sanitizado e intervalo de 60 segundos para reenvio. Redirect HTTPS apenas Hostinger ou app.luxdog.com.br; ambientes locais usam Hostinger, não localhost.

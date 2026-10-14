@@ -6,12 +6,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { canManagePackagePayments } from "../../../shared/packagePaymentAccess";
 
 interface NewPackageFormProps {
   onClose: () => void;
 }
 
 export function NewPackageForm({ onClose }: NewPackageFormProps) {
+  const { user } = useAuth();
+  const paymentAccess = canManagePackagePayments(user?.role);
   const [, navigate] = useLocation();
   const [planAppointments, setPlanAppointments] = useState(true);
   const utils = trpc.useUtils();
@@ -70,9 +74,9 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
       contractDate: formData.contractDate,
       expiryDate: formData.expiryDate || undefined,
       frequency: formData.frequency,
-      paymentStatus: formData.paymentStatus,
-      paymentDate: formData.paymentStatus === "paid" ? formData.paymentDate : undefined,
-      paymentMethod: formData.paymentMethod || undefined,
+      paymentStatus: paymentAccess ? formData.paymentStatus : "pending",
+      paymentDate: paymentAccess && formData.paymentStatus === "paid" ? formData.paymentDate : undefined,
+      paymentMethod: paymentAccess ? formData.paymentMethod || undefined : undefined,
     });
   };
 
@@ -209,7 +213,7 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
             </SelectContent>
           </Select>
         </div>
-        <div>
+        {paymentAccess && <div>
           <Label htmlFor="paymentStatus">Situação do pagamento</Label>
           <Select value={formData.paymentStatus} onValueChange={(value: typeof formData.paymentStatus) => setFormData({ ...formData, paymentStatus: value })}>
             <SelectTrigger id="paymentStatus"><SelectValue /></SelectTrigger>
@@ -219,10 +223,10 @@ export function NewPackageForm({ onClose }: NewPackageFormProps) {
               <SelectItem value="waived">Cortesia/Isento</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </div>}
       </div>
 
-      {formData.paymentStatus === "paid" && (
+      {paymentAccess && formData.paymentStatus === "paid" && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <Label htmlFor="paymentDate">Data do pagamento</Label>

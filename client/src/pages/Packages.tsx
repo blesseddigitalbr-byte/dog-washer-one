@@ -12,8 +12,12 @@ import { RetroactivePackagePreview } from "@/components/RetroactivePackagePrevie
 import { toast } from "sonner";
 import { packageJourney } from "../../../shared/packageJourney";
 import { useLocation } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { canManagePackagePayments } from "../../../shared/packagePaymentAccess";
 
 export default function Packages() {
+  const { user } = useAuth();
+  const paymentAccess = canManagePackagePayments(user?.role);
   const [, navigate] = useLocation();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
@@ -133,7 +137,7 @@ export default function Packages() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-chart-3">
+        {paymentAccess && <Card className="border-l-4 border-l-chart-3">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold text-muted-foreground">Pagamentos registrados</CardTitle>
           </CardHeader>
@@ -142,7 +146,7 @@ export default function Packages() {
               {formatCurrency(realizedRevenue)}
             </div>
           </CardContent>
-        </Card>
+        </Card>}
       </div>
 
       {attentionPackages.some((pkg: any) => ["expiring", "expired", "consumed"].includes(pkg.operational_status)) && (
@@ -259,9 +263,9 @@ export default function Packages() {
                 <div><p className="text-xs text-muted-foreground">Vencimento</p><p className="font-normal">{selectedPackage.expiry_date ? new Date(selectedPackage.expiry_date).toLocaleDateString("pt-BR") : "-"}</p></div>
                 <div><p className="text-xs text-muted-foreground">Frequência</p><p className="font-normal">{frequencyLabel[selectedPackage.frequency] || selectedPackage.frequency || "-"}</p></div>
                 <div><p className="text-xs text-muted-foreground">Valor contratado</p><p className="font-normal">{formatCurrency(Number(selectedPackage.value || 0))}</p></div>
-                <div><p className="text-xs text-muted-foreground">Pagamento</p><p className="font-normal">{selectedPackage.payment_status === "paid" ? "Pago" : selectedPackage.payment_status === "refunded" ? "Estornado" : selectedPackage.payment_status === "waived" ? "Isento" : "Pendente"}</p></div>
+                {paymentAccess && <><div><p className="text-xs text-muted-foreground">Pagamento</p><p className="font-normal">{selectedPackage.payment_status === "paid" ? "Pago" : selectedPackage.payment_status === "refunded" ? "Estornado" : selectedPackage.payment_status === "waived" ? "Isento" : "Pendente"}</p></div>
                 <div><p className="text-xs text-muted-foreground">Data do pagamento</p><p className="font-normal">{selectedPackage.payment_date ? new Date(selectedPackage.payment_date).toLocaleDateString("pt-BR") : "-"}</p></div>
-                <div><p className="text-xs text-muted-foreground">Forma de recebimento</p><p className="font-normal">{selectedPackage.payment_method || "-"}</p></div>
+                <div><p className="text-xs text-muted-foreground">Forma de recebimento</p><p className="font-normal">{selectedPackage.payment_method || "-"}</p></div></>}
               </div>
               <section className="rounded-xl border p-5 text-sm">
                 <h3 className="font-medium mb-3">Jornada de pacotes deste tutor e pet</h3>
@@ -297,7 +301,8 @@ export default function Packages() {
                 )}
                 <Button
                   className="bg-accent text-foreground hover:bg-[#c9a652]"
-                  disabled={renewMutation.isPending}
+                  disabled={renewMutation.isPending || !paymentAccess}
+                  title={!paymentAccess ? "Renovação de contrato restrita à gestão" : undefined}
                   onClick={() => renewMutation.mutate({ id: selectedPackage.id })}
                 >
                   <RefreshCw className="mr-2 h-4 w-4" /> Renovar em novo ciclo

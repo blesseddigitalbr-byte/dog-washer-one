@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
+import { canManagePackagePayments, packageForRole } from "../shared/packagePaymentAccess.js";
+import { packageOperationalColumns, paymentDetails } from "./packagePaymentData.js";
 import { systemRouter } from "./_core/systemRouter.js";
 import { protectedProcedure, publicProcedure as anonymousProcedure, router } from "./_core/trpc.js";
 import * as db from "./db.js";
@@ -2079,7 +2082,7 @@ export const appRouter = router({
           supabase.from("services").select("id, name, duration_minutes, price, category").eq("id", input.serviceId).eq("unit_id", ctx.user.unitId).eq("status", "active").single(),
           supabase.from("professionals").select("id, name").eq("id", input.professionalId).eq("unit_id", ctx.user.unitId).eq("is_active", true).single(),
           input.clientPackageId
-            ? supabase.from("client_packages").select("*, plan:package_id(name, code)").eq("id", input.clientPackageId).eq("unit_id", ctx.user.unitId).single()
+            ? supabase.from("client_packages").select(`${packageOperationalColumns}, plan:package_id(name, code)`).eq("id", input.clientPackageId).eq("unit_id", ctx.user.unitId).single()
             : Promise.resolve({ data: null, error: null }),
         ]);
         if (!clientRes.data || !petRes.data || petRes.data.client_id !== input.clientId) throw new Error("Cliente ou pet inválido");
@@ -2091,7 +2094,7 @@ export const appRouter = router({
         if (input.appointmentType === "package" && !selectedPackage) {
           const { data: candidates, error: candidatesError } = await supabase
             .from("client_packages")
-            .select("*, plan:package_id(name, code)")
+            .select(`${packageOperationalColumns}, plan:package_id(name, code)`)
             .eq("unit_id", ctx.user.unitId)
             .eq("pet_id", input.petId)
             .eq("status", "active")
@@ -2362,7 +2365,7 @@ export const appRouter = router({
       .input(z.object({ id: z.string().uuid(), coverageStart: z.string().date() }))
       .query(async ({ input, ctx }) => {
         if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
-        const { data: contract, error } = await supabase.from("client_packages").select("*")
+        const { data: contract, error } = await supabase.from("client_packages").select(packageOperationalColumns)
           .eq("id", input.id).eq("unit_id", ctx.user.unitId).single();
         if (error || !contract) throw new Error("Contrato não encontrado");
         // Broad UTC boundary, followed by exact São Paulo date validation below.
@@ -2398,12 +2401,14 @@ export const appRouter = router({
       if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
       const { data, error } = await supabase
         .from("client_packages")
-        .select("*, client:client_id(nome, id_cliente), pet:pet_id(name, breed, id_pet), plan:package_id(name, code)")
+        .select(`${packageOperationalColumns}, client:client_id(nome, id_cliente), pet:pet_id(name, breed, id_pet), plan:package_id(name, code)`)
         .eq("unit_id", ctx.user.unitId)
         .order("created_at", { ascending: false });
       if (error) throw new Error(error.message);
-      return (data ?? []).map((item: any) => ({
+      const payments = await paymentDetails(ctx.user.role);
+      return (data ?? []).map((item: any) => packageForRole({
         ...item,
+        ...payments.get(item.id),
         id_package: item.code,
         pet_name: item.pet?.name,
         pet_breed: item.pet?.breed,
@@ -2416,7 +2421,7 @@ export const appRouter = router({
         total_groomings: item.contracted_groomings,
         value: Number(item.price || 0),
         frequency: item.frequency || "weekly",
-        payment_status: item.payment_status || "pending",
+        payment_status: payments.get(item.id)?.payment_status ?? item.payment_status ?? "pending",
         consumed_baths: Math.max(0, Number(item.contracted_baths) - Number(item.balance_baths)),
         consumed_groomings: Math.max(0, Number(item.contracted_groomings) - Number(item.balance_groomings)),
         days_to_expiry: item.expiry_date
@@ -2431,7 +2436,7 @@ export const appRouter = router({
               : item.expiry_date && new Date(`${item.expiry_date}T23:59:59`).getTime() - Date.now() <= 7 * 86400000
                 ? "expiring"
                 : item.status,
-      }));
+      }, ctx.user?.role));
     }),
     byClient: protectedProcedure
       .input(z.object({ clientId: z.string().uuid() }))
@@ -2439,13 +2444,14 @@ export const appRouter = router({
         if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
         const { data, error } = await supabase
           .from("client_packages")
-          .select("*, plan:package_id(name)")
+          .select(`${packageOperationalColumns}, plan:package_id(name)`)
           .eq("unit_id", ctx.user.unitId)
           .eq("client_id", input.clientId)
           .eq("status", "active")
           .order("created_at", { ascending: false });
         if (error) throw new Error(error.message);
-        return data ?? [];
+        const payments = await paymentDetails(ctx.user.role);
+        return (data ?? []).map(item => packageForRole({...item,...payments.get(item.id)}, ctx.user?.role));
       }),
     create: protectedProcedure
       .input(z.object({
@@ -2465,6 +2471,8 @@ export const appRouter = router({
       }))
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user?.organizationId || !ctx.user.unitId) throw new Error("Unidade ativa não encontrada");
+        if (!canManagePackagePayments(ctx.user.role) && (input.paymentStatus !== "pending" || input.paymentDate !== undefined || input.paymentMethod !== undefined))
+          throw new TRPCError({ code: "FORBIDDEN", message: "Registro de pagamento restrito à gestão financeira" });
         const { data: plan, error: planError } = input.packageId
           ? await supabase.from("packages").select("*").eq("id", input.packageId).eq("unit_id", ctx.user.unitId).eq("status", "active").single()
           : { data: null, error: null };
@@ -2506,9 +2514,9 @@ export const appRouter = router({
           payment_date: input.paymentStatus === "paid" ? (input.paymentDate || contractDate) : null,
           payment_method: input.paymentMethod || null,
           notes: input.notes || null,
-        }).select().single();
+        }).select(packageOperationalColumns).single();
         if (error) throw new Error(error.message);
-        return data;
+        return packageForRole(data, ctx.user.role);
       }),
     update: protectedProcedure
       .input(z.object({
@@ -2525,7 +2533,7 @@ export const appRouter = router({
         if (contractDate !== undefined) changes.contract_date = contractDate;
         if (expiryDate !== undefined) changes.expiry_date = expiryDate;
         const { data, error } = await supabase.from("client_packages").update(changes)
-          .eq("id", id).eq("unit_id", ctx.user.unitId).select().single();
+          .eq("id", id).eq("unit_id", ctx.user.unitId).select(packageOperationalColumns).single();
         if (error) throw new Error(error.message);
         return data;
       }),
@@ -2535,7 +2543,7 @@ export const appRouter = router({
         if (!ctx.user?.unitId) throw new Error("Unidade ativa não encontrada");
         const { data, error } = await supabase.from("client_packages")
           .update({ status: "cancelled", updated_at: new Date().toISOString() })
-          .eq("id", input.id).eq("unit_id", ctx.user.unitId).select().single();
+          .eq("id", input.id).eq("unit_id", ctx.user.unitId).select(packageOperationalColumns).single();
         if (error) throw new Error(error.message);
         return data;
       }),
@@ -2543,6 +2551,7 @@ export const appRouter = router({
       .input(z.object({ id: z.string().uuid(), contractDate: z.string().date().optional() }))
       .mutation(async ({ input, ctx }) => {
         if (!ctx.user?.organizationId || !ctx.user.unitId) throw new Error("Unidade ativa não encontrada");
+        if (!canManagePackagePayments(ctx.user.role)) throw new TRPCError({ code:"FORBIDDEN", message:"Renovação de contrato restrita à gestão" });
         const { data, error } = await supabase.rpc("renew_client_package", {
           p_id: input.id,
           p_contract_date: input.contractDate || new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }),

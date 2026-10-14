@@ -22,27 +22,41 @@ async function query(path, token, input) {
   return { status: response.status, data: body.result?.data?.json };
 }
 const sessions = [];
+let phase = "initialization";
 try {
   for (const identity of identities) {
+    phase = `${identity.prefix}: login`;
     const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
     const signed = await client.auth.signInWithPassword({ email: process.env[`DWO_TEST_${identity.prefix}_EMAIL`], password: process.env[`DWO_TEST_${identity.prefix}_PASSWORD`] });
-    if (signed.error || !signed.data.session) throw new Error("Test login failed");
+    if (signed.error || !signed.data.session) {
+      const known = new Set(["invalid_credentials", "email_not_confirmed", "over_request_rate_limit", "user_banned"]);
+      if (known.has(signed.error?.code)) phase += ` (${signed.error.code})`;
+      throw new Error("Test login failed");
+    }
     sessions.push({ client, token: signed.data.session.access_token, ...identity });
   }
   const results = [];
   for (const session of sessions) {
+    phase = `${session.prefix}: profile`;
     const me = await query("auth.me", session.token);
     if (me.status !== 200 || me.data?.role !== "staff" || me.data?.organizationId !== session.org) throw new Error("Unexpected test identity or role");
+    phase = `${session.prefix}: workspace`;
     const workspace = await query("workspace.context", session.token);
     if (workspace.status !== 200 || workspace.data?.organization?.id !== session.org) throw new Error("Wrong workspace");
+    phase = `${session.prefix}: client control`;
     const clients = await query("clients.list", session.token);
     if (clients.status !== 200 || !Array.isArray(clients.data) || !clients.data.length) throw new Error("Missing positive client control");
-    for (const procedure of ["userAccess.list", "asaas.externalInvoices"]) {
+    phase = `${session.prefix}: package payment redaction`;
+    const packages = await query("clientPackages.list",session.token);
+    if(packages.status!==200 || !Array.isArray(packages.data) || packages.data.some(row=>["payment_status","payment_date","payment_method"].some(field=>Object.hasOwn(row,field)))) throw new Error("Package payment redaction failed");
+    for (const procedure of ["userAccess.list", "asaas.externalInvoices", "importReview.list"]) {
+      phase = `${session.prefix}: restriction ${procedure}`;
       if ((await query(procedure, session.token)).status !== 403) throw new Error("Staff privileged endpoint accessible");
     }
     results.push({ session, clients: clients.data });
   }
   for (let index = 0; index < results.length; index++) {
+    phase = `tenant isolation direction ${index + 1}`;
     const own = results[index], foreign = results[1 - index];
     if (own.clients.some(client => foreign.clients.some(other => other.id === client.id))) throw new Error("Client IDs shared between tenants");
     const read = await query("clients.getById", own.session.token, { id: foreign.clients[0].id });
@@ -51,7 +65,7 @@ try {
   console.log("PASS: two test logins, expected roles/workspaces, positive client controls, staff restrictions and bidirectional direct-ID read denial. No financial operations executed.");
 } catch {
   // Do not print responses, account emails, tokens, passwords or provider errors.
-  console.error("FAIL: authenticated smoke check did not pass. Review test configuration and application logs securely.");
+  console.error(`FAIL: authenticated smoke check at ${phase}. No credentials or provider responses displayed.`);
   process.exitCode = 1;
 } finally {
   for (const session of sessions) await session.client.auth.signOut({ scope: "local" }).catch(() => undefined);
