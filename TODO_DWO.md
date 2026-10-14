@@ -2,6 +2,15 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Insumos, fornecedores e compras — 14/10/2026
+
+- [x] Gestão → Produtos: cadastro de insumos un/ml/g, mínimo, edição/inativação sem apagar histórico, entrada, consumo e perda. Saldo inicial zero; entradas reais precisam ser informadas. Controle transacional por versão, trava de linha, chave de reenvio e rejeição de estoque negativo. Saldo e ledger sem escrita direta authenticated.
+- [x] Gestão → Fornecedores e compras: cadastro/edição/inativação de fornecedor, documento/contatos opcionais, registro manual de nota com número/série/emissão/total/referência e preservação da identidade original do fornecedor. Paginação e consulta por número exato.
+- [x] Entradas podem referenciar nota de compra; soma dos custos vinculados não excede o total da nota. Pagamentos manuais parciais com data/meio/referência, idempotência, trava por nota e limite pelo saldo. Consulta separa total, pago informado e custo vinculado ao estoque; sem rateio arbitrário entre produtos.
+- [x] Migrações 20261014225616, 20261014230137 e 20261014230630 aplicadas. RLS por papel/organização/unidade; rotinas privilegiadas internas verificam perfil ativo/acesso à unidade, wrappers públicos invoker sem anon. Nenhum segredo ou fornecedor real incluído no Git.
+- [x] Ensaios SQL com rollback: compra/consumo/perda, duplicação, saldo insuficiente, versão obsoleta, vínculo de compra, pagamento parcial, excesso de pagamento/custo, imutabilidade, identidade histórica e isolamento. TypeScript/build aprovados e 393 testes em 67 arquivos passaram.
+- [ ] Teste visual autenticado como gestor ainda pendente. Não criados estoques, notas ou pagamentos fictícios permanentes. Sem importação XML/PDF/anexos, validação fiscal/autenticidade, conciliação Asaas, lançamento automático de despesas, custo por serviço ou estorno/reversão desses registros manuais nesta entrega. Não chamar o módulo de emissão fiscal nem considerar liberação global concluída.
+
 ### Pagamentos de pacotes por perfil — 14/10/2026
 
 - [x] API/tela de pacotes removem situação, data e método de pagamento para Operação; cadastro operacional não aceita baixa, isenção ou metadados financeiros. Preços comerciais permanecem para orçamento. Renovação de contrato restrita à gestão.

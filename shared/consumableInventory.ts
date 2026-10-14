@@ -3,7 +3,7 @@ export type InventoryMovement = {
   quantity: number;
   unitCostCents?: number;
 };
-/** Internal supplies only. Balances must later be persisted atomically server-side. */
+/** Pure preview for internal supplies. Canonical stock is persisted by move_salon_supply. */
 export function previewInventoryMovement(balance: number, movement: InventoryMovement) {
   if (!Number.isFinite(balance) || balance < 0) throw new Error("Saldo inválido");
   if (!Number.isFinite(movement.quantity) || movement.quantity <= 0) throw new Error("Quantidade deve ser positiva");

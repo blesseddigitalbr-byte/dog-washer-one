@@ -27,6 +27,8 @@ import Branding from "./pages/Branding";
 import UserAccess from "./pages/UserAccess";
 import ResetPassword from "./pages/ResetPassword";
 import ImportReview from "./pages/ImportReview";
+import Products from "./pages/Products";
+import Purchases from "./pages/Purchases";
 
 function Router() {
   const [location] = useLocation();
@@ -65,6 +67,8 @@ function Router() {
             <Route path="/branding" component={Branding} />
             <Route path="/users" component={UserAccess} />
             <Route path="/imports" component={ImportReview} />
+            <Route path="/products" component={Products} />
+            <Route path="/purchases" component={Purchases} />
             <Route path="/404" component={NotFound} />
             <Route component={NotFound} />
           </Switch>

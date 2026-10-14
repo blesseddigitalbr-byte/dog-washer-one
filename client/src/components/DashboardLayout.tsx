@@ -84,7 +84,8 @@ export default function DashboardLayout({
       title: "GESTÃO",
       items: [
         { icon: <Scissors className="w-5 h-5" />, label: "Serviços", path: "/services" },
-        { icon: <Package className="w-5 h-5" />, label: "Produtos", path: "/products", comingSoon: true },
+        { icon: <Package className="w-5 h-5" />, label: "Produtos", path: "/products" },
+        { icon: <Package className="w-5 h-5" />, label: "Fornecedores e compras", path: "/purchases" },
         { icon: <Package className="w-5 h-5" />, label: "Planos", path: "/plans" },
         { icon: <TrendingUp className="w-5 h-5" />, label: "Financeiro", path: "/financial" },
         { icon: <Users2 className="w-5 h-5" />, label: "Equipe", path: "/team" },

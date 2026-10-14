@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { suppliesRouter } from "./supplies.js";
+import { purchasesRouter } from "./purchases.js";
 import { TRPCError } from "@trpc/server";
 import { canManagePackagePayments, packageForRole } from "../shared/packagePaymentAccess.js";
 import { packageOperationalColumns, paymentDetails } from "./packagePaymentData.js";
@@ -48,6 +50,8 @@ async function clientPhotoUrl(client: any) {
 }
 
 export const appRouter = router({
+  supplies: suppliesRouter,
+  purchases: purchasesRouter,
   importReview: importReviewRouter,
   userAccess: userAccessRouter,
   asaas: asaasRouter,

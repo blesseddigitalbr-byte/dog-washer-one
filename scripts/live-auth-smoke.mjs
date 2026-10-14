@@ -54,7 +54,7 @@ try {
     if(direct.error?.code!=="42501")throw new Error("Direct payment columns not blocked");
     const paymentRpc=await session.client.rpc("client_package_payment_details");
     if(paymentRpc.error?.code!=="42501")throw new Error("Payment RPC not blocked");
-    for (const procedure of ["userAccess.list", "asaas.externalInvoices", "importReview.list"]) {
+    for (const procedure of ["userAccess.list", "asaas.externalInvoices", "importReview.list", "supplies.list", "purchases.suppliers", "purchases.documents"]) {
       phase = `${session.prefix}: restriction ${procedure}`;
       if ((await query(procedure, session.token)).status !== 403) throw new Error("Staff privileged endpoint accessible");
     }
