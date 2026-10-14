@@ -9,6 +9,7 @@
 - [x] Entradas podem referenciar nota de compra; soma dos custos vinculados não excede o total da nota. Pagamentos manuais parciais com data/meio/referência, idempotência, trava por nota e limite pelo saldo. Consulta separa total, pago informado e custo vinculado ao estoque; sem rateio arbitrário entre produtos.
 - [x] Migrações 20261014225616, 20261014230137 e 20261014230630 aplicadas. RLS por papel/organização/unidade; rotinas privilegiadas internas verificam perfil ativo/acesso à unidade, wrappers públicos invoker sem anon. Nenhum segredo ou fornecedor real incluído no Git.
 - [x] Ensaios SQL com rollback: compra/consumo/perda, duplicação, saldo insuficiente, versão obsoleta, vínculo de compra, pagamento parcial, excesso de pagamento/custo, imutabilidade, identidade histórica e isolamento. TypeScript/build aprovados e 393 testes em 67 arquivos passaram.
+- [x] Publicação confirmada: /purchases HTTP 200 e bundle com Produtos/Fornecedores e compras; smoke autenticado de Pedro/Heloísa aprovado, incluindo bloqueio das três novas consultas de gestão para staff. Tabelas novas sem dados fictícios permanentes.
 - [ ] Teste visual autenticado como gestor ainda pendente. Não criados estoques, notas ou pagamentos fictícios permanentes. Sem importação XML/PDF/anexos, validação fiscal/autenticidade, conciliação Asaas, lançamento automático de despesas, custo por serviço ou estorno/reversão desses registros manuais nesta entrega. Não chamar o módulo de emissão fiscal nem considerar liberação global concluída.
 
 ### Pagamentos de pacotes por perfil — 14/10/2026
