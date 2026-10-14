@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 const mocks=vi.hoisted(()=>({result:{} as any,mutate:vi.fn()}));
-vi.mock("@/lib/trpc",()=>({trpc:{importReview:{list:{useQuery:()=>mocks.result},adjust:{useMutation:()=>({mutate:mocks.mutate,isPending:false})}}}}));
+vi.mock("@/lib/trpc",()=>({trpc:{importReview:{list:{useQuery:()=>mocks.result},history:{useQuery:()=>({data:[],isLoading:false})},adjust:{useMutation:()=>({mutate:mocks.mutate,isPending:false})}}}}));
 import ImportReview from "./ImportReview";
 beforeEach(()=>{vi.clearAllMocks();mocks.result={data:{rows:[],total:0},isLoading:false,refetch:vi.fn()};});
 describe("import review screen",()=>{

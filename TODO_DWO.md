@@ -2,13 +2,32 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Lote de revisão carregado — 14/10/2026
+
+- [x] 239 registros reais carregados exclusivamente no staging privado Lux Dog (67 CLIENTES, 98 PETS, 36 PACOTES, 38 FINANCEIROPACOTES), idempotentes por unidade/hash/aba/linha. Nenhuma escrita em cadastro operacional, saldos, ledger, cobrança, mensagens ou portal acadêmico. Hash original confirmado.
+- [x] Conflito CLIENTES linha 5 sinalizado no lote. Casos negativos e dois vínculos financeiros desconhecidos preservados e sinalizados, sem ajuste automático.
+- [x] Localizada referência CLI-0017 do caso Giselly: PET-0023/PET-0024, trimestrais PAC-0009/PAC-0010, semestrais PAC-0035/PAC-0036; origem financeira marca os quatro como pagos. Preservados os originais. Ainda precisa conferir agenda/tosa avulsa antes de definir consumo retroativo; pagamento histórico não equivale a confirmação Asaas.
+- [x] Publicação anterior confirmada por smoke público: /imports HTTP 200, bundle contém a tela e API retorna 401 sem autenticação. Ainda sem smoke autenticado real de edição/restrição de perfil.
+- [x] Filtro por aba e rótulos dos campos adicionados; histórico de ajustes consultável apenas após validação de organização/unidade no backend.
+- [x] Conferência banco/origem: 239 de 239 originais idênticos. Cadastros operacionais continuam com 2 clientes e 3 pets; auditoria vazia, sem correções executadas. TypeScript/build e 16 testes direcionados da revisão aprovados.
+- [x] Suíte completa final: 339 testes em 62 arquivos, mais 7 testes Python de identidade aprovados. Não há credenciais locais de teste autenticado (.env.test.local ausente), backup exportado encontrado ou destino de restauração autorizado.
+- [ ] Importação definitiva, validação de datas e deduplicação de pets/agenda ainda pendentes. Staging não significa importação operacional concluída.
+
+#### Acesso/decisões necessários para os testes restantes
+
+- Backup: disponibilizar exportação lógica ou conexão PostgreSQL privada para exportar; testar a restauração em destino separado, nunca no projeto real. No plano Free, a documentação orienta exportar via CLI; backups automáticos dependem do plano. Não contratar upgrade/branch/projeto pago sem aprovação específica.
+- Anexos: incluir cópia dos objetos Storage, pois backup do banco cobre metadados, não os arquivos. Referência: https://supabase.com/docs/guides/platform/backups.
+- Smoke autenticado: fornecer acesso local protegido a contas descartáveis de homologação nos perfis owner/admin/staff e na organização QA, ou executar a validação com a usuária logada. Não enviar senhas/chaves no chat nem publicar no Git.
+- Dados: decidir a correspondência do conflito CLIENTES linha 5 e confirmar pendências de vínculos não resolvidas após investigação; não fundir ou corrigir por suposição.
+- Produção financeira/fiscal: validar conta/credenciais produtivas, regras de repasse e configuração fiscal antes de transações reais; Asaas permanece sandbox.
+
 ### Revisão administrativa implementada — 14/10/2026
 
 - [x] Sistema → Revisão da importação (/imports): campos originais e ajustes separados, motivo obrigatório e revisão versionada, paginação de 50 linhas. Restrita a owner/admin na rota e API, com verificação de acesso à unidade.
 - [x] Migração 20261014215136: staging isolado sem escrita em clientes/pets/pacotes/financeiro. Valores originais sem privilégio UPDATE para service_role; auditoria append-only. RPC SECURITY INVOKER apenas service_role verifica novamente perfil ativo, papel, organização e acesso à unidade; trava a linha e rejeita versão obsoleta.
 - [x] Ensaio SQL com rollback: original preservado, auditoria criada, conflito de versão rejeitado, usuário de outra organização bloqueado. 11 testes de API administrativa adicionados.
 - [x] TypeScript e build aprovados; suíte completa com 334 testes em 61 arquivos aprovada, seguida de 3 testes adicionais da tela (original/ajustado, motivo obrigatório, erro e lote vazio). Publicação visual/autenticada na Hostinger ainda precisa de smoke test.
-- [ ] Ainda não carregados os dados reais da planilha no staging; tela vazia informa essa condição. Não existe confirmação de importação definitiva nesta entrega. Ajustes não equivalem a aprovação de vínculos/saldos, nem geram créditos ou cobranças.
+- [x] Dados reais carregados no staging em 14/10 (239 registros); não existe confirmação de importação definitiva. Ajustes não equivalem a aprovação de vínculos/saldos, nem geram créditos ou cobranças.
 - [ ] Backup/restauração isolada, deduplicação completa, aplicação transacional da carga e homologação financeira continuam requisitos para a liberação. Aviso de RLS sem política nas duas novas tabelas é intencional: acesso direto anon/authenticated revogado; somente backend autorizado.
 
 ### Avanço e revisão de prazo — 14/10/2026
@@ -18,7 +37,7 @@
 - [x] Fonte original mantém SHA-256 b3cc656b9bab9dd731254fedc26a8168d0ea4b06b672a1d8403f64a05c0321f7. Quantidades não finitas/fracionárias agora rejeitadas na prévia de créditos.
 - [ ] Deduplicação dos pets, histórico da agenda e identificação por registro do caso de dona Giselly ainda pendentes. Preservar renovação semestral após trimestral e tosa avulsa já paga; não inferir correção de saldo.
 - [ ] Backup/restauração não verificados: conexão atual fornece consultas/migrações, não exportação de backup; pg_dump/pg_restore/CLI ausentes. Não executar restore_project no banco real como ensaio.
-- [ ] Campos de ajuste administrativo com original imutável, motivo obrigatório e histórico auditável ainda não implementados/publicados. Importação transacional real ainda não executada.
+- [x] Campos de ajuste administrativo com original imutável, motivo obrigatório e histórico auditável implementados; publicação pública verificada em 14/10. Importação transacional operacional ainda não executada.
 - [ ] Meta 16/10 em risco para escopo completo: módulos de importação/estoque, financeiro completo, homologação Asaas/fiscal e recuperação continuam abertos. Não considerar publicação de código como homologação funcional.
 
 ### Validação inicial da importação e insumos — 12/10/2026

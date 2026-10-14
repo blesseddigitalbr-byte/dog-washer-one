@@ -4,7 +4,7 @@ from collections import Counter
 import xml.etree.ElementTree as ET
 from import_identity import compare_clients
 N = {'m': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
-def validate(path, existing=None):
+def validate(path, existing=None, include_private_rows=False):
     with open(path, 'rb') as f: digest = hashlib.file_digest(f, 'sha256').hexdigest() if hasattr(hashlib, 'file_digest') else hashlib.sha256(f.read()).hexdigest()
     sheets = {}
     with zipfile.ZipFile(path) as z:
@@ -56,6 +56,8 @@ def validate(path, existing=None):
         result['client_comparison'] = compare_clients(sheets.get('CLIENTES', []), existing)
     else:
         result['limitations'].append('No database duplicate comparison yet')
+    if include_private_rows:
+        result['private_source_rows'] = sheets
     return result
 if __name__ == '__main__':
     # Optional private snapshot via stdin: never persist customer data in the repo.

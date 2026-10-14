@@ -12,6 +12,8 @@ function caller(role:CurrentUser["role"]|null="owner"){
 function chain(result:any){const q:any={};for(const method of ["select","eq","maybeSingle","order","range"])q[method]=vi.fn(()=>q);q.then=(resolve:any)=>Promise.resolve(result).then(resolve);return q;}
 beforeEach(()=>{vi.clearAllMocks();mocks.from.mockReturnValue(chain({data:{units:{is_active:true,organization_id:org}},error:null}));mocks.rpc.mockResolvedValue({data:1,error:null});});
 describe("import administrative review",()=>{
+ it("denies history of a foreign row",async()=>{mocks.from.mockReturnValueOnce(chain({data:{units:{is_active:true,organization_id:org}},error:null})).mockReturnValueOnce(chain({data:null,error:null}));await expect(caller().history({id})).rejects.toMatchObject({code:"NOT_FOUND"});expect(mocks.from).toHaveBeenCalledTimes(2);});
+ it("filters the review by source sheet",async()=>{const q=chain({data:[],count:0,error:null});mocks.from.mockReturnValueOnce(chain({data:{units:{is_active:true,organization_id:org}},error:null})).mockReturnValueOnce(q);await caller().list({offset:0,sheet:"PETS"});expect(q.eq).toHaveBeenCalledWith("source_sheet","PETS");});
  it.each([null,"staff","manager","student"] as const)("blocks %s before database access",async role=>{
   await expect(caller(role).adjust(input)).rejects.toMatchObject({code:role?"FORBIDDEN":"UNAUTHORIZED"});expect(mocks.from).not.toHaveBeenCalled();expect(mocks.rpc).not.toHaveBeenCalled();
  });
