@@ -99,7 +99,7 @@ export default function DashboardLayout({
         { icon: <Users2 className="w-5 h-5" />, label: "Usuários e acessos", path: "/users" },
         { icon: <Package className="w-5 h-5" />, label: "Revisão da importação", path: "/imports" },
         { icon: <UserCircle className="w-5 h-5" />, label: "Meu Perfil", path: "/profile" },
-        { icon: <Zap className="w-5 h-5" />, label: "Configurações financeiras", path: "/integrations" },
+        { icon: <Zap className="w-5 h-5" />, label: "Integrações", path: "/integrations" },
         { icon: <Settings className="w-5 h-5" />, label: "Configurações", path: "/settings", comingSoon: true },
         { icon: <Settings className="w-5 h-5" />, label: "Marca e módulos", path: "/branding" },
       ],

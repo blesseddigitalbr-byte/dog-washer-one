@@ -2,6 +2,13 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Organização visual de Sistema — 15/10/2026
+
+- [x] Integrações e Usuários e acessos seguem a referência aprovada de cards, contexto visível, resumo e tabela. Mantidos logo/branding e tokens de cor existentes da Lux Dog; sem trocar identidade global ou criar seletor de perfil que amplie permissões.
+- [x] Usuários: cadastro recolhido por padrão, abertura explícita, resumo dos perfis retornados, busca por nome sem acentos, filtros de perfil/situação, unidade atual e ações de email/recuperação existentes. Limite de 200 e diferença entre unidade atual e todas as autorizadas explicitados. Nenhum email, último acesso ou total ilimitado inventado; backend e privilégios não alterados.
+- [x] Integrações: cards de Asaas, email, WhatsApp, SMS, agenda e IA. Conta cadastrada/ativa não equivale a conexão comprovada; sandbox e pendências aparecem sem badges falsos de homologação. Diagnóstico financeiro anterior preservado abaixo; menu Sistema renomeado para Integrações.
+- [x] 471 testes em 73 arquivos, TypeScript e build aprovados. Sem alteração em banco, credenciais, contas ou disparo de notificações. Validação visual autenticada de gestão no navegador ainda pendente.
+
 ### Ampliação de segurança e ensaios de execução — 15/10/2026
 
 - [x] Migração 20261015121653 aplicada: baixa e reversão privilegiadas verificam também vínculo ativo do usuário com unidade ativa, antes de ler/alterar atendimento. Mesma lógica de consumo/reversão preservada; teste real com vínculo revogado rejeitado com 42501, inclusive quando a reversão anteriormente seria idempotente.

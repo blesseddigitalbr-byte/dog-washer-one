@@ -2,6 +2,9 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/_core/hooks/useAuth";
+import SystemPageHeader from "@/components/SystemPageHeader";
+import { CreditCard, Mail, MessageCircle, CalendarDays, Bot, Smartphone } from "lucide-react";
 
 const labels: Record<string, string> = {
   pending: "Pendente", confirmed: "Confirmado · aguardando repasse", received: "Recebido",
@@ -10,8 +13,31 @@ const labels: Record<string, string> = {
 const money = (n: unknown) => Number(n ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 export default function Integrations() {
-  const query = trpc.asaas.overview.useQuery(undefined, { retry: false });
-  return <div className="space-y-6">
+  const { user } = useAuth();
+  const authorized = !!user && ["owner", "admin"].includes(user.role);
+  const query = trpc.asaas.overview.useQuery(undefined, { enabled: authorized, retry: false });
+  const workspace = trpc.workspace.context.useQuery(undefined, { enabled: authorized });
+  const asaasStatus = query.isLoading ? "Consultando cadastro" : query.error ? "Consulta indisponível" : query.data?.accounts.some(a => a.status === "active") ? "Conta ativa no cadastro" : query.data?.accounts.length ? "Conta aguardando ativação" : "Nenhuma conta cadastrada";
+  const integrations = [
+    { name: "Asaas", icon: CreditCard, description: "Contas por pessoa jurídica, cobranças e eventos. Cadastro ativo não comprova conexão nem homologação produtiva.", status: asaasStatus, detail: query.data?.accounts.some(a => a.environment === "sandbox") ? "Há conta em ambiente de testes (sandbox)." : "Confira o ambiente nos diagnósticos abaixo.", anchor: true },
+    { name: "Email transacional", icon: Mail, description: "Convites de atendimento por email. Configuração própria do app, separada da recuperação de senha.", status: "Ativação não verificada", detail: "SMTP e recebimento precisam de validação no servidor." },
+    { name: "WhatsApp", icon: MessageCircle, description: "Confirmações, lembretes e atendimento ao cliente por canal autorizado.", status: "Em preparação", detail: "Sem conexão homologada nesta tela." },
+    { name: "SMS", icon: Smartphone, description: "Notificações por mensagem de texto conforme preferências do cliente.", status: "Em preparação", detail: "Provedor, autorização e custos ainda precisam de validação." },
+    { name: "Agenda do cliente", icon: CalendarDays, description: "Arquivo de compromisso e envio de convite por email. Aceitação ocorre na agenda do cliente.", status: "Convite implementado · envio a validar", detail: "Não há sincronização automática de alterações e cancelamentos." },
+    { name: "Atendimento com IA", icon: Bot, description: "Dúvidas sobre serviços e orientação inicial, com encaminhamento para a recepção.", status: "Em preparação", detail: "Sem atendimento autônomo homologado. Ativação depende de regras e limites aprovados." },
+  ];
+  if (!authorized) return <main className="p-8"><h1 className="text-2xl font-semibold">Integrações</h1><p>Acesso restrito à administração.</p></main>;
+  return <main className="mx-auto w-full max-w-[1480px] space-y-6 p-4 sm:p-6">
+    <SystemPageHeader title="Integrações" description="Canais e serviços usados pela operação Lux Dog. Veja o que está cadastrado, em preparação ou ainda precisa de homologação."
+      organization={workspace.data?.organization?.name} unit={workspace.data?.currentUnit?.name} profile={user.role === "owner" ? "Proprietária" : "Administrador"}
+      action={<Button variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}>Atualizar diagnóstico</Button>} />
+    <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Canais e integrações">
+      {integrations.map(item => <Card key={item.name} className="gap-4 rounded-2xl border-t-2 border-t-primary/30 shadow-sm">
+        <CardHeader><div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><item.icon className="h-5 w-5" aria-hidden="true" /></div><CardTitle className="text-base">{item.name}</CardTitle><p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.description}</p></CardHeader>
+        <CardContent className="mt-auto space-y-3"><Badge variant="secondary" className="h-auto whitespace-normal text-left leading-relaxed">{item.status}</Badge><p className="text-xs leading-relaxed text-muted-foreground">{item.detail}</p>{item.anchor && <Button variant="outline" size="sm" asChild><a href="#asaas-diagnostics">Ver diagnóstico Asaas</a></Button>}</CardContent>
+      </Card>)}
+    </section>
+    <section id="asaas-diagnostics" className="scroll-mt-6 space-y-5" aria-label="Diagnóstico financeiro Asaas">
     <div className="flex items-center justify-between gap-4">
       <div><h1 className="text-2xl font-semibold">Configurações financeiras</h1><p className="text-muted-foreground">Contas por CNPJ e diagnóstico da integração Asaas. Credenciais e alterações de regras permanecem restritas ao servidor; este painel não edita regras de split.</p></div>
       <Button variant="outline" onClick={() => query.refetch()} disabled={query.isFetching}>Atualizar</Button>
@@ -38,5 +64,6 @@ export default function Integrations() {
         </tbody></table></div>}
       </CardContent></Card>
     </>}
-  </div>;
+    </section>
+  </main>;
 }
