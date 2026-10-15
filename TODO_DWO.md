@@ -2,6 +2,14 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Backup privado e acesso PostgreSQL — 15/10/2026
+
+- [x] Senha do banco redefinida pelo usuário no painel. Nova conexão ao session pooler validada com TLS verify-full/CA fixada e transação somente de leitura. Credencial atualizada apenas em `.env.recovery.local`, ignorado pelo Git. Captura da Hostinger mostrou todas as sete variáveis, sem DATABASE_URL; nenhuma chave de API foi trocada.
+- [x] Smoke autenticado Lux/QA repetido após redefinição: logins, leitura operacional positiva e bloqueios de gestão/financeiro aprovados; sem operação financeira ou edição de cadastro real.
+- [x] Suíte repetida após exportação: 471 testes em 73 arquivos aprovados. Catálogo contém dados Auth, metadados Storage, funções e políticas; SHA-256 recalculado corresponde ao manifesto. Avisos legados de descrição acessível em diálogos continuam; não equivalem a falha de isolamento nem a homologação visual.
+- [x] `scripts/backup-database.mjs`: ferramentas oficiais EDB PostgreSQL 17.11 portáteis, exportação custom de snapshot consistente somente de leitura, TLS com CA fixada, catálogo verificado e SHA-256 no manifesto. Backup de 15/10 em `%LOCALAPPDATA%/DWO-Recovery/2026-10-15T21-39-11-756Z`, fora do Git/OneDrive, pasta com ACL restrita ao usuário e SYSTEM. Credencial passada ao subprocesso por ambiente, nunca por argumento ou log público. Arquivo contém dados sensíveis; não anexar ao chat.
+- [ ] Exportação bem-sucedida NÃO equivale a restauração homologada. Destino separado ainda ausente; não restaurar na origem. Senhas de papéis globais, configurações de projeto/segredos e arquivos binários do Storage não estão no dump. Chave server-side do Storage não disponível localmente; não copiar apenas metadados e chamar de backup completo.
+
 ### Organização visual de Sistema — 15/10/2026
 
 - [x] Integrações e Usuários e acessos seguem a referência aprovada de cards, contexto visível, resumo e tabela. Mantidos logo/branding e tokens de cor existentes da Lux Dog; sem trocar identidade global ou criar seletor de perfil que amplie permissões.
