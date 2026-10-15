@@ -24,7 +24,8 @@ describe("pet, unit and service fixes", () => {
   it("stores a durable photo key and issues fresh signed URLs", () => {
     expect(migration).toContain("photo_storage_key text");
     expect(router).toContain("photo_storage_key: fileKey");
-    expect(router).toContain("createSignedUrl(pet.photo_storage_key");
+    expect(router).toContain('ownedPhotoKey(pet, "pets")');
+    expect(router).toContain("createSignedUrl(key");
   });
 
   it("allows administrators to create and edit units with RLS protection", () => {

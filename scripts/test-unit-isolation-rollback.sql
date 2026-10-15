@@ -81,6 +81,47 @@ end $$;
 reset role;
 select 'PASS: rollback fixtures; same-organization Lux/school bidirectional reads (8 tables), cross-unit update/delete/link denial; staff management writes denied' as result;
 
+
+-- Exercise privileged completion/reversal using only disposable appointments.
+set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"f1000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+do $$
+declare aid uuid := 'f2000000-0000-4000-8000-000000000001'; n integer;
+begin
+ update public.clientes set photo_storage_key=organization_id::text||'/clients/'||id::text||'/test.png' where id=aid;
+ update public.pets set photo_storage_key=organization_id::text||'/pets/'||id::text||'/test.png' where id=aid;
+ begin
+  update public.pets set photo_storage_key='d0000000-0000-4000-8000-000000000001/pets/f2000000-0000-4000-8000-000000000002/test.png' where id=aid;
+  raise exception 'Forged pet photo key accepted';
+ exception when insufficient_privilege then null; end;
+ begin
+  update public.clientes set photo_storage_key='foreign/clients/'||id::text||'/test.png' where id=aid;
+  raise exception 'Forged tutor photo key accepted';
+ exception when insufficient_privilege then null; end;
+ begin
+  update public.pets set photo_storage_key=organization_id::text||'/pets/'||id::text||'/%2e%2e' where id=aid;
+  raise exception 'Encoded photo path accepted';
+ exception when insufficient_privilege then null; end;
+
+ begin
+  update public.pets set photo_storage_key=organization_id::text||'/pets/'||id::text||'/bad'||chr(92)||'path' where id=aid;
+  raise exception 'Backslash photo path accepted';
+ exception when insufficient_privilege then null; end;
+ update public.appointments set client_package_id=aid,status='confirmed' where id=aid;
+ update public.appointments set status='in_progress' where id=aid;
+ perform public.complete_appointment(aid);
+ perform public.complete_appointment(aid);
+ select balance_baths into n from public.client_packages where id=aid;
+ if n<>3 then raise exception 'Completion did not consume exactly one credit'; end if;
+ select count(*) into n from public.package_sessions where appointment_id=aid;
+ if n<>1 then raise exception 'Duplicate consumption'; end if;
+ perform public.reverse_appointment_execution(aid,'Disposable rollback test');
+ perform public.reverse_appointment_execution(aid,'Disposable rollback test');
+ select balance_baths into n from public.client_packages where id=aid;
+ if n<>4 then raise exception 'Reversal did not restore exactly one credit'; end if;
+end $$;
+reset role;
+
 -- Pure local ledger fixtures, never a provider call.
 insert into public.payment_provider_accounts(id,organization_id,legal_entity_id,provider,environment,secret_reference,status)
 select p.id,p.organization_id,u.legal_entity_id,'asaas','sandbox','UNIT_TEST_NOT_A_SECRET','pending'
@@ -120,6 +161,14 @@ set local role authenticated;
 select set_config('request.jwt.claims','{"sub":"f1000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
 do $$
 begin
+ begin
+  perform public.complete_appointment('f2000000-0000-4000-8000-000000000001');
+  raise exception 'Revoked access completed an appointment';
+ exception when insufficient_privilege then null; end;
+ begin
+  perform public.reverse_appointment_execution('f2000000-0000-4000-8000-000000000001','Revoked access test');
+  raise exception 'Revoked access reversed an appointment';
+ exception when insufficient_privilege then null; end;
  if exists(select 1 from public.clientes where id='f2000000-0000-4000-8000-000000000001') then
    raise exception 'Revoked unit access still reads clients';
  end if;

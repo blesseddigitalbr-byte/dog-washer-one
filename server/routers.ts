@@ -16,6 +16,7 @@ import { userAccessRouter } from "./userAccess.js";
 import { importReviewRouter } from "./importReview.js";
 import { holidayAlerts } from "../shared/holidays.js";
 import { previewRetroactiveAllocation } from "../shared/retroactivePackage.js";
+import { ownedPhotoKey } from "./photoOwnership.js";
 
 // Business routes are authenticated by default. Database RLS applies the
 // organization and unit boundaries to each request.
@@ -29,13 +30,16 @@ function buildPlanCode(audienceCode: string, durationMonths: number) {
 async function attachPetPhotoUrls(pets: any[]) {
   return Promise.all(
     pets.map(async (pet) => {
-      if (!pet.photo_storage_key) return pet;
+      const { photo_storage_key, ...safePet } = pet;
+      if (!photo_storage_key) return safePet;
+      const key = ownedPhotoKey(pet, "pets");
+      if (!key) return { ...safePet, photo: null, foto_url: null };
       const { data, error } = await supabaseAdmin.storage
         .from("pet-photos")
-        .createSignedUrl(pet.photo_storage_key, 60 * 60);
-      if (error || !data?.signedUrl) return pet;
+        .createSignedUrl(key, 60 * 60);
+      if (error || !data?.signedUrl) return { ...safePet, photo: null, foto_url: null };
       return {
-        ...pet,
+        ...safePet,
         photo: data.signedUrl,
         foto_url: data.signedUrl,
       };
@@ -44,8 +48,9 @@ async function attachPetPhotoUrls(pets: any[]) {
 }
 
 async function clientPhotoUrl(client: any) {
-  if (!client.photo_storage_key || !client.photo_storage_key.startsWith(`${client.organization_id}/clients/${client.id}/`)) return null;
-  const { data } = await supabaseAdmin.storage.from("client-photos").createSignedUrl(client.photo_storage_key, 3600);
+  const key = ownedPhotoKey(client, "clients");
+  if (!key) return null;
+  const { data } = await supabaseAdmin.storage.from("client-photos").createSignedUrl(key, 3600);
   return data?.signedUrl ?? null;
 }
 

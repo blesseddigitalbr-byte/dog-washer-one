@@ -2,6 +2,16 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Ampliação de segurança e ensaios de execução — 15/10/2026
+
+- [x] Migração 20261015121653 aplicada: baixa e reversão privilegiadas verificam também vínculo ativo do usuário com unidade ativa, antes de ler/alterar atendimento. Mesma lógica de consumo/reversão preservada; teste real com vínculo revogado rejeitado com 42501, inclusive quando a reversão anteriormente seria idempotente.
+- [x] Foto: servidor só assina chave no namespace exato organização/tipo/registro; recusa caminho de outro pet/tutor/organização, subcaminhos, escapes, query e nomes ambíguos. Referência bruta removida da resposta de pets; erro de assinatura não retorna URL privada antiga. Trigger invoker bloqueia novas referências adulteradas sem alterar referências antigas.
+- [x] Banco: referências próprias de foto aceitas, referências cruzadas/codificadas e com barra invertida rejeitadas. Buckets pet-photos/client-photos privados, sem políticas de acesso direto authenticated. Nenhum objeto real de Storage criado, alterado ou apagado pelos testes.
+- [x] SQL com rollback ampliado: concluir duas vezes desconta exatamente um crédito e cria uma sessão; reverter duas vezes devolve exatamente um crédito. Controles de leitura/escrita entre unidades e financeiros repetidos. Pós-teste sem usuários/visitas fictícios remanescentes, contagens reais preservadas.
+- [x] Suíte completa: 465 testes em 72 arquivos passaram; TypeScript/build aprovados. Inclui 16 testes novos de propriedade/assinatura de fotos e regressões anteriores. Avisos de tamanho do bundle e acessibilidade de diálogos legados continuam, sem serem tratados como testes de segurança aprovados.
+- [ ] Estes testes são sequenciais/idempotência, não concorrência entre conexões independentes. Teste de corrida e restauração completa exigem conexão PostgreSQL privada e destino isolado autorizado; arquivos locais verificados não possuem chave de conexão. Não usar conexão de produção para improvisar ambiente de restauração.
+- [ ] Gates restantes: backup lógico e cópia de objetos Storage com restauração verificada; teste autenticado de gestão/escola no navegador; homologação financeira/fiscal antes de ativação produtiva; SMTP transacional privado e destinatário de teste para convites. As alterações atuais não autorizam liberação geral nem alteram o Portal acadêmico.
+
 ### Correção da auditoria entre unidades — 15/10/2026
 
 - [x] Confirmado no banco: política operacional antiga separava somente organizações. O smoke anterior Lux/QA não testava unidades da mesma organização; não usar seus resultados como prova de isolamento Lux/escola.
