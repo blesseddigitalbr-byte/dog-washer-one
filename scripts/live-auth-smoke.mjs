@@ -1,4 +1,5 @@
-// Read-only business checks. Creates only Auth sessions; never payments, messages or users.
+// Business reads + forbidden management requests against absent rolled-back fixture IDs.
+// Creates only Auth sessions; never payments, messages or users.
 import { config } from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 config({ path: ".env.local", quiet: true });
@@ -83,7 +84,7 @@ try {
     const read = await query("clients.getById", own.session.token, { id: foreign.clients[0].id });
     if (read.status !== 200 || read.data !== null) throw new Error("Cross-tenant direct ID read exposed or unexpectedly failed");
   }
-  console.log("PASS: two test logins, expected roles/workspaces, positive client controls, staff restrictions, package payment redaction, direct Data API payment denial and bidirectional direct-ID read denial. No financial operations executed.");
+  console.log("PASS: two test logins, expected roles/workspaces, positive client controls, staff restrictions including HTTP 403 on plan/contract management mutations, package payment redaction, direct Data API payment denial and bidirectional cross-organization direct-ID read denial. No financial operations executed. Same-organization units are tested separately by rollback SQL, not by these logins.");
 } catch {
   // Do not print responses, account emails, tokens, passwords or provider errors.
   console.error(`FAIL: authenticated smoke check at ${phase}. No credentials or provider responses displayed.`);
