@@ -20,8 +20,10 @@ describe("appointment activation", () => {
       router.indexOf("create: protectedProcedure", router.indexOf("appointments: router")),
       router.indexOf("setStatus: protectedProcedure"),
     );
-    expect(createBlock).not.toContain("organizationId:");
-    expect(createBlock).not.toContain("unitId:");
+    const inputSchema = createBlock.slice(0, createBlock.indexOf(".mutation("));
+    expect(inputSchema).not.toContain("organizationId:");
+    expect(inputSchema).not.toContain("unitId:");
+    expect(createBlock).not.toMatch(/input\.(organizationId|unitId)/);
     expect(createBlock).toContain("ctx.user.unitId");
   });
 

@@ -9,7 +9,7 @@ import { protectedProcedure, publicProcedure as anonymousProcedure, router } fro
 import * as db from "./db.js";
 import { supabase, supabaseAdmin } from "./_core/supabase.js";
 import { generateClientCode, generatePetCode } from "./codeGenerator.js";
-import { sendAppointmentConfirmationEmail } from "./_core/emailService.js";
+import { sendAppointmentInvitation, type InvitationResult } from "./appointmentInvitation";
 import { asaasRouter } from "./asaas/router.js";
 import { brandingRouter } from "./branding.js";
 import { userAccessRouter } from "./userAccess.js";
@@ -1279,24 +1279,18 @@ export const appRouter = router({
             throw appointmentServiceError;
           }
 
-          // Enviar email se solicitado
-          if (input.sendEmail && clientRes.data.email) {
+          let calendarInvitation: InvitationResult = "not_requested";
+          if (input.sendEmail) {
             try {
-              await sendAppointmentConfirmationEmail(
-                clientRes.data.email,
-                clientRes.data.nome,
-                petRes.data.name,
-                serviceRes.data.name,
-                input.appointmentDate,
-                formatTime(startsAt),
-              );
-            } catch (emailError) {
-              console.error("Erro ao enviar email:", emailError);
-              // Não lançar erro se o email falhar
-            }
+              calendarInvitation = await sendAppointmentInvitation({
+                organizationId: ctx.user.organizationId, unitId: ctx.user.unitId,
+                to: clientRes.data.email,
+                appointment: { id: data.id, appointmentDate: data.appointment_date,
+                  durationMinutes, status: data.status },
+              });
+            } catch { calendarInvitation = "failed"; }
           }
-
-          return data;
+          return { ...data, calendarInvitation };
         } catch (error) {
           console.error("Error creating appointment:", error);
           throw new Error(error instanceof Error ? error.message : "Erro ao criar agendamento");

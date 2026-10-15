@@ -4,6 +4,8 @@
 
 ### Escopo incluído: notificações, agenda e atendimento com IA — 14/10/2026
 
+Avanço de 15/10 (convite ao cliente): criação de atendimento solicita envio SMTP de convite iCalendar REQUEST com organizador Lux Dog, destinatário único, RSVP e UID estável. Adaptador separado do Supabase Auth e do legado Manus; escopo obrigatório de organização/unidade e chave de ativação desligada por padrão. TLS obrigatório, sem acesso a arquivos/URLs, erros sem dados pessoais e sem repetição automática após resultado ambíguo. API informa aceitação SMTP, desativação, falta de email ou falha; tela avisa sem desfazer atendimento nem afirmar entrega/aceite. Dez testes isolados do adaptador passaram sem envio real. Falta configurar APPOINTMENT_SMTP_* e APPOINTMENT_INVITES_* no servidor privado, homologar destinatário autorizado e implementar fila/auditoria persistente, atualização/cancelamento e rastreio de entrega antes de chamar o ciclo completo de pronto. Não usar o SMTP de Auth por suposição nem expor senha no chat/Git.
+
 Avanço de 15/10: implementado download manual `.ics` no detalhe de atendimento salvo, sem convite externo, nomes/contatos/valores ou sincronização automática. UID estável, horários UTC a partir do fuso explícito armazenado, duração somente quando informada; cancelados/faltas e datas sem fuso bloqueados. Dezessete testes unitários aprovados. Atualização/cancelamento automático em calendário externo e homologação visual em aplicativo de agenda ainda pendentes.
 
 Solicitação incluída no projeto; itens abaixo ainda não são funcionalidades homologadas. Implantação por etapas, sem autorizar contratação, envio real ou atendimento autônomo nesta atualização. Não ampliar o portal acadêmico neste lote.

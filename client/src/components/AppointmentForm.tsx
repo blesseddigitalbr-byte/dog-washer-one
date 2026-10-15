@@ -275,7 +275,14 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
           });
         }
       } else {
-        await createMutation.mutateAsync(appointmentPayload);
+        const created = await createMutation.mutateAsync(appointmentPayload);
+        if (created.calendarInvitation === "accepted") {
+          toast.info("Convite aceito pelo servidor de email. O cliente precisa recebê-lo e aceitar na própria agenda.");
+        } else {
+          toast.warning(created.calendarInvitation === "missing_email"
+            ? "Agendamento salvo, mas o cliente não tem email cadastrado para receber o convite."
+            : "Agendamento salvo. Convite não enviado: confira a configuração de email ou contate a recepção. Não recrie o atendimento para reenviar.");
+        }
       }
 
 
@@ -644,6 +651,7 @@ export function AppointmentForm({ onClose, onSuccess, appointment }: Appointment
       </div>
 
       {/* Botões */}
+      <p className="text-sm text-muted-foreground md:col-span-2">Novos agendamentos solicitam convite por email ao cliente, quando o envio estiver habilitado para esta unidade. O cliente precisa aceitar na própria agenda. Reagendamentos e cancelamentos ainda exigem comunicação pela recepção; não há sincronização automática.</p>
       <div className="sticky bottom-0 z-10 flex gap-3 justify-end border-t bg-background py-4 md:col-span-2">
         <Button type="button" variant="outline" onClick={onClose}>
           Cancelar
