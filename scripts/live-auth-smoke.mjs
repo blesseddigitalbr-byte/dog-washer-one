@@ -21,6 +21,13 @@ async function query(path, token, input) {
   const body = await response.json();
   return { status: response.status, data: body.result?.data?.json };
 }
+async function mutationStatus(path, token, input) {
+  const response = await fetch(`${base}/api/trpc/${path}`, {
+    method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ json: input }), signal: AbortSignal.timeout(20000),
+  });
+  return response.status;
+}
 const sessions = [];
 let phase = "initialization";
 try {
@@ -57,6 +64,15 @@ try {
     for (const procedure of ["userAccess.list", "asaas.externalInvoices", "importReview.list", "supplies.list", "purchases.suppliers", "purchases.documents"]) {
       phase = `${session.prefix}: restriction ${procedure}`;
       if ((await query(procedure, session.token)).status !== 403) throw new Error("Staff privileged endpoint accessible");
+    }
+    // IDs used only by rolled-back fixtures; never target a real business record.
+    for (const [procedure, input] of [
+      ["packages.update", { id: "f2000000-0000-4000-8000-000000000001", totalPrice: 0 }],
+      ["clientPackages.update", { id: "f2000000-0000-4000-8000-000000000001", price: 0 }],
+      ["clientPackages.cancel", { id: "f2000000-0000-4000-8000-000000000001" }],
+    ]) {
+      phase = `${session.prefix}: management write restriction ${procedure}`;
+      if (await mutationStatus(procedure, session.token, input) !== 403) throw new Error("Staff management mutation not forbidden");
     }
     results.push({ session, clients: clients.data });
   }

@@ -36,7 +36,7 @@ describe("resumo e financeiro dos pacotes", () => {
 
   it("preserva pagamentos ao cancelar sem presumir estorno", () => {
     expect(packages).toContain('.filter((pkg: any) => pkg.payment_status === "paid")');
-    const cancellation = router.slice(router.indexOf("    cancel: protectedProcedure", router.indexOf("  clientPackages: router")), router.indexOf("    renew: protectedProcedure", router.indexOf("  clientPackages: router")));
+    const cancellation = router.slice(router.indexOf("    cancel: managementProcedure", router.indexOf("  clientPackages: router")), router.indexOf("    renew: protectedProcedure", router.indexOf("  clientPackages: router")));
     expect(cancellation).toContain('status: "cancelled"');
     expect(cancellation).not.toContain("payment_status");
     expect(migration).toContain("payment_status");

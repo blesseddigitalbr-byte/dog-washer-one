@@ -58,6 +58,6 @@ describe("separação entre plano e pacote contratado", () => {
     expect(router).toContain("operational_status");
     expect(router).toContain('"expiring"');
     expect(router).toContain('"consumed"');
-    expect(router).toContain("cancel: protectedProcedure");
+    expect(router).toContain("cancel: managementProcedure");
   });
 });

@@ -31,6 +31,13 @@ const requireUser = t.middleware(async opts => {
 
 export const protectedProcedure = t.procedure.use(requireUser);
 
+export const managementProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (!ctx.user?.organizationId || !ctx.user?.unitId || !["owner", "admin", "manager"].includes(ctx.user.role)) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Ação restrita à gestão da unidade" });
+  }
+  return next({ ctx });
+});
+
 export const adminProcedure = protectedProcedure.use(
   t.middleware(async opts => {
     const { ctx, next } = opts;

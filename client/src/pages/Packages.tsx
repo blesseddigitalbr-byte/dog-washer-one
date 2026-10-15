@@ -95,6 +95,8 @@ export default function Packages() {
         </div>
         <Button 
           className="bg-primary text-white hover:bg-[#0d2f64]"
+          disabled={!paymentAccess}
+          title={!paymentAccess ? "Contratação restrita à gestão" : undefined}
           onClick={() => setIsNewPackageOpen(true)}
         >
           <Plus className="mr-2 h-4 w-4" />
@@ -293,7 +295,7 @@ export default function Packages() {
                   <Button
                     variant="outline"
                     className="border-destructive text-destructive hover:bg-destructive hover:text-white"
-                    disabled={cancelMutation.isPending}
+                    disabled={cancelMutation.isPending || !paymentAccess}
                     onClick={() => cancelMutation.mutate({ id: selectedPackage.id })}
                   >
                     <Ban className="mr-2 h-4 w-4" /> Cancelar pacote
