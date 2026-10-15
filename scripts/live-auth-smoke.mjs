@@ -54,6 +54,8 @@ try {
     phase = `${session.prefix}: client control`;
     const clients = await query("clients.list", session.token);
     if (clients.status !== 200 || !Array.isArray(clients.data) || !clients.data.length) throw new Error("Missing positive client control");
+    phase = `${session.prefix}: photo reference redaction`;
+    if (clients.data.some(client => (client.pets || []).some(pet => Object.hasOwn(pet, "photo_storage_key")))) throw new Error("Raw pet photo key exposed");
     phase = `${session.prefix}: package payment redaction`;
     const packages = await query("clientPackages.list",session.token);
     if(packages.status!==200 || !Array.isArray(packages.data) || packages.data.some(row=>["payment_status","payment_date","payment_method"].some(field=>Object.hasOwn(row,field)))) throw new Error("Package payment redaction failed");
