@@ -24,6 +24,23 @@ import { AlertTriangle, ChevronLeft, ChevronRight, Calendar, List } from "lucide
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, endOfWeek, addDays, isSameDay, isSameMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { appointmentCalendar } from "@shared/appointmentCalendar";
+
+function downloadCalendar(appointment: any) {
+  try {
+    const content = appointmentCalendar(appointment);
+    const url = URL.createObjectURL(new Blob([content], { type: "text/calendar;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `atendimento-${appointment.id}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : "Não foi possível exportar o compromisso.");
+  }
+}
 
 type ViewType = "calendar" | "week" | "day" | "agenda";
 
@@ -584,6 +601,10 @@ export default function Appointments() {
             </DialogDescription>
           </DialogHeader>
           <div className="overflow-y-auto pr-2">
+            {selectedAppointment?.id && ["pending", "confirmed", "in_progress", "completed"].includes(selectedAppointment.status) && <div className="mb-4 rounded-lg border p-3">
+              <Button variant="outline" onClick={() => downloadCalendar(selectedAppointment)}>Baixar compromisso (.ics)</Button>
+              <p className="mt-2 text-sm text-muted-foreground">Importe o arquivo na sua agenda. Não envia convites nem sincroniza alterações ou cancelamentos. Confira o fuso da agenda de destino. O arquivo não inclui nomes, contatos ou valores.</p>
+            </div>}
             {selectedAppointment?.id && <Button variant="outline" className="mb-4" asChild><a href={`/financial?appointment=${encodeURIComponent(selectedAppointment.id)}`}>Preparar cobrança deste atendimento</a></Button>}
             {selectedAppointment?.id && ["pending", "confirmed", "in_progress"].includes(selectedAppointment.status) && <Button variant="outline" className="mb-4 ml-2 text-red-700" onClick={() => { setCancelCandidate(selectedAppointment); setCancelReason(""); }}>Cancelar atendimento</Button>}
             {selectedAppointment?.status === "completed" && !selectedAppointment.execution_reversed_at && <Button variant="outline" className="mb-4 ml-2 text-red-700" onClick={() => { setReversalCandidate(selectedAppointment); setReversalReason(""); }}>Reverter baixa indevida</Button>}

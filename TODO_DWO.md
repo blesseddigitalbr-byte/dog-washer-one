@@ -2,6 +2,26 @@
 
 ## Liberação Lux Dog — meta 16/10/2026
 
+### Escopo incluído: notificações, agenda e atendimento com IA — 14/10/2026
+
+Avanço de 15/10: implementado download manual `.ics` no detalhe de atendimento salvo, sem convite externo, nomes/contatos/valores ou sincronização automática. UID estável, horários UTC a partir do fuso explícito armazenado, duração somente quando informada; cancelados/faltas e datas sem fuso bloqueados. Dezessete testes unitários aprovados. Atualização/cancelamento automático em calendário externo e homologação visual em aplicativo de agenda ainda pendentes.
+
+Solicitação incluída no projeto; itens abaixo ainda não são funcionalidades homologadas. Implantação por etapas, sem autorizar contratação, envio real ou atendimento autônomo nesta atualização. Não ampliar o portal acadêmico neste lote.
+
+- [ ] Sistema → Comunicação: configuração protegida de SMS, WhatsApp e email por organização/unidade; credenciais somente no servidor, identidade Lux Dog, teste controlado e ativação explícita por canal. Separar email transacional do app do SMTP de recuperação de senha já configurado.
+- [ ] Preferências por cliente: contato validado, autorização/finalidade por canal, registro de consentimento quando aplicável, descadastro e bloqueio de mensagens promocionais. Não presumir autorização a partir da importação da planilha.
+- [ ] Eventos: confirmação, lembrete, reagendamento e cancelamento de atendimento; avisos de pacote/créditos e cobrança somente conforme estado real e autorização financeira. Definir antecedência e horários permitidos antes de ativar; nenhum texto pode afirmar assinatura, pagamento ou crédito sem evidência do evento correspondente.
+- [ ] Central de notificações: fila persistente por organização/unidade, chave idempotente por evento/versão/destinatário/canal, tentativas limitadas, controle de custo e limites, status de entrega e erros sanitizados. Webhooks autenticados, deduplicados e tolerantes a eventos fora de ordem; cancelar lembretes obsoletos após reagendamento/cancelamento. Falha no provedor não pode desfazer um agendamento confirmado nem gerar envio duplicado.
+- [ ] Compromisso em agenda: convite ICS com fuso America/Sao_Paulo, UID estável e atualização/cancelamento do mesmo evento; integração Google Agenda opcional com autorização, convidados e calendário da unidade. Não incluir informação financeira ou dados pessoais desnecessários no convite. Sem criar eventos durante importação histórica.
+- [ ] Sistema → Atendimento com IA: base de conhecimento aprovada sobre serviços, horários e políticas; identificação clara do assistente, histórico com retenção definida e encaminhamento para recepção. Consultar dados de tutor/pet apenas após identidade verificada e dentro da organização/unidade correta; não expor outros clientes, informações de equipe ou financeiro restrito.
+- [ ] IA inicialmente consultiva: responder dúvidas e preparar sugestões de agendamento, com confirmação explícita antes de gravar alterações. Preço, disponibilidade e saldo vêm do sistema, não de suposição do modelo. Sem baixa de pagamento, estorno, emissão fiscal, mudança de permissões ou decisões clínicas autônomas. Conteúdo recebido de clientes/documentos não pode substituir as regras de segurança; usar ferramentas de escopo mínimo e auditar ações sem registrar segredos.
+- [ ] Gestão operacional: caixa de entrada e transferência para humano conforme perfil; configurações, chaves, modelos, políticas e limites em Sistema, restritos à administração. Desativação rápida por canal e da IA; indisponibilidade da automação não bloqueia recepção manual.
+- [ ] Homologação: destino de teste autorizado, isolamento entre unidades, perfil Operação sem configuração, consentimento/descadastro, repetição de webhook, falha/reenvio, fuso e mudança/cancelamento de agenda, tentativa de acesso indevido pela IA e escalonamento humano. Sem disparos para clientes reais nos testes.
+
+Dependências para ativação: provedor/conta e número autorizado de SMS/WhatsApp, remetente transacional validado, autorização do calendário, provedor de IA e limites de custo/retenção aprovados. Não é necessário escolher todos agora; manter canais desativados até validação. O prazo de liberação não implica ativação de integrações não homologadas.
+
+Diagnóstico inicial: `server/_core/emailService.ts` contém adaptador legado Manus para confirmação de agenda; `server/_core/llm.ts` contém infraestrutura genérica de modelo. Sua existência não comprova entrega de email nem atendimento com IA em produção. Os itens antigos de WhatsApp/Google Agenda deste checklist ficam subordinados a estes requisitos, evitando implementações duplicadas.
+
 ### Insumos, fornecedores e compras — 14/10/2026
 
 - [x] Gestão → Produtos: cadastro de insumos un/ml/g, mínimo, edição/inativação sem apagar histórico, entrada, consumo e perda. Saldo inicial zero; entradas reais precisam ser informadas. Controle transacional por versão, trava de linha, chave de reenvio e rejeição de estoque negativo. Saldo e ledger sem escrita direta authenticated.
