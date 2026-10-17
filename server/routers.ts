@@ -1111,7 +1111,8 @@ export const appRouter = router({
 
   appointments: router({
     // List all appointments with related data
-    list: publicProcedure.query(async () => {
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (!ctx.user?.organizationId || !ctx.user.unitId) throw new TRPCError({ code: "FORBIDDEN", message: "Unidade ativa necessária para consultar a agenda" });
       try {
         const { data: appointments, error } = await supabase
           .from("appointments")
@@ -1122,6 +1123,8 @@ export const appRouter = router({
             service:service_id(id, name, price, duration_minutes),
             professional:professional_id(id, name, specialization)
           `)
+          .eq("organization_id", ctx.user.organizationId)
+          .eq("unit_id", ctx.user.unitId)
           .order("appointment_date", { ascending: false });
 
         if (error) throw error;
@@ -1145,15 +1148,15 @@ export const appRouter = router({
           professionalName: appointment.professional?.name || "Profissional não informado",
         }));
       } catch (error) {
-        console.error("Error fetching appointments:", error);
-        return [];
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Não foi possível carregar a agenda. Tente novamente." });
       }
     }),
 
     // Get a single appointment by ID
-    getById: publicProcedure
+    getById: protectedProcedure
       .input(z.object({ id: z.string().uuid() }))
-      .query(async ({ input }) => {
+      .query(async ({ ctx, input }) => {
+        if (!ctx.user?.organizationId || !ctx.user.unitId) throw new TRPCError({ code: "FORBIDDEN", message: "Unidade ativa necessária para consultar o atendimento" });
         try {
           const { data: appointment, error } = await supabase
             .from("appointments")
@@ -1165,9 +1168,12 @@ export const appRouter = router({
               professional:professional_id(id, name, specialization)
             `)
             .eq("id", input.id)
-            .single();
+            .eq("organization_id", ctx.user.organizationId)
+            .eq("unit_id", ctx.user.unitId)
+            .maybeSingle();
 
           if (error) throw error;
+          if (!appointment) return null;
           return {
             ...appointment,
             status: appointment.execution_reversed_at ? "cancelled" : appointment.status,
@@ -1188,8 +1194,7 @@ export const appRouter = router({
             professionalName: appointment.professional?.name || "Profissional não informado",
           };
         } catch (error) {
-          console.error("Error fetching appointment:", error);
-          return null;
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Não foi possível carregar o atendimento. Tente novamente." });
         }
       }),
 

@@ -75,7 +75,9 @@ export default function Appointments() {
   const [reversalReason, setReversalReason] = useState("");
 
   // Fetch appointments
-  const { data: appointments = [] } = trpc.appointments.list.useQuery();
+  const agendaQuery = trpc.appointments.list.useQuery();
+  const appointments = agendaQuery.data ?? [];
+  const agendaUnavailable = agendaQuery.isLoading || agendaQuery.isError;
   const { data: clients = [] } = trpc.clients.list.useQuery();
   const { data: services = [] } = trpc.services.list.useQuery();
   const utils = trpc.useUtils();
@@ -96,6 +98,7 @@ export default function Appointments() {
   });
 
   const advanceStatus = (appointment: any) => {
+    if (agendaUnavailable) return;
     const nextStatus: Record<string, "confirmed" | "in_progress" | "completed"> = {
       pending: "confirmed",
       confirmed: "in_progress",
@@ -110,7 +113,7 @@ export default function Appointments() {
   };
 
   const confirmCompletion = () => {
-    if (!completionCandidate) return;
+    if (!completionCandidate || agendaUnavailable) return;
     statusMutation.mutate({ id: completionCandidate.id, status: "completed" });
     setCompletionCandidate(null);
   };
@@ -471,6 +474,7 @@ export default function Appointments() {
           <p className="text-gray-600 mt-1">Gerenciamento completo de agendamentos</p>
         </div>
         <Button
+          disabled={agendaUnavailable}
           onClick={() => { setSelectedAppointment(null); setShowForm(true); }}
           className="bg-primary text-white hover:bg-primary font-bold"
         >
@@ -582,10 +586,15 @@ export default function Appointments() {
 
       {/* Content */}
       <div className="bg-white p-6 rounded-lg border border-gray-200">
-        {viewType === "calendar" && renderCalendar()}
-        {viewType === "week" && renderWeek()}
-        {viewType === "day" && renderDay()}
-        {viewType === "agenda" && renderAgenda()}
+        {agendaQuery.isLoading ? <p role="status">Carregando agenda…</p> : agendaQuery.isError ? <div role="alert" className="space-y-3">
+          <p>Não foi possível carregar a agenda. Nenhuma disponibilidade foi confirmada.</p>
+          <Button variant="outline" onClick={() => agendaQuery.refetch()}>Tentar novamente</Button>
+        </div> : <>
+          {viewType === "calendar" && renderCalendar()}
+          {viewType === "week" && renderWeek()}
+          {viewType === "day" && renderDay()}
+          {viewType === "agenda" && renderAgenda()}
+        </>}
       </div>
 
       {/* Form Dialog */}
@@ -609,12 +618,12 @@ export default function Appointments() {
             {selectedAppointment?.id && ["pending", "confirmed", "in_progress"].includes(selectedAppointment.status) && <Button variant="outline" className="mb-4 ml-2 text-red-700" onClick={() => { setCancelCandidate(selectedAppointment); setCancelReason(""); }}>Cancelar atendimento</Button>}
             {selectedAppointment?.status === "completed" && !selectedAppointment.execution_reversed_at && <Button variant="outline" className="mb-4 ml-2 text-red-700" onClick={() => { setReversalCandidate(selectedAppointment); setReversalReason(""); }}>Reverter baixa indevida</Button>}
             {selectedAppointment?.execution_reversed_at && <p role="status" className="mb-4 rounded-lg border border-amber-300 p-3 text-sm">Baixa revertida. Consumo devolvido; execução original preservada para auditoria. Revisão financeira/acadêmica pode ser necessária.</p>}
-            <AppointmentForm
+            {agendaUnavailable ? <p role="alert">A agenda está indisponível. Aguarde a consulta antes de alterar o atendimento.</p> : <AppointmentForm
               key={selectedAppointment?.id || "new-appointment"}
               onClose={() => setShowForm(false)}
               onSuccess={() => setShowForm(false)}
               appointment={selectedAppointment}
-            />
+            />}
           </div>
         </DialogContent>
       </Dialog>
@@ -622,13 +631,13 @@ export default function Appointments() {
       <Dialog open={!!reversalCandidate} onOpenChange={open => !open && setReversalCandidate(null)}>
         <DialogContent><DialogHeader><DialogTitle>Reverter baixa indevida</DialogTitle><DialogDescription>Uso exclusivo da gestão para corrigir registro incorreto. Devolve apenas o banho/tosa efetivamente descontado, sem renovar validade ou alterar mensalidade. Não estorna cobrança nem recupera repasse. Registros acadêmicos exigem conferência.</DialogDescription></DialogHeader>
           <label className="text-sm">Motivo obrigatório<Input maxLength={500} value={reversalReason} onChange={event => setReversalReason(event.target.value)} /></label>
-          <div className="flex gap-2"><Button variant="outline" onClick={() => setReversalCandidate(null)}>Voltar</Button><Button disabled={reverseMutation.isPending || reversalReason.trim().length < 3} onClick={() => reverseMutation.mutate({ id: reversalCandidate.id, reason: reversalReason })}>Confirmar reversão</Button></div>
+          <div className="flex gap-2"><Button variant="outline" onClick={() => setReversalCandidate(null)}>Voltar</Button><Button disabled={agendaUnavailable || reverseMutation.isPending || reversalReason.trim().length < 3} onClick={() => reverseMutation.mutate({ id: reversalCandidate.id, reason: reversalReason })}>Confirmar reversão</Button></div>
         </DialogContent>
       </Dialog>
       <Dialog open={!!cancelCandidate} onOpenChange={open => !open && setCancelCandidate(null)}>
         <DialogContent><DialogHeader><DialogTitle>Cancelar atendimento</DialogTitle><DialogDescription>Cancelar antes da conclusão não consome sessão e não altera mensalidade, cobrança ou pagamento. Uma baixa indevida já concluída exige revisão separada.</DialogDescription></DialogHeader>
           <label className="text-sm">Motivo obrigatório<Input value={cancelReason} maxLength={500} onChange={event => setCancelReason(event.target.value)} /></label>
-          <div className="flex gap-2"><Button variant="outline" onClick={() => setCancelCandidate(null)}>Voltar</Button><Button disabled={statusMutation.isPending || cancelReason.trim().length < 3} onClick={() => statusMutation.mutate({ id: cancelCandidate.id, status: "cancelled", reason: cancelReason })}>Confirmar cancelamento</Button></div>
+          <div className="flex gap-2"><Button variant="outline" onClick={() => setCancelCandidate(null)}>Voltar</Button><Button disabled={agendaUnavailable || statusMutation.isPending || cancelReason.trim().length < 3} onClick={() => statusMutation.mutate({ id: cancelCandidate.id, status: "cancelled", reason: cancelReason })}>Confirmar cancelamento</Button></div>
         </DialogContent>
       </Dialog>
       <AlertDialog open={!!completionCandidate} onOpenChange={(open) => !open && setCompletionCandidate(null)}>
@@ -648,6 +657,7 @@ export default function Appointments() {
             <div className="mt-6 flex justify-center gap-3">
               <AlertDialogCancel className="mt-0 font-bold">Cancelar</AlertDialogCancel>
               <AlertDialogAction
+                disabled={agendaUnavailable || statusMutation.isPending}
                 onClick={confirmCompletion}
                 className="bg-primary font-semibold text-white hover:bg-primary"
               >

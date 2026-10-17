@@ -56,6 +56,13 @@ try {
     if (clients.status !== 200 || !Array.isArray(clients.data) || !clients.data.length) throw new Error("Missing positive client control");
     phase = `${session.prefix}: photo reference redaction`;
     if (clients.data.some(client => (client.pets || []).some(pet => Object.hasOwn(pet, "photo_storage_key")))) throw new Error("Raw pet photo key exposed");
+    phase = `${session.prefix}: agenda read`;
+    const agenda = await query("appointments.list", session.token);
+    if (agenda.status !== 200 || !Array.isArray(agenda.data)) throw new Error("Agenda read failed");
+    if (agenda.data.some(row => row.organization_id !== session.org || row.unit_id !== me.data.unitId)) throw new Error("Agenda unit scope failed");
+    phase = `${session.prefix}: absent agenda detail`;
+    const absent = await query("appointments.getById", session.token, { id: "f2000000-0000-4000-8000-000000000001" });
+    if (absent.status !== 200 || absent.data !== null) throw new Error("Absent agenda detail failed");
     phase = `${session.prefix}: package payment redaction`;
     const packages = await query("clientPackages.list",session.token);
     if(packages.status!==200 || !Array.isArray(packages.data) || packages.data.some(row=>["payment_status","payment_date","payment_method"].some(field=>Object.hasOwn(row,field)))) throw new Error("Package payment redaction failed");
